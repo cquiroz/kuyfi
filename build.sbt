@@ -3,8 +3,8 @@ import sbt.Keys._
 val commonSettings: Seq[Setting[_]] = Seq(
   version := s"0.1.0-SNAPSHOT",
   organization := "com.github.cquiroz",
-  scalaVersion := "2.11.8",
-  crossScalaVersions := Seq("2.10.4", "2.11.8", "2.12.0"),
+  scalaVersion := "2.10.6",
+  crossScalaVersions := Seq("2.10.6", "2.11.8", "2.12.0"),
   scalacOptions ++= Seq("-deprecation", "-feature", "-Xfatal-warnings"),
   exportJars := true,
   publishMavenStyle := true,
@@ -47,8 +47,9 @@ lazy val kuyfi: Project = project.in(file("."))
     publish := {},
     publishLocal := {},
     libraryDependencies ++= Seq(
-      "org.tpolecat" %% "atto-core"  % "0.5.1",
-      "org.tpolecat" %% "atto-compat-scalaz72" % "0.5.1",
-      "org.scalaz" %% "scalaz-core" % "7.2.7"
+      "org.tpolecat"  %% "atto-core"            % "0.5.1",
+      "org.tpolecat"  %% "atto-compat-scalaz72" % "0.5.1",
+      "org.scalaz"    %% "scalaz-core"          % "7.2.7",
+      "org.scalatest" %% "scalatest"            % "3.0.0" % "test"
     )
   )
