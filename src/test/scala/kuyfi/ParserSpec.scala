@@ -130,8 +130,26 @@ class ParserSpec extends FlatSpec with Matchers {
 
   "TZDBParser" should
     "parse Rules" in {
-      val rule = "Rule	Algeria	1916	only	-	Jun	14	23:00s	1:00	S"
-      (ruleParser parseOnly rule) shouldBe Done("",
-        Rule("Algeria", GivenYear(1916), Only, Month.JUNE, DayOfTheMonth(14), AtStandardTime(LocalTime.of(23, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter('S')))
+      val rules = List(
+        "Rule	Algeria	1916	only	-	Jun	14	23:00s	1:00	S" ->
+          Rule("Algeria", GivenYear(1916), Only, Month.JUNE, DayOfTheMonth(14), AtStandardTime(LocalTime.of(23, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("S")),
+        "Rule	Egypt	1995	2010	-	Apr	lastFri	 0:00s	1:00	S" ->
+          Rule("Egypt", GivenYear(1995), GivenYear(2010), Month.APRIL, LastWeekday(DayOfWeek.FRIDAY), AtStandardTime(LocalTime.of(0, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("S")),
+        "Rule	Egypt	2007	only	-	Sep	Thu>=1	24:00	0	-" ->
+          Rule("Egypt", GivenYear(2007), Only, Month.SEPTEMBER, AfterWeekday(DayOfWeek.THURSDAY, 1), AtWallTime(LocalTime.of(0, 0)), RuleSave(LocalTime.of(0, 0)), RuleLetter("-")),
+        "Rule	Ghana	1920	1942	-	Sep	 1	0:00	0:20	GHST" ->
+          Rule("Ghana", GivenYear(1920), GivenYear(1942), Month.SEPTEMBER, DayOfTheMonth(1), AtWallTime(LocalTime.of(0, 0)), RuleSave(LocalTime.of(0, 20)), RuleLetter("GHST")),
+        "Rule RussiaAsia	1981	1984	-	Apr	1	 0:00	1:00	S" ->
+          Rule("RussiaAsia", GivenYear(1981), GivenYear(1984), Month.APRIL, DayOfTheMonth(1), AtWallTime(LocalTime.of(0, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("S")),
+        "Rule	Lebanon	1993	max	-	Mar	lastSun	0:00	1:00	S" ->
+          Rule("Lebanon", GivenYear(1993), Maximum, Month.MARCH, LastWeekday(DayOfWeek.SUNDAY), AtWallTime(LocalTime.of(0, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("S")),
+        "Rule	Syria	1991	only	-	Apr	 1	0:00	1:00	S" ->
+          Rule("Syria", GivenYear(1991), Only, Month.APRIL, DayOfTheMonth(1), AtWallTime(LocalTime.of(0, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("S")),
+        "Rule	Regina	1945	only	-	Aug	14	23:00u	1:00	P # Peace" ->
+          Rule("Regina", GivenYear(1945), Only, Month.AUGUST, DayOfTheMonth(14), AtUniversalTime(LocalTime.of(23, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("P"))
+      )
+      rules.foreach { rule =>
+        (ruleParser parseOnly rule._1) shouldBe Done("", rule._2)
+      }
     }
 }

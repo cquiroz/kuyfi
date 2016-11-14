@@ -16,7 +16,7 @@ import scala.collection.JavaConverters._
 import scala.collection.breakOut
 
 object TZDBParser {
-  case class RuleLetter(letter: Char)
+  case class RuleLetter(letter: String)
   case class RuleSave(time: LocalTime)
 
   sealed trait RuleAt extends Product with Serializable {
@@ -40,7 +40,7 @@ object TZDBParser {
 
   case class Rule(name: String, from: RuleYear, to: RuleYear, month: Month, on: RuleOn, at: RuleAt, save: RuleSave, letter: RuleLetter)
 
-  val tab: Parser[Char] = chr('\t')
+  val tab: Parser[Char] = chr('\t') | chr(' ')
   val from: Parser[String] =
     stringOf1(digit) |
     string("minimum") |
@@ -48,12 +48,14 @@ object TZDBParser {
   val fromParser: Parser[RuleYear] = {
     stringOf1(digit).map(y => GivenYear(y.toInt)) |
     string("minimum").map(_ => Minimum: RuleYear) |
-    string("maximum").map(_ => Maximum: RuleYear)
+    string("maximum").map(_ => Maximum: RuleYear) |
+    string("max").map(_ => Maximum: RuleYear)
   }
   val toParser: Parser[RuleYear] = {
     stringOf1(digit).map(y => GivenYear(y.toInt)) |
     string("minimum").map(_ => Minimum: RuleYear) |
     string("maximum").map(_ => Maximum: RuleYear) |
+    string("max").map(_ => Maximum: RuleYear) |
     string("only").map(_ => Only: RuleYear)
   }
 
@@ -86,27 +88,28 @@ object TZDBParser {
       d <- dayParser
     } yield LastWeekday(d)
   val onParser: Parser[RuleOn] =
-    int.map(DayOfTheMonth.apply) |
-    lastWeekdayParser |
+    (opt(chr(' ')) ~> int.map(DayOfTheMonth.apply)) |
+    afterWeekdayParser |
     beforeWeekdayParser |
     lastWeekdayParser
   val timePartParser: Parser[Char] =
     digit | chr(':')
   val hourMinParser: Parser[LocalTime] =
     for {
+      _ <- opt(chr(' '))
       h <- int <~ chr(':')
       m <- int
-    } yield LocalTime.of(h, m)
+    } yield LocalTime.of((h === 24) ? 0 | h, m)
   val hourMinSecParser: Parser[LocalTime] =
     for {
       h <- int <~ chr(':')
       m <- int <~ chr(':')
       s <- int
-    } yield LocalTime.of(h, m, s)
+    } yield LocalTime.of((h === 24) ? 0 | h, m, s)
   val timeParser: Parser[LocalTime] =
     hourMinSecParser |
     hourMinParser |
-    int.map(h => LocalTime.of(h, 0))
+    int.map(h => LocalTime.of((h === 24) ? 0 | h, 0))
   val atParser: Parser[RuleAt] =
     (timeParser ~ chr('w')).map(x => AtWallTime(x._1): RuleAt) |
     (timeParser ~ chr('s')).map(x => AtStandardTime(x._1): RuleAt) |
@@ -115,7 +118,10 @@ object TZDBParser {
   val saveParser: Parser[RuleSave] =
     timeParser.map(x => RuleSave(x))
   val letterParser: Parser[RuleLetter] =
-    upper.map(RuleLetter.apply)
+    for {
+      l <- takeWhile(c => c.isUpper || c === '-')
+      _ <- takeWhile(_ =/= '\n')
+    } yield RuleLetter(l)
 
   val ruleParser: Parser[Rule] = for {
     _      <- string("Rule") <~ tab
