@@ -152,4 +152,23 @@ class ParserSpec extends FlatSpec with Matchers {
         (ruleParser parseOnly rule._1) shouldBe Done("", rule._2)
       }
     }
+    it should "parse Link" in {
+      val links = List(
+        "Link America/Curacao America/Aruba" ->
+          Link("America/Curacao", "America/Aruba"),
+        "Link	America/Curacao	America/Kralendijk	# Caribbean Netherlands" ->
+          Link("America/Curacao", "America/Kralendijk"),
+        "Link America/Port_of_Spain America/Marigot	# St Martin (French part)" ->
+          Link("America/Port_of_Spain", "America/Marigot"),
+        "Link	America/Los_Angeles	US/Pacific-New	##" ->
+          Link("America/Los_Angeles", "US/Pacific-New"),
+        "Link	Etc/GMT				Etc/GMT+0" ->
+          Link("Etc/GMT", "Etc/GMT+0"),
+        "Link Africa/Abidjan Africa/Sao_Tome	# São Tomé and Príncipe" ->
+          Link("Africa/Abidjan", "Africa/Sao_Tome")
+      )
+      links.foreach { link =>
+        (linkParser parseOnly link._1) shouldBe Done("", link._2)
+      }
+    }
 }

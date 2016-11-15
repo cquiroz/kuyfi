@@ -40,17 +40,23 @@ object TZDBParser {
 
   case class Rule(name: String, from: RuleYear, to: RuleYear, month: Month, on: RuleOn, at: RuleAt, save: RuleSave, letter: RuleLetter)
 
+  case class Link(from: String, to: String)
+
   val tab: Parser[Char] = chr('\t') | chr(' ')
+  val linkSeparator: Parser[List[Char]] = many(tab)
+
   val from: Parser[String] =
     stringOf1(digit) |
     string("minimum") |
     string("maximum")
+
   val fromParser: Parser[RuleYear] = {
     stringOf1(digit).map(y => GivenYear(y.toInt)) |
     string("minimum").map(_ => Minimum: RuleYear) |
     string("maximum").map(_ => Maximum: RuleYear) |
     string("max").map(_ => Maximum: RuleYear)
   }
+
   val toParser: Parser[RuleYear] = {
     stringOf1(digit).map(y => GivenYear(y.toInt)) |
     string("minimum").map(_ => Minimum: RuleYear) |
@@ -71,56 +77,70 @@ object TZDBParser {
   }
 
   val monthParser: Parser[Month] = parseOneOf(months, "unknown month")
+
   val dayParser: Parser[DayOfWeek] = parseOneOf(days, "unknown day")
+
   val afterWeekdayParser: Parser[RuleOn] =
     for {
       d <- dayParser <~ string(">=")
       a <- int
     } yield AfterWeekday(d, a)
+
   val beforeWeekdayParser: Parser[RuleOn] =
     for {
       d <- dayParser <~ string("<=")
       a <- int
     } yield BeforeWeekday(d, a)
+
   val lastWeekdayParser: Parser[RuleOn] =
     for {
       _ <- string("last")
       d <- dayParser
     } yield LastWeekday(d)
+
   val onParser: Parser[RuleOn] =
     (opt(chr(' ')) ~> int.map(DayOfTheMonth.apply)) |
     afterWeekdayParser |
     beforeWeekdayParser |
     lastWeekdayParser
+
   val timePartParser: Parser[Char] =
     digit | chr(':')
+
   val hourMinParser: Parser[LocalTime] =
     for {
       _ <- opt(chr(' '))
       h <- int <~ chr(':')
       m <- int
     } yield LocalTime.of((h === 24) ? 0 | h, m)
+
   val hourMinSecParser: Parser[LocalTime] =
     for {
       h <- int <~ chr(':')
       m <- int <~ chr(':')
       s <- int
     } yield LocalTime.of((h === 24) ? 0 | h, m, s)
+
   val timeParser: Parser[LocalTime] =
     hourMinSecParser |
     hourMinParser |
     int.map(h => LocalTime.of((h === 24) ? 0 | h, 0))
+
   val atParser: Parser[RuleAt] =
     (timeParser ~ chr('w')).map(x => AtWallTime(x._1): RuleAt) |
     (timeParser ~ chr('s')).map(x => AtStandardTime(x._1): RuleAt) |
     (timeParser ~ chr('u')).map(x => AtUniversalTime(x._1): RuleAt) |
     timeParser.map(x => AtWallTime(x): RuleAt)
+
   val saveParser: Parser[RuleSave] =
     timeParser.map(x => RuleSave(x))
+
+  def toEndLine: Parser[String] = takeWhile(_ =/= '\n')
+
   val letterParser: Parser[RuleLetter] =
     for {
       l <- takeWhile(c => c.isUpper || c === '-')
-      _ <- takeWhile(_ =/= '\n')
+      _ <- toEndLine
     } yield RuleLetter(l)
 
   val ruleParser: Parser[Rule] = for {
@@ -135,6 +155,13 @@ object TZDBParser {
     save   <- saveParser <~ tab
     letter <- letterParser
   } yield Rule(name, from, to, month, on, at, save, letter)
+
+  val linkParser: Parser[Link] = for {
+    _    <- string("Link") <~ linkSeparator
+    from <- stringOf1(noneOf(" \t")) <~ linkSeparator
+    to   <- stringOf1(noneOf(" \t"))
+    _    <- toEndLine
+  } yield Link(from, to)
 
   val files: List[String] = List(
     "africa",
