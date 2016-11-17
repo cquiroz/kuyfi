@@ -42,7 +42,9 @@ object TZDBParser {
   case object Maximum extends RuleYear
   case object Only extends RuleYear
 
-  case class Rule(name: String, from: RuleYear, to: RuleYear, month: Month, on: RuleOn, at: RuleAt, save: RuleSave, letter: RuleLetter)
+  case class Rule(name: String, from: RuleYear, to: RuleYear, month: Month, on: RuleOn, at: RuleAt, save: RuleSave, letter: RuleLetter) extends Product with Serializable
+  case class Comment(comment: String) extends Product with Serializable
+  case class BlankLine(line: String) extends Product with Serializable
 
   case class Link(from: String, to: String)
 
@@ -50,6 +52,7 @@ object TZDBParser {
   private val semicolon = chr(':')
   private val tab = chr('\t')
   private val identifier = stringOf1(noneOf(" \t"))
+  private val nl = chr('\n')
 
   private val whitespace: Parser[Char] = tab | space
   private val linkSeparator: Parser[List[Char]] = many(whitespace)
@@ -209,15 +212,15 @@ object TZDBParser {
 
   val zoneTransitionParser: Parser[ZoneTransition] =
     for {
-      gmtOff <- gmtOffsetParser <~ whitespace
+      gmtOff <- many(whitespace) ~> gmtOffsetParser <~ whitespace
       rules  <- identifier <~ many(whitespace)
       format <- identifier <~ many(whitespace)
-      until  <- untilParser
-    } yield ZoneTransition(gmtOff, rules, format, until.some)
+      until  <- opt(untilParser)
+    } yield ZoneTransition(gmtOff, rules, format, until)
 
   val continuationZoneTransitionParser: Parser[ZoneTransition] =
     for {
-      _      <- chr('\n')
+      _      <- nl
       _      <- manyN(3, whitespace)
       gmtOff <- gmtOffsetParser <~ whitespace
       rules  <- identifier <~ many(whitespace)
@@ -236,6 +239,23 @@ object TZDBParser {
       _      <- toEndLine
     } yield Zone(name, trans)
 
+  val commentParser: Parser[Comment] =
+    chr('#') ~> toEndLine.map(Comment.apply) <~ nl
+
+  val blankLine: Parser[BlankLine] =
+    many(whitespace).map(c => BlankLine(c.mkString)) <~ nl
+
+  val ruleLineParser: Parser[Rule] =
+    ruleParser <~ nl
+
+  val zoneLineParser: Parser[Zone] =
+    zoneParser <~ nl
+
+  val fileParser: Parser[Any] =
+    for {
+      c <- many(commentParser || blankLine || zoneLineParser || ruleParser)
+      _ <- toEndLine
+    } yield c
 
   val files: List[String] = List(
     "africa",
@@ -251,25 +271,19 @@ object TZDBParser {
     "systemv"
   )
 
-  def parseRule = {
-    string("Rule") ~ whitespace ~ stringOf1(notChar('\t')) ~ whitespace
+  def parseFile(text: String) = {
+    fileParser parseOnly text
   }
 
-  def toSource(f: File) = {
-
-
-    string("RowOnly") parseOnly "123abc"
-  }
-
-  def generateTZDataSources(base: File, data: File): Seq[File] = {
+  /*def generateTZDataSources(base: File, data: File): Seq[File] = {
     val r = Files.list(data.toPath).iterator().asScala.collect {
       case f if files.contains(f.toFile.getName) => toSource(f.toFile)
     }
     println(parseRule)
     Nil
-  }
+  }*/
 
   def main(args: Array[String]): Unit = {
-    generateTZDataSources(new File("src/main/scala/zone/data"), new File("jvm/src/main/resources/tzdb"))
+    //generateTZDataSources(new File("src/main/scala/zone/data"), new File("jvm/src/main/resources/tzdb"))
   }
 }
