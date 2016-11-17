@@ -1,12 +1,10 @@
 package kuyfi
 
 import java.time.{DayOfWeek, LocalTime, Month}
-import java.time.format.TextStyle
-import java.util.Locale
 
 import org.scalatest.{FlatSpec, Matchers}
-import atto.Atto._
 import atto._
+import atto.Atto._
 import TZDBParser._
 import atto.ParseResult.{Done, Fail}
 
@@ -169,6 +167,78 @@ class ParserSpec extends FlatSpec with Matchers {
       )
       links.foreach { link =>
         (linkParser parseOnly link._1) shouldBe Done("", link._2)
+      }
+    }
+    it should "parse single-line Zone" in {
+      val zones = List(
+        "Zone	Africa/Abidjan	-0:16:08 -	LMT	1912" ->
+          Zone("Africa/Abidjan", List(ZoneTransition(GmtOffset(0, -16, 8), "-", "LMT", Some(Until(1912, None, None, None))))),
+        "Zone	Africa/Bissau	-1:02:20 -	LMT	1912 Jan  1" ->
+          Zone("Africa/Bissau", List(ZoneTransition(GmtOffset(-1, 2, 20), "-", "LMT", Some(Until(1912, Some(Month.JANUARY), Some(DayOfTheMonth(1)), None))))),
+        "Zone	Africa/Nairobi	2:27:16	-	LMT	1928 Jul" ->
+          Zone("Africa/Nairobi", List(ZoneTransition(GmtOffset(2, 27, 16), "-", "LMT", Some(Until(1928, Some(Month.JULY), None, None))))),
+        "Zone Antarctica/DumontDUrville 0 -	-00	1947" ->
+          Zone("Antarctica/DumontDUrville", List(ZoneTransition(GmtOffset(0, 0, 0), "-", "-00", Some(Until(1947, None, None, None))))),
+        "Zone Pacific/Honolulu -10:31:26 -     LMT    1900 Jan  1 12:00" ->
+          Zone("Pacific/Honolulu", List(ZoneTransition(GmtOffset(-10, 31, 26), "-", "LMT", Some(Until(1900, Some(Month.JANUARY), Some(DayOfTheMonth(1)), Some(AtWallTime(LocalTime.of(12, 0))))))))
+      )
+      zones.foreach { zone =>
+        (zoneParser parseOnly zone._1) shouldBe Done("", zone._2)
+      }
+    }
+    it should "parse multi-line Zone" in {
+      val zones = List(
+        """Zone Pacific/Honolulu	-10:31:26 -	LMT	1896 Jan 13 12:00
+          |			-10:30	-	HST	1933 Apr 30  2:00
+          |			-10:30	1:00	HDT	1933 May 21 12:00
+          |			-10:30	-	HST	1942 Feb  9  2:00
+          |			-10:30	1:00	HDT	1945 Sep 30  2:00
+          |			-10:30	-	HST	1947 Jun  8  2:00
+          |			-10:00	-	HST""".stripMargin ->
+          Zone("Pacific/Honolulu", List(
+            ZoneTransition(GmtOffset(-10, 31, 26), "-",    "LMT", Some(Until(1896, Some(Month.JANUARY),   Some(DayOfTheMonth(13)), Some(AtWallTime(LocalTime.of(12, 0)))))),
+            ZoneTransition(GmtOffset(-10, 30,  0), "-",    "HST", Some(Until(1933, Some(Month.APRIL),     Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-10, 30,  0), "1:00", "HDT", Some(Until(1933, Some(Month.MAY),       Some(DayOfTheMonth(21)), Some(AtWallTime(LocalTime.of(12, 0)))))),
+            ZoneTransition(GmtOffset(-10, 30,  0), "-",    "HST", Some(Until(1942, Some(Month.FEBRUARY),  Some(DayOfTheMonth(9)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-10, 30,  0), "1:00", "HDT", Some(Until(1945, Some(Month.SEPTEMBER), Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-10, 30,  0), "-",    "HST", Some(Until(1947, Some(Month.JUNE),      Some(DayOfTheMonth(8)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-10,  0,  0), "-",    "HST", None)
+          )),
+        """Zone America/Phoenix	-7:28:18 -	LMT	1883 Nov 18 11:31:42
+          |			-7:00	US	M%sT	1944 Jan  1  0:01
+          |			-7:00	-	MST	1944 Apr  1  0:01
+          |			-7:00	US	M%sT	1944 Oct  1  0:01
+          |			-7:00	-	MST	1967
+          |			-7:00	US	M%sT	1968 Mar 21
+          |			-7:00	-	MST""".stripMargin ->
+            Zone("America/Phoenix", List(
+              ZoneTransition(GmtOffset(-7, 28, 18), "-",  "LMT",  Some(Until(1883, Some(Month.NOVEMBER), Some(DayOfTheMonth(18)), Some(AtWallTime(LocalTime.of(11, 31, 42)))))),
+              ZoneTransition(GmtOffset(-7,  0,  0), "US", "M%sT", Some(Until(1944, Some(Month.JANUARY),  Some(DayOfTheMonth(1)), Some(AtWallTime(LocalTime.of(0, 1)))))),
+              ZoneTransition(GmtOffset(-7,  0,  0), "-",  "MST",  Some(Until(1944, Some(Month.APRIL),    Some(DayOfTheMonth(1)), Some(AtWallTime(LocalTime.of(0, 1)))))),
+              ZoneTransition(GmtOffset(-7,  0,  0), "US", "M%sT", Some(Until(1944, Some(Month.OCTOBER),  Some(DayOfTheMonth(1)), Some(AtWallTime(LocalTime.of(0, 1)))))),
+              ZoneTransition(GmtOffset(-7,  0,  0), "-",  "MST",  Some(Until(1967, None, None, None))),
+              ZoneTransition(GmtOffset(-7,  0,  0), "US", "M%sT", Some(Until(1968, Some(Month.MARCH),    Some(DayOfTheMonth(21)), None))),
+              ZoneTransition(GmtOffset(-7,  0,  0), "-",  "MST",  None)
+            )),
+        """Zone America/Indiana/Tell_City -5:47:03 - LMT	1883 Nov 18 12:12:57
+          |			-6:00	US	C%sT	1946
+          |			-6:00 Perry	C%sT	1964 Apr 26  2:00
+          |			-5:00	-	EST	1969
+          |			-5:00	US	E%sT	1971
+          |			-5:00	-	EST	2006 Apr  2  2:00
+          |			-6:00	US	C%sT""".stripMargin ->
+            Zone("America/Indiana/Tell_City", List(
+              ZoneTransition(GmtOffset(-5, 47, 3), "-",     "LMT",  Some(Until(1883, Some(Month.NOVEMBER), Some(DayOfTheMonth(18)), Some(AtWallTime(LocalTime.of(12, 12, 57)))))),
+              ZoneTransition(GmtOffset(-6,  0, 0), "US",    "C%sT", Some(Until(1946, None, None, None))),
+              ZoneTransition(GmtOffset(-6,  0, 0), "Perry", "C%sT", Some(Until(1964, Some(Month.APRIL),    Some(DayOfTheMonth(26)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset(-5,  0, 0), "-",     "EST",  Some(Until(1969, None, None, None))),
+              ZoneTransition(GmtOffset(-5,  0, 0), "US",    "E%sT", Some(Until(1971, None, None, None))),
+              ZoneTransition(GmtOffset(-5,  0, 0), "-",     "EST",  Some(Until(2006, Some(Month.APRIL),    Some(DayOfTheMonth(2)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset(-6,  0, 0), "US",    "C%sT", None)
+            ))
+        )
+      zones.foreach { zone =>
+        (zoneParser parseOnly zone._1) shouldBe Done("", zone._2)
       }
     }
 }

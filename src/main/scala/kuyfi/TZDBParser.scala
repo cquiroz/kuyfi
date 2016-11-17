@@ -13,9 +13,13 @@ import atto.Atto.{char => chr, _}
 import compat.scalaz._
 
 import scala.collection.JavaConverters._
-import scala.collection.breakOut
 
 object TZDBParser {
+  case class GmtOffset(h: Int, m: Int, s: Int)
+  case class Until(y: Int, m: Option[Month], d: Option[DayOfTheMonth], at: Option[RuleAt])
+  case class ZoneTransition(at: GmtOffset, rules: String, format: String, until: Option[Until])
+  case class Zone(name: String, transitions: List[ZoneTransition])
+
   case class RuleLetter(letter: String)
   case class RuleSave(time: LocalTime)
 
@@ -42,8 +46,16 @@ object TZDBParser {
 
   case class Link(from: String, to: String)
 
-  val tab: Parser[Char] = chr('\t') | chr(' ')
-  val linkSeparator: Parser[List[Char]] = many(tab)
+  private val space = chr(' ')
+  private val semicolon = chr(':')
+  private val tab = chr('\t')
+  private val identifier = stringOf1(noneOf(" \t"))
+
+  private val whitespace: Parser[Char] = tab | space
+  private val linkSeparator: Parser[List[Char]] = many(whitespace)
+
+  private val months: List[(String, Month)] = Month.values().map(m => (m.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), m)).toList
+  private val days: List[(String, DayOfWeek)] = DayOfWeek.values().map(m => (m.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), m)).toList
 
   val from: Parser[String] =
     stringOf1(digit) |
@@ -64,9 +76,6 @@ object TZDBParser {
     string("max").map(_ => Maximum: RuleYear) |
     string("only").map(_ => Only: RuleYear)
   }
-
-  private val months: List[(String, Month)] = Month.values().map(m => (m.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), m)).toList
-  private val days: List[(String, DayOfWeek)] = DayOfWeek.values().map(m => (m.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), m)).toList
 
   def parseOneOf[A](items: List[(String, A)], msg: String): Parser[A] = {
     val p = items.map {
@@ -99,32 +108,56 @@ object TZDBParser {
     } yield LastWeekday(d)
 
   val onParser: Parser[RuleOn] =
-    (opt(chr(' ')) ~> int.map(DayOfTheMonth.apply)) |
+    (opt(space) ~> int.map(DayOfTheMonth.apply)) |
     afterWeekdayParser |
     beforeWeekdayParser |
     lastWeekdayParser
 
   val timePartParser: Parser[Char] =
-    digit | chr(':')
+    digit | semicolon
 
-  val hourMinParser: Parser[LocalTime] =
+  val hourMinParser: Parser[(Int, Int)] =
     for {
-      _ <- opt(chr(' '))
-      h <- int <~ chr(':')
+      _ <- opt(space)
+      h <- int <~ semicolon
       m <- int
-    } yield LocalTime.of((h === 24) ? 0 | h, m)
+    } yield (h, m)
 
-  val hourMinSecParser: Parser[LocalTime] =
+  val hourMinParserLT: Parser[LocalTime] = hourMinParser.map {
+    case (h, m) => LocalTime.of((h === 24) ? 0 | h, m)
+  }
+
+  val hourMinParserOf: Parser[GmtOffset] = hourMinParser.map {
+    case (h, m) => GmtOffset(h, m, 0)
+  }
+
+  val hourMinSecParser: Parser[(Boolean, Int, Int, Int)] =
     for {
-      h <- int <~ chr(':')
-      m <- int <~ chr(':')
+      n <- opt(chr('-'))
+      _ <- opt(space)
+      h <- int <~ semicolon
+      m <- int <~ semicolon
       s <- int
-    } yield LocalTime.of((h === 24) ? 0 | h, m, s)
+    } yield (n.isDefined, h, m, s)
+
+  val hourMinSecParserLT: Parser[LocalTime] = hourMinSecParser.map {
+      case (_, h, m, s) => LocalTime.of((h === 24) ? 0 | h, m, s)
+    }
+
+  val hourMinSecParserOf: Parser[GmtOffset] = hourMinSecParser.map {
+      case (n, h, m, s) => GmtOffset(n ? -h | h, (n && h === 0) ? -m | m, s)
+    }
 
   val timeParser: Parser[LocalTime] =
-    hourMinSecParser |
-    hourMinParser |
+    opt(many(whitespace)) ~>
+    hourMinSecParserLT |
+    hourMinParserLT |
     int.map(h => LocalTime.of((h === 24) ? 0 | h, 0))
+
+  val gmtOffsetParser: Parser[GmtOffset] =
+    hourMinSecParserOf |
+    hourMinParserOf |
+    int.map(h => GmtOffset(h, 0, 0))
 
   val atParser: Parser[RuleAt] =
     (timeParser ~ chr('w')).map(x => AtWallTime(x._1): RuleAt) |
@@ -135,7 +168,7 @@ object TZDBParser {
   val saveParser: Parser[RuleSave] =
     timeParser.map(x => RuleSave(x))
 
-  def toEndLine: Parser[String] = takeWhile(_ =/= '\n')
+  val toEndLine: Parser[String] = takeWhile(_ =/= '\n')
 
   val letterParser: Parser[RuleLetter] =
     for {
@@ -143,25 +176,66 @@ object TZDBParser {
       _ <- toEndLine
     } yield RuleLetter(l)
 
-  val ruleParser: Parser[Rule] = for {
-    _      <- string("Rule") <~ tab
-    name   <- stringOf1(notChar('\t')) <~ tab
-    from   <- fromParser <~ tab
-    to     <- toParser <~ tab
-    _      <- chr('-') <~ tab
-    month  <- monthParser <~ tab
-    on     <- onParser <~ tab
-    at     <- atParser <~ tab
-    save   <- saveParser <~ tab
-    letter <- letterParser
-  } yield Rule(name, from, to, month, on, at, save, letter)
+  val ruleParser: Parser[Rule] =
+    for {
+      _      <- string("Rule") <~ whitespace
+      name   <- stringOf1(notChar('\t')) <~ whitespace
+      from   <- fromParser <~ whitespace
+      to     <- toParser <~ whitespace
+      _      <- chr('-') <~ whitespace
+      month  <- monthParser <~ whitespace
+      on     <- onParser <~ whitespace
+      at     <- atParser <~ whitespace
+      save   <- saveParser <~ whitespace
+      letter <- letterParser
+    } yield Rule(name, from, to, month, on, at, save, letter)
 
-  val linkParser: Parser[Link] = for {
-    _    <- string("Link") <~ linkSeparator
-    from <- stringOf1(noneOf(" \t")) <~ linkSeparator
-    to   <- stringOf1(noneOf(" \t"))
-    _    <- toEndLine
-  } yield Link(from, to)
+  val linkParser: Parser[Link] =
+    for {
+      _    <- string("Link") <~ linkSeparator
+      from <- identifier <~ linkSeparator
+      to   <- identifier
+      _    <- toEndLine
+    } yield Link(from, to)
+
+  val untilParser: Parser[Until] =
+    for {
+      year  <- int <~ opt(whitespace)
+      month <- opt(monthParser) <~ many(whitespace)
+      day   <- opt(int.map(DayOfTheMonth.apply)) <~ many(whitespace)
+      at    <- opt(atParser)
+      _     <- toEndLine
+    } yield Until(year, month, day, at)
+
+  val zoneTransitionParser: Parser[ZoneTransition] =
+    for {
+      gmtOff <- gmtOffsetParser <~ whitespace
+      rules  <- identifier <~ many(whitespace)
+      format <- identifier <~ many(whitespace)
+      until  <- untilParser
+    } yield ZoneTransition(gmtOff, rules, format, until.some)
+
+  val continuationZoneTransitionParser: Parser[ZoneTransition] =
+    for {
+      _      <- chr('\n')
+      _      <- manyN(3, whitespace)
+      gmtOff <- gmtOffsetParser <~ whitespace
+      rules  <- identifier <~ many(whitespace)
+      format <- identifier <~ many(whitespace)
+      until  <- opt(untilParser)
+    } yield ZoneTransition(gmtOff, rules, format, until)
+
+  val zoneTransitionListParser: Parser[List[ZoneTransition]] =
+    (zoneTransitionParser ~ many(continuationZoneTransitionParser)).map { case (a, b) => a :: b }
+
+  val zoneParser: Parser[Zone] =
+    for {
+      _      <- string("Zone") <~ whitespace
+      name   <- identifier <~ whitespace
+      trans  <- zoneTransitionListParser
+      _      <- toEndLine
+    } yield Zone(name, trans)
+
 
   val files: List[String] = List(
     "africa",
@@ -178,7 +252,7 @@ object TZDBParser {
   )
 
   def parseRule = {
-    string("Rule") ~ tab ~ stringOf1(notChar('\t')) ~ tab
+    string("Rule") ~ whitespace ~ stringOf1(notChar('\t')) ~ whitespace
   }
 
   def toSource(f: File) = {
