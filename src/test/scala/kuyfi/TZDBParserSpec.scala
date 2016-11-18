@@ -5,7 +5,7 @@ import java.time.{DayOfWeek, LocalTime, Month}
 import org.scalatest.{FlatSpec, Matchers}
 import atto._
 import atto.Atto._
-import TZDBParser._
+import TZDBParser.{AtWallTime, _}
 import atto.ParseResult.{Done, Fail}
 
 class TZDBParserSpec extends FlatSpec with Matchers {
@@ -146,7 +146,11 @@ class TZDBParserSpec extends FlatSpec with Matchers {
         "Rule	Regina	1945	only	-	Aug	14	23:00u	1:00	P # Peace" ->
           Rule("Regina", GivenYear(1945), Only, Month.AUGUST, DayOfTheMonth(14), AtUniversalTime(LocalTime.of(23, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("P")),
         "Rule Indianapolis 1941	only	-	Jun	22	2:00	1:00	D" ->
-          Rule("Indianapolis", GivenYear(1941), Only, Month.JUNE, DayOfTheMonth(22), AtWallTime(LocalTime.of(2, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("D"))
+          Rule("Indianapolis", GivenYear(1941), Only, Month.JUNE, DayOfTheMonth(22), AtWallTime(LocalTime.of(2, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("D")),
+        "Rule	Syria	2007	only	-	Nov	 Fri>=1	0:00	0	-" ->
+          Rule("Syria", GivenYear(2007), Only, Month.NOVEMBER, AfterWeekday(DayOfWeek.FRIDAY, 1), AtWallTime(LocalTime.of(0, 0)), RuleSave(LocalTime.of(0, 0)), RuleLetter("-")),
+        "Rule	SystemV	1974	only	-	Jan	6	2:00	1:00	D" ->
+          Rule("SystemV", GivenYear(1974), Only, Month.JANUARY, DayOfTheMonth(6), AtWallTime(LocalTime.of(2, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("D"))
       )
       rules.foreach { rule =>
         (ruleParser parseOnly rule._1) shouldBe Done("", rule._2)
@@ -239,6 +243,12 @@ class TZDBParserSpec extends FlatSpec with Matchers {
             ZoneTransition(GmtOffset(-5, 0, 0), "US",    "E%sT", Some(Until(1971, None,                 None,                    None))),
             ZoneTransition(GmtOffset(-5, 0, 0), "-",     "EST",  Some(Until(2006, Some(Month.APRIL),    Some(DayOfTheMonth(2)),  Some(AtWallTime(LocalTime.of(2, 0)))))),
             ZoneTransition(GmtOffset(-6, 0, 0), "US",    "C%sT", None)
+          )),
+        """Zone America/Guadeloupe	-4:06:08 -	LMT	1911 Jun  8 # Pointe-à-Pitre
+          |			-4:00	 -	AST""".stripMargin ->
+          Zone("America/Guadeloupe", List(
+            ZoneTransition(GmtOffset(-4, 6, 8), "-", "LMT", Some(Until(1911, Some(Month.JUNE), Some(DayOfTheMonth(8)), None))),
+            ZoneTransition(GmtOffset(-4, 0, 0), "-", "AST", None)
           ))
       )
       zones.foreach { zone =>
@@ -307,15 +317,33 @@ class TZDBParserSpec extends FlatSpec with Matchers {
           |			1:00	Libya	CE%sT	2013 Oct 25  2:00
           |			2:00	-	EET""".stripMargin ->
           Zone("Africa/Tripoli", List(
-              ZoneTransition(GmtOffset( 0, 52, 44), "-",  "LMT",   Some(Until(1920, None, None, None))),
-              ZoneTransition(GmtOffset( 1,  0,  0), "Libya",  "CE%sT",   Some(Until(1959, None, None, None))),
-              ZoneTransition(GmtOffset( 2,  0,  0), "-",  "EET",   Some(Until(1982, None,                 None,                    None))),
-              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT",  Some(Until(1990, Some(Month.MAY),                 Some(DayOfTheMonth(4)),                    None))),
-              ZoneTransition(GmtOffset( 2,  0,  0), "-",  "EET",   Some(Until(1996, Some(Month.SEPTEMBER),                 Some(DayOfTheMonth(30)),                    None))),
-              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT",  Some(Until(1997, Some(Month.OCTOBER),                 Some(DayOfTheMonth(4)),                    None))),
-              ZoneTransition(GmtOffset( 2,  0,  0), "-",  "EET",   Some(Until(2012, Some(Month.NOVEMBER),                 Some(DayOfTheMonth(10)),                    Some(AtWallTime(LocalTime.of(2, 0)))))),
-              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT",  Some(Until(2013, Some(Month.OCTOBER),                 Some(DayOfTheMonth(25)),                    Some(AtWallTime(LocalTime.of(2, 0)))))),
-              ZoneTransition(GmtOffset( 2,  0,  0), "-",  "EET",  None)
+              ZoneTransition(GmtOffset( 0, 52, 44), "-",     "LMT",   Some(Until(1920, None,                  None,                    None))),
+              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT", Some(Until(1959, None,                  None,                    None))),
+              ZoneTransition(GmtOffset( 2,  0,  0), "-",     "EET",   Some(Until(1982, None,                  None,                    None))),
+              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT", Some(Until(1990, Some(Month.MAY),       Some(DayOfTheMonth(4)),  None))),
+              ZoneTransition(GmtOffset( 2,  0,  0), "-",     "EET",   Some(Until(1996, Some(Month.SEPTEMBER), Some(DayOfTheMonth(30)), None))),
+              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT", Some(Until(1997, Some(Month.OCTOBER),   Some(DayOfTheMonth(4)),  None))),
+              ZoneTransition(GmtOffset( 2,  0,  0), "-",     "EET",   Some(Until(2012, Some(Month.NOVEMBER),  Some(DayOfTheMonth(10)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT", Some(Until(2013, Some(Month.OCTOBER),   Some(DayOfTheMonth(25)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset( 2,  0,  0), "-",     "EET",   None)
+          )),
+        """Zone	Europe/Belfast	-0:23:40 -	LMT	1880 Aug  2
+          |			-0:25:21 -	DMT	1916 May 21  2:00
+          |						# DMT = Dublin/Dunsink MT
+          |			-0:25:21 1:00	IST	1916 Oct  1  2:00s
+          |						# IST = Irish Summer Time
+          |			 0:00	GB-Eire	%s	1968 Oct 27
+          |			 1:00	-	BST	1971 Oct 31  2:00u
+          |			 0:00	GB-Eire	%s	1996
+          |			 0:00	EU	GMT/BST""".stripMargin ->
+          Zone("Europe/Belfast", List(
+              ZoneTransition(GmtOffset(0, -23, 40), "-",       "LMT",     Some(Until(1880, Some(Month.AUGUST),  Some(DayOfTheMonth(2)),  None))),
+              ZoneTransition(GmtOffset(0, -25, 21), "-",       "DMT",     Some(Until(1916, Some(Month.MAY),     Some(DayOfTheMonth(21)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset(0, -25, 21), "1:00",    "IST",     Some(Until(1916, Some(Month.OCTOBER), Some(DayOfTheMonth(1)),  Some(AtStandardTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1968, Some(Month.OCTOBER), Some(DayOfTheMonth(27)), None))),
+              ZoneTransition(GmtOffset(1,   0,  0), "-",       "BST",     Some(Until(1971, Some(Month.OCTOBER), Some(DayOfTheMonth(31)), Some(AtUniversalTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1996, None,                None,                    None))),
+              ZoneTransition(GmtOffset(0,   0,  0), "EU",      "GMT/BST", None)
           ))
         )
       zones.foreach { zone =>
@@ -323,17 +351,20 @@ class TZDBParserSpec extends FlatSpec with Matchers {
       }
     }
     it should "parse a complete file" in {
-      val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/africa"), "UTF-8").mkString
+      val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/systemv"), "UTF-8").mkString
       val r = TZDBParser.parseFile(text)
-      println(r)
-      r.done shouldBe r
+      r should matchPattern {
+        case Done("", _) =>
+      }
     }
     it should "parse all relevant files" in {
       TZDBParser.files.foreach { f =>
         val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(s"/$f"), "UTF-8").mkString
         val r = TZDBParser.parseFile(text)
-        println(r)
-        r.done shouldBe r
+        // Checks that it ingests the whole file
+        r should matchPattern {
+          case Done("", _) =>
+        }
       }
     }
 }

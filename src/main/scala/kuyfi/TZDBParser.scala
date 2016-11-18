@@ -69,7 +69,8 @@ object TZDBParser {
     stringOf1(digit).map(y => GivenYear(y.toInt)) |
     string("minimum").map(_ => Minimum: RuleYear) |
     string("maximum").map(_ => Maximum: RuleYear) |
-    string("max").map(_ => Maximum: RuleYear)
+    string("max").map(_ => Maximum: RuleYear) |
+    string("min").map(_ => Minimum: RuleYear)
   }
 
   val toParser: Parser[RuleYear] = {
@@ -77,6 +78,7 @@ object TZDBParser {
     string("minimum").map(_ => Minimum: RuleYear) |
     string("maximum").map(_ => Maximum: RuleYear) |
     string("max").map(_ => Maximum: RuleYear) |
+    string("min").map(_ => Minimum: RuleYear) |
     string("only").map(_ => Only: RuleYear)
   }
 
@@ -94,13 +96,13 @@ object TZDBParser {
 
   val afterWeekdayParser: Parser[RuleOn] =
     for {
-      d <- dayParser <~ string(">=")
+      d <- opt(space) ~> dayParser <~ string(">=")
       a <- int
     } yield AfterWeekday(d, a)
 
   val beforeWeekdayParser: Parser[RuleOn] =
     for {
-      d <- dayParser <~ string("<=")
+      d <- opt(space) ~> dayParser <~ string("<=")
       a <- int
     } yield BeforeWeekday(d, a)
 
@@ -226,10 +228,10 @@ object TZDBParser {
     for {
       _      <- manyN(3, whitespace)
       gmtOff <- gmtOffsetParser <~ whitespace
-      rules  <- identifier <~ many(whitespace)
+      rules  <- opt(whitespace) ~> identifier <~ many(whitespace)
       format <- identifier <~ many(whitespace)
       until  <- opt(untilParser)
-      _      <- opt(many(commentParser))
+      _      <- opt(many(many(whitespace) ~> commentParser))
     } yield ZoneTransition(gmtOff, rules, format, until)
 
   val zoneTransitionListParser: Parser[List[ZoneTransition]] =
