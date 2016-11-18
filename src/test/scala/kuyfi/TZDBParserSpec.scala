@@ -144,7 +144,9 @@ class TZDBParserSpec extends FlatSpec with Matchers {
         "Rule	Syria	1991	only	-	Apr	 1	0:00	1:00	S" ->
           Rule("Syria", GivenYear(1991), Only, Month.APRIL, DayOfTheMonth(1), AtWallTime(LocalTime.of(0, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("S")),
         "Rule	Regina	1945	only	-	Aug	14	23:00u	1:00	P # Peace" ->
-          Rule("Regina", GivenYear(1945), Only, Month.AUGUST, DayOfTheMonth(14), AtUniversalTime(LocalTime.of(23, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("P"))
+          Rule("Regina", GivenYear(1945), Only, Month.AUGUST, DayOfTheMonth(14), AtUniversalTime(LocalTime.of(23, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("P")),
+        "Rule Indianapolis 1941	only	-	Jun	22	2:00	1:00	D" ->
+          Rule("Indianapolis", GivenYear(1941), Only, Month.JUNE, DayOfTheMonth(22), AtWallTime(LocalTime.of(2, 0)), RuleSave(LocalTime.of(1, 0)), RuleLetter("D"))
       )
       rules.foreach { rule =>
         (ruleParser parseOnly rule._1) shouldBe Done("", rule._2)
@@ -198,13 +200,13 @@ class TZDBParserSpec extends FlatSpec with Matchers {
           |			-10:30	-	HST	1947 Jun  8  2:00
           |			-10:00	-	HST""".stripMargin ->
           Zone("Pacific/Honolulu", List(
-            ZoneTransition(GmtOffset(-10, 31, 26), "-", "LMT", Some(Until(1896, Some(Month.JANUARY), Some(DayOfTheMonth(13)), Some(AtWallTime(LocalTime.of(12, 0)))))),
-            ZoneTransition(GmtOffset(-10, 30, 0), "-", "HST", Some(Until(1933, Some(Month.APRIL), Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset(-10, 30, 0), "1:00", "HDT", Some(Until(1933, Some(Month.MAY), Some(DayOfTheMonth(21)), Some(AtWallTime(LocalTime.of(12, 0)))))),
-            ZoneTransition(GmtOffset(-10, 30, 0), "-", "HST", Some(Until(1942, Some(Month.FEBRUARY), Some(DayOfTheMonth(9)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset(-10, 30, 0), "1:00", "HDT", Some(Until(1945, Some(Month.SEPTEMBER), Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset(-10, 30, 0), "-", "HST", Some(Until(1947, Some(Month.JUNE), Some(DayOfTheMonth(8)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset(-10, 0, 0), "-", "HST", None)
+            ZoneTransition(GmtOffset(-10, 31, 26), "-",    "LMT", Some(Until(1896, Some(Month.JANUARY),   Some(DayOfTheMonth(13)), Some(AtWallTime(LocalTime.of(12, 0)))))),
+            ZoneTransition(GmtOffset(-10, 30,  0), "-",    "HST", Some(Until(1933, Some(Month.APRIL),     Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-10, 30,  0), "1:00", "HDT", Some(Until(1933, Some(Month.MAY),       Some(DayOfTheMonth(21)), Some(AtWallTime(LocalTime.of(12, 0)))))),
+            ZoneTransition(GmtOffset(-10, 30,  0), "-",    "HST", Some(Until(1942, Some(Month.FEBRUARY),  Some(DayOfTheMonth(9)),  Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-10, 30,  0), "1:00", "HDT", Some(Until(1945, Some(Month.SEPTEMBER), Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-10, 30,  0), "-",    "HST", Some(Until(1947, Some(Month.JUNE),      Some(DayOfTheMonth(8)),  Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-10,  0,  0), "-",    "HST", None)
           )),
         """Zone America/Phoenix	-7:28:18 -	LMT	1883 Nov 18 11:31:42
           |			-7:00	US	M%sT	1944 Jan  1  0:01
@@ -214,13 +216,13 @@ class TZDBParserSpec extends FlatSpec with Matchers {
           |			-7:00	US	M%sT	1968 Mar 21
           |			-7:00	-	MST""".stripMargin ->
           Zone("America/Phoenix", List(
-            ZoneTransition(GmtOffset(-7, 28, 18), "-", "LMT", Some(Until(1883, Some(Month.NOVEMBER), Some(DayOfTheMonth(18)), Some(AtWallTime(LocalTime.of(11, 31, 42)))))),
-            ZoneTransition(GmtOffset(-7, 0, 0), "US", "M%sT", Some(Until(1944, Some(Month.JANUARY), Some(DayOfTheMonth(1)), Some(AtWallTime(LocalTime.of(0, 1)))))),
-            ZoneTransition(GmtOffset(-7, 0, 0), "-", "MST", Some(Until(1944, Some(Month.APRIL), Some(DayOfTheMonth(1)), Some(AtWallTime(LocalTime.of(0, 1)))))),
-            ZoneTransition(GmtOffset(-7, 0, 0), "US", "M%sT", Some(Until(1944, Some(Month.OCTOBER), Some(DayOfTheMonth(1)), Some(AtWallTime(LocalTime.of(0, 1)))))),
-            ZoneTransition(GmtOffset(-7, 0, 0), "-", "MST", Some(Until(1967, None, None, None))),
-            ZoneTransition(GmtOffset(-7, 0, 0), "US", "M%sT", Some(Until(1968, Some(Month.MARCH), Some(DayOfTheMonth(21)), None))),
-            ZoneTransition(GmtOffset(-7, 0, 0), "-", "MST", None)
+            ZoneTransition(GmtOffset(-7, 28, 18), "-",  "LMT",  Some(Until(1883, Some(Month.NOVEMBER), Some(DayOfTheMonth(18)), Some(AtWallTime(LocalTime.of(11, 31, 42)))))),
+            ZoneTransition(GmtOffset(-7,  0,  0), "US", "M%sT", Some(Until(1944, Some(Month.JANUARY),  Some(DayOfTheMonth(1)),  Some(AtWallTime(LocalTime.of(0, 1)))))),
+            ZoneTransition(GmtOffset(-7,  0,  0), "-",  "MST",  Some(Until(1944, Some(Month.APRIL),    Some(DayOfTheMonth(1)),  Some(AtWallTime(LocalTime.of(0, 1)))))),
+            ZoneTransition(GmtOffset(-7,  0,  0), "US", "M%sT", Some(Until(1944, Some(Month.OCTOBER),  Some(DayOfTheMonth(1)),  Some(AtWallTime(LocalTime.of(0, 1)))))),
+            ZoneTransition(GmtOffset(-7,  0,  0), "-",  "MST",  Some(Until(1967, None,                 None,                    None))),
+            ZoneTransition(GmtOffset(-7,  0,  0), "US", "M%sT", Some(Until(1968, Some(Month.MARCH),    Some(DayOfTheMonth(21)), None))),
+            ZoneTransition(GmtOffset(-7,  0,  0), "-",  "MST",  None)
           )),
         """Zone America/Indiana/Tell_City -5:47:03 - LMT	1883 Nov 18 12:12:57
           |			-6:00	US	C%sT	1946
@@ -231,11 +233,11 @@ class TZDBParserSpec extends FlatSpec with Matchers {
           |			-6:00	US	C%sT""".stripMargin ->
           Zone("America/Indiana/Tell_City", List(
             ZoneTransition(GmtOffset(-5, 47, 3), "-",    "LMT",  Some(Until(1883, Some(Month.NOVEMBER), Some(DayOfTheMonth(18)), Some(AtWallTime(LocalTime.of(12, 12, 57)))))),
-            ZoneTransition(GmtOffset(-6, 0, 0), "US",    "C%sT", Some(Until(1946, None, None, None))),
-            ZoneTransition(GmtOffset(-6, 0, 0), "Perry", "C%sT", Some(Until(1964, Some(Month.APRIL), Some(DayOfTheMonth(26)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset(-5, 0, 0), "-",     "EST",  Some(Until(1969, None, None, None))),
-            ZoneTransition(GmtOffset(-5, 0, 0), "US",    "E%sT", Some(Until(1971, None, None, None))),
-            ZoneTransition(GmtOffset(-5, 0, 0), "-",     "EST",  Some(Until(2006, Some(Month.APRIL), Some(DayOfTheMonth(2)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-6, 0, 0), "US",    "C%sT", Some(Until(1946, None,                 None,                    None))),
+            ZoneTransition(GmtOffset(-6, 0, 0), "Perry", "C%sT", Some(Until(1964, Some(Month.APRIL),    Some(DayOfTheMonth(26)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-5, 0, 0), "-",     "EST",  Some(Until(1969, None,                 None,                    None))),
+            ZoneTransition(GmtOffset(-5, 0, 0), "US",    "E%sT", Some(Until(1971, None,                 None,                    None))),
+            ZoneTransition(GmtOffset(-5, 0, 0), "-",     "EST",  Some(Until(2006, Some(Month.APRIL),    Some(DayOfTheMonth(2)),  Some(AtWallTime(LocalTime.of(2, 0)))))),
             ZoneTransition(GmtOffset(-6, 0, 0), "US",    "C%sT", None)
           ))
       )
@@ -265,35 +267,73 @@ class TZDBParserSpec extends FlatSpec with Matchers {
           |			 -9:00	US	AK%sT
           |""".stripMargin ->
           List(Zone("America/Juneau", List(
-              ZoneTransition(GmtOffset( 15,  2, 19), "-",    "LMT", Some(Until(1867, Some(Month.OCTOBER),   Some(DayOfTheMonth(18)), None))),
-              ZoneTransition(GmtOffset( -8, 57, 41), "-",    "LMT", Some(Until(1900, Some(Month.AUGUST),    Some(DayOfTheMonth(20)), Some(AtWallTime(LocalTime.of(12, 0)))))),
-              ZoneTransition(GmtOffset( -8,  0,  0), "-",    "PST", Some(Until(1942, None, None, None))),
-              ZoneTransition(GmtOffset( -8,  0,  0), "US",   "P%sT", Some(Until(1946, None, None, None))),
-              ZoneTransition(GmtOffset( -8,  0,  0), "-",    "PST", Some(Until(1969, None, None, None))),
-              ZoneTransition(GmtOffset( -8,  0,  0), "US",   "P%sT", Some(Until(1980, Some(Month.APRIL),    Some(DayOfTheMonth(27)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-              ZoneTransition(GmtOffset( -9,  0,  0), "US",   "Y%sT", Some(Until(1980, Some(Month.OCTOBER),    Some(DayOfTheMonth(26)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-              ZoneTransition(GmtOffset( -8,  0,  0), "US",   "P%sT", Some(Until(1983, Some(Month.OCTOBER),    Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-              ZoneTransition(GmtOffset( -9,  0,  0), "US",   "Y%sT", Some(Until(1983, Some(Month.NOVEMBER),    Some(DayOfTheMonth(30)), None))),
-              ZoneTransition(GmtOffset( -9,  0,  0), "US",   "AK%sT", None)
+              ZoneTransition(GmtOffset(15,  2, 19), "-",  "LMT",   Some(Until(1867, Some(Month.OCTOBER),  Some(DayOfTheMonth(18)), None))),
+              ZoneTransition(GmtOffset(-8, 57, 41), "-",  "LMT",   Some(Until(1900, Some(Month.AUGUST),   Some(DayOfTheMonth(20)), Some(AtWallTime(LocalTime.of(12, 0)))))),
+              ZoneTransition(GmtOffset(-8,  0,  0), "-",  "PST",   Some(Until(1942, None,                 None,                    None))),
+              ZoneTransition(GmtOffset(-8,  0,  0), "US", "P%sT",  Some(Until(1946, None,                 None,                    None))),
+              ZoneTransition(GmtOffset(-8,  0,  0), "-",  "PST",   Some(Until(1969, None,                 None,                    None))),
+              ZoneTransition(GmtOffset(-8,  0,  0), "US", "P%sT",  Some(Until(1980, Some(Month.APRIL),    Some(DayOfTheMonth(27)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset(-9,  0,  0), "US", "Y%sT",  Some(Until(1980, Some(Month.OCTOBER),  Some(DayOfTheMonth(26)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset(-8,  0,  0), "US", "P%sT",  Some(Until(1983, Some(Month.OCTOBER),  Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset(-9,  0,  0), "US", "Y%sT",  Some(Until(1983, Some(Month.NOVEMBER), Some(DayOfTheMonth(30)), None))),
+              ZoneTransition(GmtOffset(-9,  0,  0), "US", "AK%sT", None)
             )),
             Zone("America/Sitka", List(
-              ZoneTransition(GmtOffset( 14, 58, 47), "-",    "LMT", Some(Until(1867, Some(Month.OCTOBER),   Some(DayOfTheMonth(18)), None))),
-              ZoneTransition(GmtOffset( -9,  1, 13), "-",    "LMT", Some(Until(1900, Some(Month.AUGUST),    Some(DayOfTheMonth(20)), Some(AtWallTime(LocalTime.of(12, 0)))))),
-              ZoneTransition(GmtOffset( -8,  0,  0), "-",    "PST", Some(Until(1942, None, None, None))),
-              ZoneTransition(GmtOffset( -8,  0,  0), "US",   "P%sT", Some(Until(1946, None, None, None))),
-              ZoneTransition(GmtOffset( -8,  0,  0), "-",    "PST", Some(Until(1969, None, None, None))),
-              ZoneTransition(GmtOffset( -8,  0,  0), "US",   "P%sT", Some(Until(1983, Some(Month.OCTOBER),    Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-              ZoneTransition(GmtOffset( -9,  0,  0), "US",   "Y%sT", Some(Until(1983, Some(Month.NOVEMBER),    Some(DayOfTheMonth(30)), None))),
-              ZoneTransition(GmtOffset( -9,  0,  0), "US",   "AK%sT", None)
+              ZoneTransition(GmtOffset(14, 58, 47), "-",  "LMT",   Some(Until(1867, Some(Month.OCTOBER),  Some(DayOfTheMonth(18)), None))),
+              ZoneTransition(GmtOffset(-9,  1, 13), "-",  "LMT",   Some(Until(1900, Some(Month.AUGUST),   Some(DayOfTheMonth(20)), Some(AtWallTime(LocalTime.of(12, 0)))))),
+              ZoneTransition(GmtOffset(-8,  0,  0), "-",  "PST",   Some(Until(1942, None,                 None,                    None))),
+              ZoneTransition(GmtOffset(-8,  0,  0), "US", "P%sT",  Some(Until(1946, None,                 None,                    None))),
+              ZoneTransition(GmtOffset(-8,  0,  0), "-",  "PST",   Some(Until(1969, None,                 None,                    None))),
+              ZoneTransition(GmtOffset(-8,  0,  0), "US", "P%sT",  Some(Until(1983, Some(Month.OCTOBER),  Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset(-9,  0,  0), "US", "Y%sT",  Some(Until(1983, Some(Month.NOVEMBER), Some(DayOfTheMonth(30)), None))),
+              ZoneTransition(GmtOffset(-9,  0,  0), "US", "AK%sT", None)
           )))
         )
       zones.foreach { zone =>
         (many(zoneParser <~ char('\n')) parseOnly zone._1) shouldBe Done("", zone._2)
       }
     }
+  it should "parse Zones with comments" in {
+      val zones = List(
+        """Zone	Africa/Tripoli	0:52:44 -	LMT	1920
+          |			1:00	Libya	CE%sT	1959
+          |			2:00	-	EET	1982
+          |			1:00	Libya	CE%sT	1990 May  4
+          |# The 1996 and 1997 entries are from Shanks & Pottenger;
+          |# the IATA SSIM data entries contain some obvious errors.
+          |			2:00	-	EET	1996 Sep 30
+          |			1:00	Libya	CE%sT	1997 Oct  4
+          |			2:00	-	EET	2012 Nov 10  2:00
+          |			1:00	Libya	CE%sT	2013 Oct 25  2:00
+          |			2:00	-	EET""".stripMargin ->
+          Zone("Africa/Tripoli", List(
+              ZoneTransition(GmtOffset( 0, 52, 44), "-",  "LMT",   Some(Until(1920, None, None, None))),
+              ZoneTransition(GmtOffset( 1,  0,  0), "Libya",  "CE%sT",   Some(Until(1959, None, None, None))),
+              ZoneTransition(GmtOffset( 2,  0,  0), "-",  "EET",   Some(Until(1982, None,                 None,                    None))),
+              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT",  Some(Until(1990, Some(Month.MAY),                 Some(DayOfTheMonth(4)),                    None))),
+              ZoneTransition(GmtOffset( 2,  0,  0), "-",  "EET",   Some(Until(1996, Some(Month.SEPTEMBER),                 Some(DayOfTheMonth(30)),                    None))),
+              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT",  Some(Until(1997, Some(Month.OCTOBER),                 Some(DayOfTheMonth(4)),                    None))),
+              ZoneTransition(GmtOffset( 2,  0,  0), "-",  "EET",   Some(Until(2012, Some(Month.NOVEMBER),                 Some(DayOfTheMonth(10)),                    Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT",  Some(Until(2013, Some(Month.OCTOBER),                 Some(DayOfTheMonth(25)),                    Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset( 2,  0,  0), "-",  "EET",  None)
+          ))
+        )
+      zones.foreach { zone =>
+        (zoneParser parseOnly zone._1) shouldBe Done("", zone._2)
+      }
+    }
     it should "parse a complete file" in {
-      val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/northamerica"), "UTF-8").mkString
-      println(TZDBParser.parseFile(text))
-      //println(text)
+      val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/africa"), "UTF-8").mkString
+      val r = TZDBParser.parseFile(text)
+      println(r)
+      r.done shouldBe r
+    }
+    it should "parse all relevant files" in {
+      TZDBParser.files.foreach { f =>
+        val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(s"/$f"), "UTF-8").mkString
+        val r = TZDBParser.parseFile(text)
+        println(r)
+        r.done shouldBe r
+      }
     }
 }
