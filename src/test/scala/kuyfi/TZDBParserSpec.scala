@@ -230,13 +230,13 @@ class TZDBParserSpec extends FlatSpec with Matchers {
           |			-5:00	-	EST	2006 Apr  2  2:00
           |			-6:00	US	C%sT""".stripMargin ->
           Zone("America/Indiana/Tell_City", List(
-            ZoneTransition(GmtOffset(-5, 47, 3), "-", "LMT", Some(Until(1883, Some(Month.NOVEMBER), Some(DayOfTheMonth(18)), Some(AtWallTime(LocalTime.of(12, 12, 57)))))),
-            ZoneTransition(GmtOffset(-6, 0, 0), "US", "C%sT", Some(Until(1946, None, None, None))),
+            ZoneTransition(GmtOffset(-5, 47, 3), "-",    "LMT",  Some(Until(1883, Some(Month.NOVEMBER), Some(DayOfTheMonth(18)), Some(AtWallTime(LocalTime.of(12, 12, 57)))))),
+            ZoneTransition(GmtOffset(-6, 0, 0), "US",    "C%sT", Some(Until(1946, None, None, None))),
             ZoneTransition(GmtOffset(-6, 0, 0), "Perry", "C%sT", Some(Until(1964, Some(Month.APRIL), Some(DayOfTheMonth(26)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset(-5, 0, 0), "-", "EST", Some(Until(1969, None, None, None))),
-            ZoneTransition(GmtOffset(-5, 0, 0), "US", "E%sT", Some(Until(1971, None, None, None))),
-            ZoneTransition(GmtOffset(-5, 0, 0), "-", "EST", Some(Until(2006, Some(Month.APRIL), Some(DayOfTheMonth(2)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset(-6, 0, 0), "US", "C%sT", None)
+            ZoneTransition(GmtOffset(-5, 0, 0), "-",     "EST",  Some(Until(1969, None, None, None))),
+            ZoneTransition(GmtOffset(-5, 0, 0), "US",    "E%sT", Some(Until(1971, None, None, None))),
+            ZoneTransition(GmtOffset(-5, 0, 0), "-",     "EST",  Some(Until(2006, Some(Month.APRIL), Some(DayOfTheMonth(2)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-6, 0, 0), "US",    "C%sT", None)
           ))
       )
       zones.foreach { zone =>
@@ -262,18 +262,29 @@ class TZDBParserSpec extends FlatSpec with Matchers {
           |			 -8:00	-	PST	1969
           |			 -8:00	US	P%sT	1983 Oct 30  2:00
           |			 -9:00	US	Y%sT	1983 Nov 30
-          |			 -9:00	US	AK%sT""".stripMargin ->
+          |			 -9:00	US	AK%sT
+          |""".stripMargin ->
           List(Zone("America/Juneau", List(
-            ZoneTransition(GmtOffset( 15,  2, 19), "-",    "LMT", Some(Until(1867, Some(Month.OCTOBER),   Some(DayOfTheMonth(18)), None))),
-            ZoneTransition(GmtOffset( -8, 57, 41), "-",    "LMT", Some(Until(1900, Some(Month.AUGUST),    Some(DayOfTheMonth(20)), Some(AtWallTime(LocalTime.of(12, 0)))))),
-            ZoneTransition(GmtOffset( -8,  0,  0), "-",    "PST", Some(Until(1942, None, None, None))),
-            ZoneTransition(GmtOffset( -8,  0,  0), "US",   "P%sT", Some(Until(1946, None, None, None))),
-            ZoneTransition(GmtOffset( -8,  0,  0), "-",    "PST", Some(Until(1969, None, None, None))),
-            ZoneTransition(GmtOffset( -8,  0,  0), "US",   "P%sT", Some(Until(1980, Some(Month.APRIL),    Some(DayOfTheMonth(27)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset( -9,  0,  0), "US",   "Y%sT", Some(Until(1980, Some(Month.OCTOBER),    Some(DayOfTheMonth(26)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset( -8,  0,  0), "US",   "P%sT", Some(Until(1983, Some(Month.OCTOBER),    Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset( -9,  0,  0), "US",   "Y%sT", Some(Until(1983, Some(Month.NOVEMBER),    Some(DayOfTheMonth(30)), None))),
-            ZoneTransition(GmtOffset( -9,  0,  0), "US",   "AY%sT", None)
+              ZoneTransition(GmtOffset( 15,  2, 19), "-",    "LMT", Some(Until(1867, Some(Month.OCTOBER),   Some(DayOfTheMonth(18)), None))),
+              ZoneTransition(GmtOffset( -8, 57, 41), "-",    "LMT", Some(Until(1900, Some(Month.AUGUST),    Some(DayOfTheMonth(20)), Some(AtWallTime(LocalTime.of(12, 0)))))),
+              ZoneTransition(GmtOffset( -8,  0,  0), "-",    "PST", Some(Until(1942, None, None, None))),
+              ZoneTransition(GmtOffset( -8,  0,  0), "US",   "P%sT", Some(Until(1946, None, None, None))),
+              ZoneTransition(GmtOffset( -8,  0,  0), "-",    "PST", Some(Until(1969, None, None, None))),
+              ZoneTransition(GmtOffset( -8,  0,  0), "US",   "P%sT", Some(Until(1980, Some(Month.APRIL),    Some(DayOfTheMonth(27)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset( -9,  0,  0), "US",   "Y%sT", Some(Until(1980, Some(Month.OCTOBER),    Some(DayOfTheMonth(26)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset( -8,  0,  0), "US",   "P%sT", Some(Until(1983, Some(Month.OCTOBER),    Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset( -9,  0,  0), "US",   "Y%sT", Some(Until(1983, Some(Month.NOVEMBER),    Some(DayOfTheMonth(30)), None))),
+              ZoneTransition(GmtOffset( -9,  0,  0), "US",   "AK%sT", None)
+            )),
+            Zone("America/Sitka", List(
+              ZoneTransition(GmtOffset( 14, 58, 47), "-",    "LMT", Some(Until(1867, Some(Month.OCTOBER),   Some(DayOfTheMonth(18)), None))),
+              ZoneTransition(GmtOffset( -9,  1, 13), "-",    "LMT", Some(Until(1900, Some(Month.AUGUST),    Some(DayOfTheMonth(20)), Some(AtWallTime(LocalTime.of(12, 0)))))),
+              ZoneTransition(GmtOffset( -8,  0,  0), "-",    "PST", Some(Until(1942, None, None, None))),
+              ZoneTransition(GmtOffset( -8,  0,  0), "US",   "P%sT", Some(Until(1946, None, None, None))),
+              ZoneTransition(GmtOffset( -8,  0,  0), "-",    "PST", Some(Until(1969, None, None, None))),
+              ZoneTransition(GmtOffset( -8,  0,  0), "US",   "P%sT", Some(Until(1983, Some(Month.OCTOBER),    Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset( -9,  0,  0), "US",   "Y%sT", Some(Until(1983, Some(Month.NOVEMBER),    Some(DayOfTheMonth(30)), None))),
+              ZoneTransition(GmtOffset( -9,  0,  0), "US",   "AK%sT", None)
           )))
         )
       zones.foreach { zone =>

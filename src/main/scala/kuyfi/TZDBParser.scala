@@ -51,7 +51,7 @@ object TZDBParser {
   private val space = chr(' ')
   private val semicolon = chr(':')
   private val tab = chr('\t')
-  private val identifier = stringOf1(noneOf(" \t"))
+  private val identifier = stringOf1(noneOf(" \t\n"))
   private val nl = chr('\n')
 
   private val whitespace: Parser[Char] = tab | space
@@ -171,7 +171,7 @@ object TZDBParser {
   val saveParser: Parser[RuleSave] =
     timeParser.map(x => RuleSave(x))
 
-  val toEndLine: Parser[String] = takeWhile(_ =/= '\n')
+  val toEndLine: Parser[String] = takeWhile(_ =/= '\n') <~ opt(nl)
 
   val letterParser: Parser[RuleLetter] =
     for {
@@ -220,7 +220,6 @@ object TZDBParser {
 
   val continuationZoneTransitionParser: Parser[ZoneTransition] =
     for {
-      _      <- nl
       _      <- manyN(3, whitespace)
       gmtOff <- gmtOffsetParser <~ whitespace
       rules  <- identifier <~ many(whitespace)
@@ -236,7 +235,6 @@ object TZDBParser {
       _      <- string("Zone") <~ whitespace
       name   <- identifier <~ whitespace
       trans  <- zoneTransitionListParser
-      _      <- toEndLine
     } yield Zone(name, trans)
 
   val commentParser: Parser[Comment] =
