@@ -50,6 +50,7 @@ lazy val kuyfi: Project = project.in(file("."))
       "org.tpolecat"  %% "atto-core"            % "0.5.1",
       "org.tpolecat"  %% "atto-compat-scalaz72" % "0.5.1",
       "org.scalaz"    %% "scalaz-core"          % "7.2.7",
+      "com.chuusai"   %% "shapeless"            % "2.3.2",
       "org.scalatest" %% "scalatest"            % "3.0.0" % "test"
     )
   )

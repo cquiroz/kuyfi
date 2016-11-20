@@ -1,52 +1,82 @@
 package kuyfi
 
-import java.io.File
-import java.nio.file.Files
 import java.time.{DayOfWeek, LocalTime, Month}
 import java.time.format.TextStyle
 import java.util.Locale
 
-import scalaz._
-import Scalaz._
 import atto._
 import atto.Atto.{char => chr, _}
 import compat.scalaz._
 
-import scala.collection.JavaConverters._
+import shapeless._
 
-object TZDBParser {
-  case class GmtOffset(h: Int, m: Int, s: Int)
-  case class Until(y: Int, m: Option[Month], d: Option[DayOfTheMonth], at: Option[RuleAt])
-  case class ZoneTransition(at: GmtOffset, rules: String, format: String, until: Option[Until])
-  case class Zone(name: String, transitions: List[ZoneTransition])
+/**
+  * Model of the TimeZone Database
+  */
+object TZDB {
 
-  case class RuleLetter(letter: String)
-  case class RuleSave(time: LocalTime)
-
-  sealed trait RuleAt extends Product with Serializable {
+  /**
+    * Definition of timestamps
+    */
+  sealed trait At extends Product with Serializable {
     def time: LocalTime
   }
-  case class AtWallTime(time: LocalTime) extends RuleAt
-  case class AtStandardTime(time: LocalTime) extends RuleAt
-  case class AtUniversalTime(time: LocalTime) extends RuleAt
+  case class AtWallTime(time: LocalTime) extends At
+  case class AtStandardTime(time: LocalTime) extends At
+  case class AtUniversalTime(time: LocalTime) extends At
 
-  sealed trait RuleOn extends Product with Serializable
-  case class DayOfTheMonth(i: Int) extends RuleOn
-  case class LastWeekday(d: DayOfWeek) extends RuleOn
-  case class AfterWeekday(d: DayOfWeek, day: Int) extends RuleOn
-  case class BeforeWeekday(d: DayOfWeek, day: Int) extends RuleOn
+  /**
+    * Model for Zone entries on TZDB
+    */
+  case class GmtOffset(h: Int, m: Int, s: Int)
+  case class Until(y: Int, m: Option[Month], d: Option[DayOfTheMonth], at: Option[At])
+  case class ZoneTransition(at: GmtOffset, rules: String, format: String, until: Option[Until])
+  case class Zone(name: String, transitions: List[ZoneTransition])  extends Product with Serializable
 
-  sealed trait RuleYear extends Product with Serializable
-  case class GivenYear(year: Int) extends RuleYear
-  case object Minimum extends RuleYear
-  case object Maximum extends RuleYear
-  case object Only extends RuleYear
+  /**
+    * Model for Rule Entries
+    */
+  case class Letter(letter: String)
+  case class Save(time: LocalTime)
 
-  case class Rule(name: String, from: RuleYear, to: RuleYear, month: Month, on: RuleOn, at: RuleAt, save: RuleSave, letter: RuleLetter) extends Product with Serializable
+  sealed trait On extends Product with Serializable
+  case class DayOfTheMonth(i: Int) extends On
+  case class LastWeekday(d: DayOfWeek) extends On
+  case class AfterWeekday(d: DayOfWeek, day: Int) extends On
+  case class BeforeWeekday(d: DayOfWeek, day: Int) extends On
+
+  sealed trait Year extends Product with Serializable
+  case class GivenYear(year: Int) extends Year
+  case object Minimum extends Year
+  case object Maximum extends Year
+  case object Only extends Year
+  case class Rule(name: String, from: Year, to: Year, month: Month, on: On, at: At, save: Save, letter: Letter) extends Product with Serializable
+
+  /**
+    * Model for Link entries
+    */
+  case class Link(from: String, to: String) extends Product with Serializable
+
+  /**
+    * Comments and blank lines
+    */
   case class Comment(comment: String) extends Product with Serializable
   case class BlankLine(line: String) extends Product with Serializable
 
-  case class Link(from: String, to: String)
+  /**
+    * Coproduct for the content of lines on the parsed files
+    */
+  type Row = Comment :+: BlankLine :+: Link :+: Rule :+: Zone :+: CNil
+
+}
+
+/**
+  * Defines atto parsers to read tzdb files
+  */
+object TZDBParser {
+  import TZDB._
+  import scalaz._
+  import Scalaz._
 
   private val space = chr(' ')
   private val semicolon = chr(':')
@@ -65,21 +95,21 @@ object TZDBParser {
     string("minimum") |
     string("maximum")
 
-  val fromParser: Parser[RuleYear] = {
+  val fromParser: Parser[Year] = {
     stringOf1(digit).map(y => GivenYear(y.toInt)) |
-    string("minimum").map(_ => Minimum: RuleYear) |
-    string("maximum").map(_ => Maximum: RuleYear) |
-    string("max").map(_ => Maximum: RuleYear) |
-    string("min").map(_ => Minimum: RuleYear)
+    string("minimum").map(_ => Minimum: Year) |
+    string("maximum").map(_ => Maximum: Year) |
+    string("max").map(_ => Maximum: Year) |
+    string("min").map(_ => Minimum: Year)
   }
 
-  val toParser: Parser[RuleYear] = {
+  val toParser: Parser[Year] = {
     stringOf1(digit).map(y => GivenYear(y.toInt)) |
-    string("minimum").map(_ => Minimum: RuleYear) |
-    string("maximum").map(_ => Maximum: RuleYear) |
-    string("max").map(_ => Maximum: RuleYear) |
-    string("min").map(_ => Minimum: RuleYear) |
-    string("only").map(_ => Only: RuleYear)
+    string("minimum").map(_ => Minimum: Year) |
+    string("maximum").map(_ => Maximum: Year) |
+    string("max").map(_ => Maximum: Year) |
+    string("min").map(_ => Minimum: Year) |
+    string("only").map(_ => Only: Year)
   }
 
   def parseOneOf[A](items: List[(String, A)], msg: String): Parser[A] = {
@@ -94,25 +124,25 @@ object TZDBParser {
 
   val dayParser: Parser[DayOfWeek] = parseOneOf(days, "unknown day")
 
-  val afterWeekdayParser: Parser[RuleOn] =
+  val afterWeekdayParser: Parser[On] =
     for {
       d <- opt(space) ~> dayParser <~ string(">=")
       a <- int
     } yield AfterWeekday(d, a)
 
-  val beforeWeekdayParser: Parser[RuleOn] =
+  val beforeWeekdayParser: Parser[On] =
     for {
       d <- opt(space) ~> dayParser <~ string("<=")
       a <- int
     } yield BeforeWeekday(d, a)
 
-  val lastWeekdayParser: Parser[RuleOn] =
+  val lastWeekdayParser: Parser[On] =
     for {
       _ <- string("last")
       d <- dayParser
     } yield LastWeekday(d)
 
-  val onParser: Parser[RuleOn] =
+  val onParser: Parser[On] =
     (opt(space) ~> int.map(DayOfTheMonth.apply)) |
     afterWeekdayParser |
     beforeWeekdayParser |
@@ -164,22 +194,22 @@ object TZDBParser {
     hourMinParserOf |
     int.map(h => GmtOffset(h, 0, 0))
 
-  val atParser: Parser[RuleAt] =
-    (timeParser ~ chr('w')).map(x => AtWallTime(x._1): RuleAt) |
-    (timeParser ~ chr('s')).map(x => AtStandardTime(x._1): RuleAt) |
-    (timeParser ~ chr('u')).map(x => AtUniversalTime(x._1): RuleAt) |
-    timeParser.map(x => AtWallTime(x): RuleAt)
+  val atParser: Parser[At] =
+    (timeParser ~ chr('w')).map(x => AtWallTime(x._1): At) |
+    (timeParser ~ chr('s')).map(x => AtStandardTime(x._1): At) |
+    (timeParser ~ chr('u')).map(x => AtUniversalTime(x._1): At) |
+    timeParser.map(x => AtWallTime(x): At)
 
-  val saveParser: Parser[RuleSave] =
-    timeParser.map(x => RuleSave(x))
+  val saveParser: Parser[Save] =
+    timeParser.map(x => Save(x))
 
   val toEndLine: Parser[String] = takeWhile(_ =/= '\n') <~ opt(nl)
 
-  val letterParser: Parser[RuleLetter] =
+  val letterParser: Parser[Letter] =
     for {
       l <- takeWhile(c => c.isUpper || c === '-')
       _ <- toEndLine
-    } yield RuleLetter(l)
+    } yield Letter(l)
 
   val ruleParser: Parser[Rule] =
     for {
@@ -248,9 +278,9 @@ object TZDBParser {
     nl.map(_ => BlankLine(""))
     //many(whitespace <~ nl).map(c => BlankLine(c.mkString))
 
-  val fileParser: Parser[Any] =
+  val fileParser: Parser[List[Row]] =
     for {
-      c <- many(commentParser || ruleParser || zoneParser || linkParser || blankLine)
+      c <- many(commentParser.map(shapeless.Coproduct[Row](_)) | ruleParser .map(shapeless.Coproduct[Row](_)) | zoneParser .map(shapeless.Coproduct[Row](_)) | linkParser .map(shapeless.Coproduct[Row](_)) | blankLine.map(shapeless.Coproduct[Row](_)))
     } yield c
 
   val files: List[String] = List(
@@ -267,7 +297,7 @@ object TZDBParser {
     "systemv"
   )
 
-  def parseFile(text: String): ParseResult[Any] = {
+  def parseFile(text: String): ParseResult[List[Row]] = {
     fileParser parseOnly text
   }
 
