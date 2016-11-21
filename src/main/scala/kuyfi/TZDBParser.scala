@@ -4,11 +4,8 @@ import java.time.{DayOfWeek, LocalTime, Month}
 import java.time.format.TextStyle
 import java.util.Locale
 
-import atto._
-import atto.Atto.{char => chr, _}
-import compat.scalaz._
-
 import shapeless._
+import shapeless.ops.coproduct.Inject
 
 /**
   * Model of the TimeZone Database
@@ -77,6 +74,7 @@ object TZDBParser {
   import TZDB._
   import scalaz._
   import Scalaz._
+  import atto._, Atto.{char => chr, _}, compat.scalaz._
 
   private val space = chr(' ')
   private val semicolon = chr(':')
@@ -159,7 +157,7 @@ object TZDBParser {
     } yield (h, m)
 
   val hourMinParserLT: Parser[LocalTime] = hourMinParser.map {
-    case (h, m) => LocalTime.of((h === 24) ? 0 | h, m)
+    case (h, m) => LocalTime.of(fixHourRange(h), m)
   }
 
   val hourMinParserOf: Parser[GmtOffset] = hourMinParser.map {
@@ -176,7 +174,7 @@ object TZDBParser {
     } yield (n.isDefined, h, m, s)
 
   val hourMinSecParserLT: Parser[LocalTime] = hourMinSecParser.map {
-      case (_, h, m, s) => LocalTime.of((h === 24) ? 0 | h, m, s)
+      case (_, h, m, s) => LocalTime.of(fixHourRange(h), m, s)
     }
 
   val hourMinSecParserOf: Parser[GmtOffset] = hourMinSecParser.map {
@@ -187,7 +185,9 @@ object TZDBParser {
     opt(many(whitespace)) ~>
     hourMinSecParserLT |
     hourMinParserLT |
-    int.map(h => LocalTime.of((h === 24) ? 0 | h, 0))
+    int.map(h => LocalTime.of(fixHourRange(h), 0))
+
+  private def fixHourRange(h: Int) = (h === 24) ? 0 | h
 
   val gmtOffsetParser: Parser[GmtOffset] =
     hourMinSecParserOf |

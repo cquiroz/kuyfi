@@ -5,7 +5,11 @@ val commonSettings: Seq[Setting[_]] = Seq(
   organization := "com.github.cquiroz",
   scalaVersion := "2.10.6",
   crossScalaVersions := Seq("2.10.6", "2.11.8", "2.12.0"),
-  scalacOptions ++= Seq("-deprecation", "-feature", "-Xfatal-warnings"),
+  scalacOptions ++= Seq(
+    "-deprecation",
+    "-feature",
+    "-Xfatal-warnings",
+    "-encoding", "UTF-8"),
   exportJars := true,
   publishMavenStyle := true,
   publishArtifact in Test := false,
