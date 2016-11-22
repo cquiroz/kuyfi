@@ -1,7 +1,7 @@
 import sbt.Keys._
 
 val commonSettings: Seq[Setting[_]] = Seq(
-  version := s"0.1.0",
+  version := s"0.2.0-SNAPSHOT",
   organization := "com.github.cquiroz",
   scalaVersion := "2.10.6",
   crossScalaVersions := Seq("2.10.6", "2.11.8"),
@@ -48,8 +48,6 @@ lazy val kuyfi: Project = project.in(file("."))
   .settings(commonSettings: _*)
   .settings(
     name := "kuyfi",
-    publish := {},
-    publishLocal := {},
     libraryDependencies ++= Seq(
       "org.tpolecat"         %% "atto-core"            % "0.5.1",
       "org.tpolecat"         %% "atto-compat-scalaz72" % "0.5.1",
