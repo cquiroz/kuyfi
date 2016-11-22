@@ -51,10 +51,12 @@ lazy val kuyfi: Project = project.in(file("."))
     publish := {},
     publishLocal := {},
     libraryDependencies ++= Seq(
-      "org.tpolecat"  %% "atto-core"            % "0.5.1",
-      "org.tpolecat"  %% "atto-compat-scalaz72" % "0.5.1",
-      "org.scalaz"    %% "scalaz-core"          % "7.2.7",
-      "com.chuusai"   %% "shapeless"            % "2.3.2",
-      "org.scalatest" %% "scalatest"            % "3.0.0" % "test"
+      "org.tpolecat"         %% "atto-core"            % "0.5.1",
+      "org.tpolecat"         %% "atto-compat-scalaz72" % "0.5.1",
+      "org.scalaz"           %% "scalaz-core"          % "7.2.7",
+      "org.scalaz"           %% "scalaz-effect"        % "7.2.7",
+      "com.chuusai"          %% "shapeless"            % "2.3.2",
+      "com.github.pathikrit" %% "better-files"         % "2.14.0",
+      "org.scalatest"        %% "scalatest"            % "3.0.0" % "test"
     )
   )

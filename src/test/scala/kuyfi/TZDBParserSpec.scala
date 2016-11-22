@@ -358,7 +358,7 @@ class TZDBParserSpec extends FlatSpec with Matchers {
       }
     }
     it should "parse all relevant files" in {
-      TZDBParser.files.foreach { f =>
+      TZDBParser.tzdbFiles.foreach { f =>
         val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(s"/$f"), "UTF-8").mkString
         val r = TZDBParser.parseFile(text)
         // Checks that it ingests the whole file
@@ -366,5 +366,17 @@ class TZDBParserSpec extends FlatSpec with Matchers {
           case Done("", _) =>
         }
       }
+    }
+    it should "parse a whole dir" in {
+      import better.files._
+      import shapeless._
+
+      val r = file"src/test/resources/"
+      val rows = TZDBParser.parseAll(r).unsafePerformIO()
+      // Check a few well-known items
+      rows.flatMap(_.select[Link]) should contain (Link("America/Port_of_Spain", "America/Anguilla"))
+      rows.flatMap(_.select[Rule]) should contain (Rule("Thule", GivenYear(1993), GivenYear(2006), Month.OCTOBER, LastWeekday(DayOfWeek.SUNDAY), AtWallTime(LocalTime.of(2, 0)), Save(LocalTime.of(0, 0)), Letter("S")))
+      rows.flatMap(_.select[Zone]) should contain (Zone("Africa/Cairo", List(ZoneTransition(GmtOffset(2, 5, 9), "-", "LMT", Some(Until(1900, Some(Month.OCTOBER), None, None))), ZoneTransition(GmtOffset(2, 0, 0), "Egypt", "EE%sT", None))))
+      rows should not be empty
     }
 }

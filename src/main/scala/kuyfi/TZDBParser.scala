@@ -4,6 +4,7 @@ import java.time.{DayOfWeek, LocalTime, Month}
 import java.time.format.TextStyle
 import java.util.Locale
 
+import atto.ParseResult.{Done, Fail, Partial}
 import shapeless._
 import shapeless.ops.coproduct.Inject
 
@@ -65,6 +66,15 @@ object TZDB {
     */
   type Row = Comment :+: BlankLine :+: Link :+: Rule :+: Zone :+: CNil
 
+  implicit class ToCoproduct[A](val a: A) extends AnyVal {
+    def liftC[C <: Coproduct](implicit inj: Inject[C, A]): Coproduct = Coproduct[C](a)
+  }
+
+  /*implicit class ToCoproduct2[A](val a: Parser[A]) extends AnyVal {
+    def liftC[C <: Coproduct](implicit inj: Inject[C, A]): Parser[C] = a.map(_.liftC[C])
+  }*/
+
+  val r: Coproduct = Comment("abc").liftC[Row]
 }
 
 /**
@@ -73,8 +83,18 @@ object TZDB {
 object TZDBParser {
   import TZDB._
   import scalaz._
+  import scalaz.effect._
   import Scalaz._
   import atto._, Atto.{char => chr, _}, compat.scalaz._
+  import better.files._
+  import java.io.{File => JFile}
+
+  // Useful Monoid
+  implicit def parserListMonoid[A]: Monoid[ParseResult[List[A]]] =
+    Monoid.instance[ParseResult[List[A]]]((a, b) => (a, b) match {
+      case (Done(u, x), Done(v, y)) => Done(u + v, x ::: y)
+      case _                        => Fail("", Nil, "Can only handle full response ")
+    }, Done("", List.empty[A]))
 
   private val space = chr(' ')
   private val semicolon = chr(':')
@@ -280,10 +300,14 @@ object TZDBParser {
 
   val fileParser: Parser[List[Row]] =
     for {
-      c <- many(commentParser.map(shapeless.Coproduct[Row](_)) | ruleParser .map(shapeless.Coproduct[Row](_)) | zoneParser .map(shapeless.Coproduct[Row](_)) | linkParser .map(shapeless.Coproduct[Row](_)) | blankLine.map(shapeless.Coproduct[Row](_)))
+      c <- many(commentParser.map(shapeless.Coproduct[Row](_)) | ruleParser.map(shapeless.Coproduct[Row](_)) | zoneParser .map(shapeless.Coproduct[Row](_)) | linkParser .map(shapeless.Coproduct[Row](_)) | blankLine.map(shapeless.Coproduct[Row](_)))
     } yield c
 
-  val files: List[String] = List(
+  def parseFile(text: String): ParseResult[List[Row]] = {
+    fileParser parseOnly text
+  }
+
+  val tzdbFiles: List[String] = List(
     "africa",
     "antarctica",
     "asia",
@@ -297,11 +321,20 @@ object TZDBParser {
     "systemv"
   )
 
-  def parseFile(text: String): ParseResult[List[Row]] = {
-    fileParser parseOnly text
-  }
-
-  def main(args: Array[String]): Unit = {
-    //generateTZDataSources(new File("src/main/scala/zone/data"), new File("jvm/src/main/resources/tzdb"))
+  /**
+    * Entry point. Takes a dir with the TZDB files and parses them into Rows
+    */
+  def parseAll(dir: File): IO[List[Row]] = IO {
+    dir match {
+      case File.Type.SymbolicLink(_) => Nil
+      case File.Type.Directory(files) =>
+        val parsed = files.filter(f => tzdbFiles.contains(f.name)).map(f => parseFile(f.contentAsString))
+        parsed.toList.suml match {
+          case Done(_, v) => v
+          case _          => Nil
+        }
+      case File.Type.RegularFile(_) => Nil
+      case _ => Nil
+    }
   }
 }
