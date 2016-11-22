@@ -5,7 +5,7 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 import atto.ParseResult.{Done, Fail, Partial}
-import shapeless._
+import shapeless.{Coproduct, _}
 import shapeless.ops.coproduct.Inject
 
 /**
@@ -67,14 +67,9 @@ object TZDB {
   type Row = Comment :+: BlankLine :+: Link :+: Rule :+: Zone :+: CNil
 
   implicit class ToCoproduct[A](val a: A) extends AnyVal {
-    def liftC[C <: Coproduct](implicit inj: Inject[C, A]): Coproduct = Coproduct[C](a)
+    def liftC[C <: Coproduct](implicit inj: Inject[C, A]): C = Coproduct[C](a)
   }
 
-  /*implicit class ToCoproduct2[A](val a: Parser[A]) extends AnyVal {
-    def liftC[C <: Coproduct](implicit inj: Inject[C, A]): Parser[C] = a.map(_.liftC[C])
-  }*/
-
-  val r: Coproduct = Comment("abc").liftC[Row]
 }
 
 /**
@@ -95,6 +90,10 @@ object TZDBParser {
       case (Done(u, x), Done(v, y)) => Done(u + v, x ::: y)
       case _                        => Fail("", Nil, "Can only handle full response ")
     }, Done("", List.empty[A]))
+
+  implicit class Parser2Coproduct[A](val a: Parser[A]) extends AnyVal {
+    def liftC[C <: shapeless.Coproduct](implicit inj: shapeless.ops.coproduct.Inject[C, A]): Parser[C] = a.map(_.liftC[C])
+  }
 
   private val space = chr(' ')
   private val semicolon = chr(':')
@@ -300,7 +299,7 @@ object TZDBParser {
 
   val fileParser: Parser[List[Row]] =
     for {
-      c <- many(commentParser.map(shapeless.Coproduct[Row](_)) | ruleParser.map(shapeless.Coproduct[Row](_)) | zoneParser .map(shapeless.Coproduct[Row](_)) | linkParser .map(shapeless.Coproduct[Row](_)) | blankLine.map(shapeless.Coproduct[Row](_)))
+      c <- many(commentParser.liftC[Row] | ruleParser.liftC[Row] | zoneParser.liftC[Row] | linkParser.liftC[Row] | blankLine.liftC[Row])
     } yield c
 
   def parseFile(text: String): ParseResult[List[Row]] = {
