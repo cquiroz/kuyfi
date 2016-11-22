@@ -1,10 +1,10 @@
 import sbt.Keys._
 
 val commonSettings: Seq[Setting[_]] = Seq(
-  version := s"0.1.0-SNAPSHOT",
+  version := s"0.1.0",
   organization := "com.github.cquiroz",
   scalaVersion := "2.10.6",
-  crossScalaVersions := Seq("2.10.6", "2.11.8", "2.12.0"),
+  crossScalaVersions := Seq("2.10.6", "2.11.8"),
   scalacOptions ++= Seq(
     "-deprecation",
     "-feature",
