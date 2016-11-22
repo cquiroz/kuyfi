@@ -57,6 +57,7 @@ lazy val kuyfi: Project = project.in(file("."))
       "org.scalaz"           %% "scalaz-effect"        % "7.2.7",
       "com.chuusai"          %% "shapeless"            % "2.3.2",
       "com.github.pathikrit" %% "better-files"         % "2.14.0",
+      "com.eed3si9n"         %% "treehugger"           % "0.4.1",
       "org.scalatest"        %% "scalatest"            % "3.0.0" % "test"
     )
   )
