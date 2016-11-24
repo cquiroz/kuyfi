@@ -401,9 +401,40 @@ class TZDBParserSpec extends FlatSpec with Matchers {
 
       treeToString(TreeGenerator[Zone].generateTree(zone)) shouldBe "\"Europe/Belfast\""
     }
+    it should "generate a tuple from a Link" in {
+      import TZDBCodeGenerator._
+      import treehugger.forest._
+
+      val link = Link("America/Curacao", "America/Aruba")
+
+      treeToString(TreeGenerator[Link].generateTree(link)) shouldBe "(\"America/Aruba\", \"America/Curacao\")"
+    }
+    it should "clean dangling links" in {
+      import TZDBCodeGenerator._
+      import TZDB._
+      import treehugger.forest._
+
+      val link1 = Link("Europe/Ireland", "Europe/Belfast")
+      val link2 = Link("America/Curacao", "America/Aruba")
+      val rows1 = link1.liftC[Row] :: link2.liftC[Row] :: Nil
+      cleanLinks(rows1) shouldBe empty
+
+      val zone = Zone("Europe/Belfast", List(
+                    ZoneTransition(GmtOffset(0, -23, 40), "-",       "LMT",     Some(Until(1880, Some(Month.AUGUST),  Some(DayOfTheMonth(2)),  None))),
+                    ZoneTransition(GmtOffset(0, -25, 21), "-",       "DMT",     Some(Until(1916, Some(Month.MAY),     Some(DayOfTheMonth(21)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+                    ZoneTransition(GmtOffset(0, -25, 21), "1:00",    "IST",     Some(Until(1916, Some(Month.OCTOBER), Some(DayOfTheMonth(1)),  Some(AtStandardTime(LocalTime.of(2, 0)))))),
+                    ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1968, Some(Month.OCTOBER), Some(DayOfTheMonth(27)), None))),
+                    ZoneTransition(GmtOffset(1,   0,  0), "-",       "BST",     Some(Until(1971, Some(Month.OCTOBER), Some(DayOfTheMonth(31)), Some(AtUniversalTime(LocalTime.of(2, 0)))))),
+                    ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1996, None,                None,                    None))),
+                    ZoneTransition(GmtOffset(0,   0,  0), "EU",      "GMT/BST", None)
+                ))
+
+      val rows2 = link1.liftC[Row] :: link2.liftC[Row] :: zone.liftC[Row] :: Nil
+      cleanLinks(rows2) should have size 2
+    }
     it should "generate an object from a List of Zones" in {
       import TZDBCodeGenerator._
-      import treehugger.forest._, definitions._, treehuggerDSL._
+      import treehugger.forest._
 
       val zones = List(
           Zone("Africa/Tripoli", List(
