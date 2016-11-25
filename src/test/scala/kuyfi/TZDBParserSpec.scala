@@ -414,7 +414,7 @@ class TZDBParserSpec extends FlatSpec with Matchers {
       import TZDB._
       import treehugger.forest._
 
-      val link1 = Link("Europe/Ireland", "Europe/Belfast")
+      val link1 = Link("Europe/Belfast", "Europe/Ireland")
       val link2 = Link("America/Curacao", "America/Aruba")
       val rows1 = link1.liftC[Row] :: link2.liftC[Row] :: Nil
       cleanLinks(rows1) shouldBe empty
