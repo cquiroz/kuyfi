@@ -370,7 +370,6 @@ class TZDBParserSpec extends FlatSpec with Matchers {
     }
     it should "parse a whole dir" in {
       import better.files._
-      import shapeless._
 
       val r = file"src/test/resources/"
       val rows = TZDBParser.parseAll(r).unsafePerformIO()
@@ -378,86 +377,64 @@ class TZDBParserSpec extends FlatSpec with Matchers {
       rows.flatMap(_.select[Link]) should contain (Link("America/Port_of_Spain", "America/Anguilla"))
       rows.flatMap(_.select[Rule]) should contain (Rule("Thule", GivenYear(1993), GivenYear(2006), Month.OCTOBER, LastWeekday(DayOfWeek.SUNDAY), AtWallTime(LocalTime.of(2, 0)), Save(LocalTime.of(0, 0)), Letter("S")))
       rows.flatMap(_.select[Zone]) should contain (Zone("Africa/Cairo", List(ZoneTransition(GmtOffset(2, 5, 9), "-", "LMT", Some(Until(1900, Some(Month.OCTOBER), None, None))), ZoneTransition(GmtOffset(2, 0, 0), "Egypt", "EE%sT", None))))
-      rows.flatMap(_.select[Zone]).map(_.name).sorted.foreach(println)
+      rows.flatMap(_.select[Zone]).filter(_.transitions.length == 1).map(u => (u.name, u.transitions)).sortBy(_._1).foreach(println)
       println("----------")
-      rows.flatMap(_.select[Link]).map(_.to).sorted.foreach(println)
+      println(rows.flatMap(_.select[Zone]).length)
+      println(rows.flatMap(_.select[Zone]).find(_.name == "Pacific/Pohnpei"))
+      println(rows.flatMap(_.select[Zone]).find(_.name == "Pacific/Ponape"))
+      println("----------")
+      //rows.flatMap(_.select[Link]).sortBy(_.from).foreach(println)
+      //println(rows.flatMap(_.select[Link]).length)
       rows should not be empty
     }
 
+  val zone1 = Zone("Europe/Belfast", List(
+                ZoneTransition(GmtOffset(0, -23, 40), "-",       "LMT",     Some(Until(1880, Some(Month.AUGUST),  Some(DayOfTheMonth(2)),  None))),
+                ZoneTransition(GmtOffset(0, -25, 21), "-",       "DMT",     Some(Until(1916, Some(Month.MAY),     Some(DayOfTheMonth(21)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+                ZoneTransition(GmtOffset(0, -25, 21), "1:00",    "IST",     Some(Until(1916, Some(Month.OCTOBER), Some(DayOfTheMonth(1)),  Some(AtStandardTime(LocalTime.of(2, 0)))))),
+                ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1968, Some(Month.OCTOBER), Some(DayOfTheMonth(27)), None))),
+                ZoneTransition(GmtOffset(1,   0,  0), "-",       "BST",     Some(Until(1971, Some(Month.OCTOBER), Some(DayOfTheMonth(31)), Some(AtUniversalTime(LocalTime.of(2, 0)))))),
+                ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1996, None,                None,                    None))),
+                ZoneTransition(GmtOffset(0,   0,  0), "EU",      "GMT/BST", None)
+            ))
+
+  val zone2 = Zone("Africa/Tripoli", List(
+      ZoneTransition(GmtOffset( 0, 52, 44), "-",     "LMT",   Some(Until(1920, None,                  None,                    None))),
+      ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT", Some(Until(1959, None,                  None,                    None))),
+      ZoneTransition(GmtOffset( 2,  0,  0), "-",     "EET",   Some(Until(1982, None,                  None,                    None))),
+      ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT", Some(Until(1990, Some(Month.MAY),       Some(DayOfTheMonth(4)),  None))),
+      ZoneTransition(GmtOffset( 2,  0,  0), "-",     "EET",   Some(Until(1996, Some(Month.SEPTEMBER), Some(DayOfTheMonth(30)), None))),
+      ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT", Some(Until(1997, Some(Month.OCTOBER),   Some(DayOfTheMonth(4)),  None))),
+      ZoneTransition(GmtOffset( 2,  0,  0), "-",     "EET",   Some(Until(2012, Some(Month.NOVEMBER),  Some(DayOfTheMonth(10)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+      ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT", Some(Until(2013, Some(Month.OCTOBER),   Some(DayOfTheMonth(25)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+      ZoneTransition(GmtOffset( 2,  0,  0), "-",     "EET",   None)
+  ))
+
+  val link1 = Link("Europe/Belfast", "Europe/Ireland")
+  val link2 = Link("America/Curacao", "America/Aruba")
+
+  import TZDBCodeGenerator._
+  import treehugger.forest._
+
   "TZDB Code generator" should
     "generate a name from a Zone" in {
-      import TZDBCodeGenerator._
-      import treehugger.forest._, definitions._, treehuggerDSL._
-
-      val zone = Zone("Europe/Belfast", List(
-                    ZoneTransition(GmtOffset(0, -23, 40), "-",       "LMT",     Some(Until(1880, Some(Month.AUGUST),  Some(DayOfTheMonth(2)),  None))),
-                    ZoneTransition(GmtOffset(0, -25, 21), "-",       "DMT",     Some(Until(1916, Some(Month.MAY),     Some(DayOfTheMonth(21)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-                    ZoneTransition(GmtOffset(0, -25, 21), "1:00",    "IST",     Some(Until(1916, Some(Month.OCTOBER), Some(DayOfTheMonth(1)),  Some(AtStandardTime(LocalTime.of(2, 0)))))),
-                    ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1968, Some(Month.OCTOBER), Some(DayOfTheMonth(27)), None))),
-                    ZoneTransition(GmtOffset(1,   0,  0), "-",       "BST",     Some(Until(1971, Some(Month.OCTOBER), Some(DayOfTheMonth(31)), Some(AtUniversalTime(LocalTime.of(2, 0)))))),
-                    ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1996, None,                None,                    None))),
-                    ZoneTransition(GmtOffset(0,   0,  0), "EU",      "GMT/BST", None)
-                ))
-
-      treeToString(TreeGenerator[Zone].generateTree(zone)) shouldBe "\"Europe/Belfast\""
+      treeToString(TreeGenerator[Zone].generateTree(zone1)) shouldBe "\"Europe/Belfast\""
     }
     it should "generate a tuple from a Link" in {
-      import TZDBCodeGenerator._
-      import treehugger.forest._
-
-      val link = Link("America/Curacao", "America/Aruba")
-
-      treeToString(TreeGenerator[Link].generateTree(link)) shouldBe "(\"America/Aruba\", \"America/Curacao\")"
+      treeToString(TreeGenerator[Link].generateTree(link2)) shouldBe "(\"America/Aruba\", \"America/Curacao\")"
     }
     it should "clean dangling links" in {
-      import TZDBCodeGenerator._
-      import TZDB._
-      import treehugger.forest._
-
-      val link1 = Link("Europe/Belfast", "Europe/Ireland")
-      val link2 = Link("America/Curacao", "America/Aruba")
       val rows1 = link1.liftC[Row] :: link2.liftC[Row] :: Nil
       cleanLinks(rows1) shouldBe empty
 
-      val zone = Zone("Europe/Belfast", List(
-                    ZoneTransition(GmtOffset(0, -23, 40), "-",       "LMT",     Some(Until(1880, Some(Month.AUGUST),  Some(DayOfTheMonth(2)),  None))),
-                    ZoneTransition(GmtOffset(0, -25, 21), "-",       "DMT",     Some(Until(1916, Some(Month.MAY),     Some(DayOfTheMonth(21)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-                    ZoneTransition(GmtOffset(0, -25, 21), "1:00",    "IST",     Some(Until(1916, Some(Month.OCTOBER), Some(DayOfTheMonth(1)),  Some(AtStandardTime(LocalTime.of(2, 0)))))),
-                    ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1968, Some(Month.OCTOBER), Some(DayOfTheMonth(27)), None))),
-                    ZoneTransition(GmtOffset(1,   0,  0), "-",       "BST",     Some(Until(1971, Some(Month.OCTOBER), Some(DayOfTheMonth(31)), Some(AtUniversalTime(LocalTime.of(2, 0)))))),
-                    ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1996, None,                None,                    None))),
-                    ZoneTransition(GmtOffset(0,   0,  0), "EU",      "GMT/BST", None)
-                ))
+      val rows2 = link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil
 
-      val rows2 = link1.liftC[Row] :: link2.liftC[Row] :: zone.liftC[Row] :: Nil
       cleanLinks(rows2) should have size 2
     }
     it should "generate an object from a List of Zones" in {
-      import TZDBCodeGenerator._
-      import treehugger.forest._
-
-      val zones = List(
-          Zone("Africa/Tripoli", List(
-              ZoneTransition(GmtOffset( 0, 52, 44), "-",     "LMT",   Some(Until(1920, None,                  None,                    None))),
-              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT", Some(Until(1959, None,                  None,                    None))),
-              ZoneTransition(GmtOffset( 2,  0,  0), "-",     "EET",   Some(Until(1982, None,                  None,                    None))),
-              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT", Some(Until(1990, Some(Month.MAY),       Some(DayOfTheMonth(4)),  None))),
-              ZoneTransition(GmtOffset( 2,  0,  0), "-",     "EET",   Some(Until(1996, Some(Month.SEPTEMBER), Some(DayOfTheMonth(30)), None))),
-              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT", Some(Until(1997, Some(Month.OCTOBER),   Some(DayOfTheMonth(4)),  None))),
-              ZoneTransition(GmtOffset( 2,  0,  0), "-",     "EET",   Some(Until(2012, Some(Month.NOVEMBER),  Some(DayOfTheMonth(10)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-              ZoneTransition(GmtOffset( 1,  0,  0), "Libya", "CE%sT", Some(Until(2013, Some(Month.OCTOBER),   Some(DayOfTheMonth(25)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-              ZoneTransition(GmtOffset( 2,  0,  0), "-",     "EET",   None)
-          )),
-          Zone("Europe/Belfast", List(
-              ZoneTransition(GmtOffset(0, -23, 40), "-",       "LMT",     Some(Until(1880, Some(Month.AUGUST),  Some(DayOfTheMonth(2)),  None))),
-              ZoneTransition(GmtOffset(0, -25, 21), "-",       "DMT",     Some(Until(1916, Some(Month.MAY),     Some(DayOfTheMonth(21)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-              ZoneTransition(GmtOffset(0, -25, 21), "1:00",    "IST",     Some(Until(1916, Some(Month.OCTOBER), Some(DayOfTheMonth(1)),  Some(AtStandardTime(LocalTime.of(2, 0)))))),
-              ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1968, Some(Month.OCTOBER), Some(DayOfTheMonth(27)), None))),
-              ZoneTransition(GmtOffset(1,   0,  0), "-",       "BST",     Some(Until(1971, Some(Month.OCTOBER), Some(DayOfTheMonth(31)), Some(AtUniversalTime(LocalTime.of(2, 0)))))),
-              ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1996, None,                None,                    None))),
-              ZoneTransition(GmtOffset(0,   0,  0), "EU",      "GMT/BST", None)
-          ))
-        )
-      println(treeToString(TreeGenerator[List[Zone]].generateTree(zones)))
+      treeToString(TreeGenerator[List[Zone]].generateTree(List(zone1, zone2))) shouldBe "lazy val allZones: List[String] = List(\"Europe/Belfast\", \"Africa/Tripoli\")"
+    }
+    it should "import a top level package" in {
+      treeToString(exportAll("org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil)) should include ("import org.threeten.bp._")
     }
 }
