@@ -8,14 +8,16 @@ import org.scalatest.{FlatSpec, Matchers}
 class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
 
   val zone1 = Zone("Europe/Belfast", List(
-                ZoneTransition(GmtOffset(0, -23, 40), "-",       "LMT",     Some(Until(1880, Some(Month.AUGUST),  Some(DayOfTheMonth(2)),  None))),
-                ZoneTransition(GmtOffset(0, -25, 21), "-",       "DMT",     Some(Until(1916, Some(Month.MAY),     Some(DayOfTheMonth(21)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-                ZoneTransition(GmtOffset(0, -25, 21), "1:00",    "IST",     Some(Until(1916, Some(Month.OCTOBER), Some(DayOfTheMonth(1)),  Some(AtStandardTime(LocalTime.of(2, 0)))))),
-                ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1968, Some(Month.OCTOBER), Some(DayOfTheMonth(27)), None))),
-                ZoneTransition(GmtOffset(1,   0,  0), "-",       "BST",     Some(Until(1971, Some(Month.OCTOBER), Some(DayOfTheMonth(31)), Some(AtUniversalTime(LocalTime.of(2, 0)))))),
-                ZoneTransition(GmtOffset(0,   0,  0), "GB-Eire", "%s",      Some(Until(1996, None,                None,                    None))),
-                ZoneTransition(GmtOffset(0,   0,  0), "EU",      "GMT/BST", None)
+                ZoneTransition(GmtOffset(0, -23, -40), "-",       "LMT",     Some(Until(1880, Some(Month.AUGUST),  Some(DayOfTheMonth(2)),  None))),
+                ZoneTransition(GmtOffset(0, -25, -21), "-",       "DMT",     Some(Until(1916, Some(Month.MAY),     Some(DayOfTheMonth(21)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+                ZoneTransition(GmtOffset(0, -25, -21), "1:00",    "IST",     Some(Until(1916, Some(Month.OCTOBER), Some(DayOfTheMonth(1)),  Some(AtStandardTime(LocalTime.of(2, 0)))))),
+                ZoneTransition(GmtOffset(0,   0,   0), "GB-Eire", "%s",      Some(Until(1968, Some(Month.OCTOBER), Some(DayOfTheMonth(27)), None))),
+                ZoneTransition(GmtOffset(1,   0,   0), "-",       "BST",     Some(Until(1971, Some(Month.OCTOBER), Some(DayOfTheMonth(31)), Some(AtUniversalTime(LocalTime.of(2, 0)))))),
+                ZoneTransition(GmtOffset(0,   0,   0), "GB-Eire", "%s",      Some(Until(1996, None,                None,                    None))),
+                ZoneTransition(GmtOffset(0,   0,   0), "EU",      "GMT/BST", None)
             ))
+
+  val zoneFixed = Zone("Etc/GMT+1", List(ZoneTransition(GmtOffset(-1,0,0), "-", "-01",None)))
 
   val zone2 = Zone("Africa/Tripoli", List(
       ZoneTransition(GmtOffset( 0, 52, 44), "-",     "LMT",   Some(Until(1920, None,                  None,                    None))),

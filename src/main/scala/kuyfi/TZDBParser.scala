@@ -170,23 +170,26 @@ object TZDBParser {
   val timePartParser: Parser[Char] =
     digit | semicolon
 
-  val hourMinParser: Parser[(Int, Int)] =
+  val hourMinParser: Parser[(Boolean, Int, Int)] =
     for {
       _ <- opt(space)
+      n <- opt(chr('-'))
       h <- int <~ semicolon
       m <- int
-    } yield (h, m)
+    } yield (n.isDefined, h, m)
 
   val hourMinParserLT: Parser[LocalTime] = hourMinParser.map {
-    case (h, m) => LocalTime.of(fixHourRange(h), m)
+    case (_, h, m) => LocalTime.of(fixHourRange(h), m)
   }
 
   val hourMinParserOf: Parser[GmtOffset] = hourMinParser.map {
-    case (h, m) => GmtOffset(h, m, 0)
+    case (n, h, m) if n => GmtOffset(-h, -m, 0)
+    case (_, h, m)      => GmtOffset( h,  m, 0)
   }
 
   val hourMinSecParser: Parser[(Boolean, Int, Int, Int)] =
     for {
+      _ <- opt(space)
       n <- opt(chr('-'))
       _ <- opt(space)
       h <- int <~ semicolon
@@ -199,7 +202,8 @@ object TZDBParser {
     }
 
   val hourMinSecParserOf: Parser[GmtOffset] = hourMinSecParser.map {
-      case (n, h, m, s) => GmtOffset(n ? -h | h, (n && h === 0) ? -m | m, s)
+      case (neg, h, m, s) if neg => GmtOffset(-h, -m, -s)
+      case (_  , h, m, s)        => GmtOffset( h,  m,  s)
     }
 
   val timeParser: Parser[LocalTime] =
