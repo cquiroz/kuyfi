@@ -181,15 +181,17 @@ class TZDBParserSpec extends FlatSpec with Matchers {
         "Zone	EST		 -5:00	-	EST" ->
           Zone("EST", List(ZoneTransition(GmtOffset(-5, 0, 0), "-", "EST", None))),
         "Zone	Africa/Abidjan	-0:16:08 -	LMT	1912" ->
-          Zone("Africa/Abidjan", List(ZoneTransition(GmtOffset(0, -16, 8), "-", "LMT", Some(Until(1912, None, None, None))))),
+          Zone("Africa/Abidjan", List(ZoneTransition(GmtOffset(0, -16, -8), "-", "LMT", Some(Until(1912, None, None, None))))),
         "Zone	Africa/Bissau	-1:02:20 -	LMT	1912 Jan  1" ->
-          Zone("Africa/Bissau", List(ZoneTransition(GmtOffset(-1, 2, 20), "-", "LMT", Some(Until(1912, Some(Month.JANUARY), Some(DayOfTheMonth(1)), None))))),
+          Zone("Africa/Bissau", List(ZoneTransition(GmtOffset(-1, -2, -20), "-", "LMT", Some(Until(1912, Some(Month.JANUARY), Some(DayOfTheMonth(1)), None))))),
         "Zone	Africa/Nairobi	2:27:16	-	LMT	1928 Jul" ->
           Zone("Africa/Nairobi", List(ZoneTransition(GmtOffset(2, 27, 16), "-", "LMT", Some(Until(1928, Some(Month.JULY), None, None))))),
         "Zone Antarctica/DumontDUrville 0 -	-00	1947" ->
           Zone("Antarctica/DumontDUrville", List(ZoneTransition(GmtOffset(0, 0, 0), "-", "-00", Some(Until(1947, None, None, None))))),
         "Zone Pacific/Honolulu -10:31:26 -     LMT    1900 Jan  1 12:00" ->
-          Zone("Pacific/Honolulu", List(ZoneTransition(GmtOffset(-10, 31, 26), "-", "LMT", Some(Until(1900, Some(Month.JANUARY), Some(DayOfTheMonth(1)), Some(AtWallTime(LocalTime.of(12, 0))))))))
+          Zone("Pacific/Honolulu", List(ZoneTransition(GmtOffset(-10, -31, -26), "-", "LMT", Some(Until(1900, Some(Month.JANUARY), Some(DayOfTheMonth(1)), Some(AtWallTime(LocalTime.of(12, 0)))))))),
+        "Zone America/Juneau -8:57:41 -	LMT	1900 Aug 20 12:00" ->
+          Zone("America/Juneau", List(ZoneTransition(GmtOffset(-8, -57, -41), "-", "LMT", Some(Until(1900, Some(Month.AUGUST), Some(DayOfTheMonth(20)), Some(AtWallTime(LocalTime.of(12, 0))))))))
       )
       zones.foreach { zone =>
         (zoneParser parseOnly zone._1) shouldBe Done("", zone._2)

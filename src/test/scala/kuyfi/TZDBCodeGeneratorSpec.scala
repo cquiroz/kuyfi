@@ -37,7 +37,10 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
 
   "TZDB Code generator" should
     "generate a name from a Zone" in {
-      treeToString(TreeGenerator[Zone].generateTree(zone1)) shouldBe "\"Europe/Belfast\""
+      treeToString(TreeGenerator[Zone].generateTree(zone1)) shouldBe "(\"Europe/Belfast\", ZoneRules.of(ZoneOffset.ofHoursMinutesSeconds(0, -23, -40)))"
+    }
+    it should "generate a name from a Fixed offset Zone" in {
+      treeToString(TreeGenerator[Zone].generateTree(zoneFixed)) shouldBe "(\"Etc/GMT+1\", ZoneRules.of(ZoneOffset.ofHoursMinutesSeconds(-1, 0, 0)))"
     }
     it should "generate a tuple from a Link" in {
       treeToString(TreeGenerator[Link].generateTree(link2)) shouldBe "(\"America/Aruba\", \"America/Curacao\")"
@@ -51,7 +54,7 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
       cleanLinks(rows2) should have size 2
     }
     it should "generate an object from a List of Zones" in {
-      treeToString(TreeGenerator[List[Zone]].generateTree(List(zone1, zone2))) shouldBe "lazy val allZones: List[String] = List(\"Europe/Belfast\", \"Africa/Tripoli\")"
+      treeToString(TreeGenerator[List[Zone]].generateTree(List(zone1, zone2))) shouldBe "lazy val allZones: Map[String, ZoneRules] = Map((\"Europe/Belfast\", ZoneRules.of(ZoneOffset.ofHoursMinutesSeconds(0, -23, -40))), (\"Africa/Tripoli\", ZoneRules.of(ZoneOffset.ofHoursMinutesSeconds(0, 52, 44))))"
     }
     it should "import a top level package" in {
       treeToString(exportAll("org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil)) should include ("import org.threeten.bp._")
