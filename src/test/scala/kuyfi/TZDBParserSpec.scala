@@ -208,11 +208,11 @@ class TZDBParserSpec extends FlatSpec with Matchers {
           |			-10:00	-	HST""".stripMargin ->
           Zone("Pacific/Honolulu", List(
             ZoneTransition(GmtOffset(-10, -31, -26), "-",    "LMT", Some(Until(1896, Some(Month.JANUARY),   Some(DayOfTheMonth(13)), Some(AtWallTime(LocalTime.of(12, 0)))))),
-            ZoneTransition(GmtOffset(-10,  30,   0), "-",    "HST", Some(Until(1933, Some(Month.APRIL),     Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset(-10,  30,   0), "1:00", "HDT", Some(Until(1933, Some(Month.MAY),       Some(DayOfTheMonth(21)), Some(AtWallTime(LocalTime.of(12, 0)))))),
-            ZoneTransition(GmtOffset(-10,  30,   0), "-",    "HST", Some(Until(1942, Some(Month.FEBRUARY),  Some(DayOfTheMonth(9)),  Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset(-10,  30,   0), "1:00", "HDT", Some(Until(1945, Some(Month.SEPTEMBER), Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset(-10,  30,   0), "-",    "HST", Some(Until(1947, Some(Month.JUNE),      Some(DayOfTheMonth(8)),  Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-10, -30,   0), "-",    "HST", Some(Until(1933, Some(Month.APRIL),     Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-10, -30,   0), "1:00", "HDT", Some(Until(1933, Some(Month.MAY),       Some(DayOfTheMonth(21)), Some(AtWallTime(LocalTime.of(12, 0)))))),
+            ZoneTransition(GmtOffset(-10, -30,   0), "-",    "HST", Some(Until(1942, Some(Month.FEBRUARY),  Some(DayOfTheMonth(9)),  Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-10, -30,   0), "1:00", "HDT", Some(Until(1945, Some(Month.SEPTEMBER), Some(DayOfTheMonth(30)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-10, -30,   0), "-",    "HST", Some(Until(1947, Some(Month.JUNE),      Some(DayOfTheMonth(8)),  Some(AtWallTime(LocalTime.of(2, 0)))))),
             ZoneTransition(GmtOffset(-10,   0,   0), "-",    "HST", None)
           )),
         """Zone America/Phoenix	-7:28:18 -	LMT	1883 Nov 18 11:31:42

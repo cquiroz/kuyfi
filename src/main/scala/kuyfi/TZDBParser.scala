@@ -5,11 +5,8 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 import atto.ParseResult.{Done, Fail}
-import better.files.File
 import shapeless.{Coproduct, _}
 import shapeless.ops.coproduct.Inject
-
-import scalaz.effect.IO
 
 /**
   * Model of the TimeZone Database
@@ -83,7 +80,7 @@ object TZDBParser {
   import scalaz._
   import scalaz.effect._
   import Scalaz._
-  import atto._, Atto.{char => chr, _}, compat.scalaz._
+  import atto._, Atto.{char => chr, _}
   import better.files._
 
   // Useful Monoid
@@ -301,16 +298,14 @@ object TZDBParser {
 
   val blankLine: Parser[BlankLine] =
     nl.map(_ => BlankLine(""))
-    //many(whitespace <~ nl).map(c => BlankLine(c.mkString))
 
   val fileParser: Parser[List[Row]] =
     for {
       c <- many(commentParser.liftC[Row] | ruleParser.liftC[Row] | zoneParser.liftC[Row] | linkParser.liftC[Row] | blankLine.liftC[Row])
     } yield c
 
-  def parseFile(text: String): ParseResult[List[Row]] = {
+  def parseFile(text: String): ParseResult[List[Row]] =
     fileParser parseOnly text
-  }
 
   val tzdbFiles: List[String] = List(
     "africa",
