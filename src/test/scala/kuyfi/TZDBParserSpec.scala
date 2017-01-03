@@ -396,10 +396,13 @@ class TZDBParserSpec extends FlatSpec with Matchers {
       rows.flatMap(_.select[Zone]) should contain (Zone("Africa/Cairo", List(ZoneTransition(GmtOffset(2, 5, 9), "-", "LMT", Some(Until(1900, Some(Month.OCTOBER), None, None))), ZoneTransition(GmtOffset(2, 0, 0), "Egypt", "EE%sT", None))))
       rows.flatMap(_.select[Zone]).filter(_.transitions.length == 1).map(u => (u.name, u.transitions)).sortBy(_._1).foreach(println)
       println("----------")
-      println(rows.flatMap(_.select[Zone]).length)
-      println(rows.flatMap(_.select[Zone]).find(_.name == "Pacific/Pohnpei"))
-      println(rows.flatMap(_.select[Zone]).find(_.name == "Pacific/Ponape"))
-      println("----------")
+      rows.flatMap(_.select[Zone]).filter(z => z.transitions.exists(r => r.offset.h < 0 && (r.offset.m >0 || r.offset.s > 0))).map(k => s"${k.name} ${k.transitions}").foreach(println)
+        /*
+        println(rows.flatMap(_.select[Zone]).length)
+        println(rows.flatMap(_.select[Zone]).find(_.name == "Pacific/Pohnpei"))
+        println(rows.flatMap(_.select[Zone]).find(_.name == "Pacific/Ponape"))
+        println("----------")
+        */
       //rows.flatMap(_.select[Link]).sortBy(_.from).foreach(println)
       //println(rows.flatMap(_.select[Link]).length)
       rows should not be empty
