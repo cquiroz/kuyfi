@@ -122,12 +122,12 @@ object StandardZoneRules {
   *                                This is a paired array, where the first entry is the start of the transition
   *                                and the second entry is the end of the transition.
   */
-case class StandardZoneRules private(private val standardTransitions: Array[Long],
-                                      private val standardOffsets: Array[ZoneOffset],
-                                      private val savingsInstantTransitions: Array[Long],
-                                      private val wallOffsets: Array[ZoneOffset],
-                                      private val lastRules: Array[ZoneOffsetTransitionRule],
-                                      private val savingsLocalTransitions: Array[LocalDateTime]) extends Product with Serializable {
+case class StandardZoneRules private(val standardTransitions: Array[Long],
+                                      val standardOffsets: Array[ZoneOffset],
+                                      val savingsInstantTransitions: Array[Long],
+                                      val wallOffsets: Array[ZoneOffset],
+                                      val lastRules: Array[ZoneOffsetTransitionRule],
+                                      val savingsLocalTransitions: Array[LocalDateTime]) extends Product with Serializable {
   /** The map of recent transitions. */
   private val lastRulesCache: ConcurrentMap[Integer, Array[ZoneOffsetTransition]] = new ConcurrentHashMap[Integer, Array[ZoneOffsetTransition]]
 

@@ -90,7 +90,8 @@ object ZoneRulesBuilder {
           println(t.offset)
           println(t.until.map(_.y) + " -> " + t.until.map(_.d))
           //val year = t.until.map(_.y)
-          t.until.fold(b.addWindowForever(t.offset))(until => b.addWindow(t.offset, until.toDateTime, until.at.map(At.toTimeDefinition).getOrElse(TimeDefinition.WALL)))
+          val r = t.until.fold(b.addWindowForever(t.offset))(until => b.addWindow(t.offset, until.toDateTime, until.at.map(At.toTimeDefinition).getOrElse(TimeDefinition.WALL)))
+
           /*if (year != null)
             bld.addWindow(standardOffset, toDateTime(year.getValue), timeDefinition)
           else {
@@ -115,9 +116,24 @@ object ZoneRulesBuilder {
     }
   }
 
+  object collectRules extends Poly1 {
+    type U = List[Rule] => List[Rule]
+
+    implicit val caseItem1: Case.Aux[Comment, U] = at[Comment](i => identity)
+    implicit val caseItem2: Case.Aux[BlankLine, U] = at[BlankLine](i => identity)
+    implicit val caseItem3: Case.Aux[Link, U] = at[Link](i => identity)
+    implicit val caseItem4: Case.Aux[Rule, U] = at[Rule](i => r => i :: r)
+    implicit val caseItem5: Case.Aux[Zone, U] = at[Zone](i => identity)
+
+  }
+
   def calculateTransitions(rows: List[Row]): List[Row] = {
     val builder = new ZoneRulesBuilder()
-    rows.map(_.fold(updateCopy).apply(builder))
+    val r = rows.flatMap(_.fold(collectRules).apply(Nil))
+    r.foreach(println)
+    println(r.distinct.length)
+    //val k = rows.map(_.fold(updateCopy).apply(builder))
+    //k.map(_.toRules("Europe/London").standardTransitions).foreach(println)
     rows
   }
 }
@@ -379,7 +395,8 @@ class ZoneRulesBuilder() {
           }
         }
       }
-      if (loopStandardOffset != window.standardOffset) {
+      if (loopStandardOffset != window.standardOffset.toZoneOffset) {
+        ZoneOffsetTransition.of(LocalDateTime.ofEpochSecond(loopWindowStart.toEpochSecond(loopWindowOffset), 0, loopStandardOffset), loopStandardOffset, window.standardOffset.toZoneOffset)
         standardTransitionList.add(deduplicate(ZoneOffsetTransition.of(LocalDateTime.ofEpochSecond(loopWindowStart.toEpochSecond(loopWindowOffset), 0, loopStandardOffset), loopStandardOffset, window.standardOffset.toZoneOffset)))
         loopStandardOffset = deduplicate(window.standardOffset.toZoneOffset)
       }
