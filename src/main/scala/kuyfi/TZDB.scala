@@ -6,6 +6,9 @@ import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 import shapeless._
 import shapeless.ops.coproduct.Inject
 
+import scalaz.Order
+import scalaz.Ordering
+
 /**
   * Model of the TimeZone Database
   */
@@ -78,12 +81,30 @@ object TZDB {
   case class AfterWeekday(d: DayOfWeek, day: Int) extends On
   case class BeforeWeekday(d: DayOfWeek, day: Int) extends On
 
-  sealed trait Year extends Product with Serializable
-  case class GivenYear(year: Int) extends Year
-  case object Minimum extends Year
-  case object Maximum extends Year
-  case object Only extends Year
-  case class Rule(name: String, from: Year, to: Year, month: Month, on: On, at: At, save: Save, letter: Letter) extends Product with Serializable {
+  sealed trait RuleYear extends Product with Serializable
+  case class GivenYear(year: Int) extends RuleYear
+  case object Minimum extends RuleYear
+  case object Maximum extends RuleYear
+  case object Only extends RuleYear
+
+  object RuleYear {
+    implicit val order: Order[RuleYear] = Order.order { (a, b) => (a, b) match {
+        case (GivenYear(x), GivenYear(y)) => Ordering.fromInt(x.compareTo(y))
+        case (Maximum, Maximum) => Ordering.EQ
+        case (Minimum, Minimum) => Ordering.EQ
+        case (Only, Only)       => Ordering.EQ
+        case (Only, _)          => Ordering.LT
+        case (_, Only)          => Ordering.GT
+        case (_, Maximum)       => Ordering.LT
+        case (Maximum, _)       => Ordering.GT
+        case (Minimum, _)       => Ordering.LT
+        case (_, Minimum)       => Ordering.GT
+        case _                  => Ordering.EQ
+      }
+    }
+  }
+
+  case class Rule(name: String, from: RuleYear, to: RuleYear, month: Month, on: On, at: At, save: Save, letter: Letter) extends Product with Serializable {
     def adjustForwards: Rule = on match {
       case BeforeWeekday(weekDay, dayOfMonth) =>
         val adjustedDate: LocalDate = LocalDate.of(2004, this.month, dayOfMonth).minusDays(6)
