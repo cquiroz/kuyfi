@@ -45,8 +45,6 @@ object TZDB {
   case class Until(y: Int, m: Option[Month], d: Option[DayOfTheMonth], at: Option[At]) {
     // TODO move to an aux class
     def toDateTime: LocalDateTime = {
-      //adjustToFowards(year)
-      //var date: LocalDate = null
       val month = m.getOrElse(Month.JANUARY)
       val date: LocalDate = d.fold {
         val dayOfMonth = month.length(Year.isLeap(y))
@@ -54,22 +52,7 @@ object TZDB {
       } { dayOfTheMonth =>
         LocalDate.of(y, month, dayOfTheMonth.i)
       }
-      /*if (dayOfMonth == -1) {
-        dayOfMonth = month.length(Year.isLeap(year))
-        date = LocalDate.of(year, month, dayOfMonth)
-        if (dayOfWeek != null)
-          date = date.`with`(TemporalAdjusters.previousOrSame(dayOfWeek))(/
-      } else {
-        date = LocalDate.of(year, month, dayOfMonth)
-        if (dayOfWeek != null)
-          date = date.`with`(TemporalAdjusters.nextOrSame(dayOfWeek))
-      }*/
-      //date = deduplicate(date)
       LocalDateTime.of(date, LocalTime.MIDNIGHT)
-      /*
-      if (endOfDay)
-        ldt = ldt.plusDays(1)
-      ldt*/
     }
 
   }
@@ -100,7 +83,16 @@ object TZDB {
   case object Minimum extends Year
   case object Maximum extends Year
   case object Only extends Year
-  case class Rule(name: String, from: Year, to: Year, month: Month, on: On, at: At, save: Save, letter: Letter) extends Product with Serializable
+  case class Rule(name: String, from: Year, to: Year, month: Month, on: On, at: At, save: Save, letter: Letter) extends Product with Serializable {
+    def adjustForwards: Rule = on match {
+      case BeforeWeekday(weekDay, dayOfMonth) =>
+        val adjustedDate: LocalDate = LocalDate.of(2004, this.month, dayOfMonth).minusDays(6)
+        val before = BeforeWeekday(weekDay, adjustedDate.getDayOfMonth)
+        val month = adjustedDate.getMonth
+        copy(month = month, on = before)
+      case _                   => this
+    }
+  }
 
   /**
     * Model for Link entries

@@ -50,90 +50,71 @@ import java.time.zone.ZoneOffsetTransitionRule
 import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 
 import kuyfi.TZDB._
+import kuyfi.ZoneRulesBuilder.{FixedTimeZoneWindow, TimeZoneWindow}
 import shapeless._
 
 object ZoneRulesBuilder {
 
-  /*object expansionPoly extends Poly2 {
-    implicit val commentCase: Case.Aux[ZoneRulesBuilder, Comment, ZoneRulesBuilder] = {
-      at[ZoneRulesBuilder, Zone]{(b, m) => b}
-    }
-    implicit val blankCase: Case.Aux[ZoneRulesBuilder, BlankLine, ZoneRulesBuilder] = {
-      at[ZoneRulesBuilder, Zone]{(b, m) => m}
-    }
-    implicit val linkCase: Case.Aux[ZoneRulesBuilder, Link, ZoneRulesBuilder] = {
-      at[ZoneRulesBuilder, Zone]{(b, m) => m}
-    }
-    implicit val ruleCase: Case.Aux[ZoneRulesBuilder, Rule, ZoneRulesBuilder] = {
-      at[ZoneRulesBuilder, Zone]{(b, m) => m}
-    }
-    implicit val zoneCase: Case.Aux[ZoneRulesBuilder, Zone, ZoneRulesBuilder] = {
-      at[ZoneRulesBuilder, Zone]{(b, m) =>
-        println(b)
-        m.transitions.foreach(println)
-        m}
-    }
-  }*/
+  sealed trait TimeZoneWindow {
+    def standardOffset: GmtOffset
+    def windowEnd: LocalDateTime
+    def timeDefinition: ZoneOffsetTransitionRule.TimeDefinition
+  }
+
+  case class FixedTimeZoneWindow(standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: ZoneOffsetTransitionRule.TimeDefinition) extends TimeZoneWindow
+  case class RulesTimeZoneWindow(standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: ZoneOffsetTransitionRule.TimeDefinition, rules: List[Rule]) extends TimeZoneWindow
+
+  type RulesById = Map[String, List[Rule]]
 
   object updateCopy extends Poly1 {
-    type U = ZoneRulesBuilder => ZoneRulesBuilder
+    type Param = (RulesById, ZoneRulesBuilder)
+    type U = Param => Param
 
-    implicit val caseItem1: Case.Aux[Comment, U] = at[Comment](i => identity)
-    implicit val caseItem2: Case.Aux[BlankLine, U] = at[BlankLine](i => identity)
-    implicit val caseItem3: Case.Aux[Link, U] = at[Link](i => identity)
-    implicit val caseItem4: Case.Aux[Rule, U] = at[Rule](i => identity)
-    implicit val caseItem5: Case.Aux[Zone, U] = at[Zone]{
-      i                                                              =>
-        println(i)
-        b => i.transitions.foreach { t =>
-          println(t)
-          println(t.offset)
-          println(t.until.map(_.y) + " -> " + t.until.map(_.d))
-          //val year = t.until.map(_.y)
-          val r = t.until.fold(b.addWindowForever(t.offset))(until => b.addWindow(t.offset, until.toDateTime, until.at.map(At.toTimeDefinition).getOrElse(TimeDefinition.WALL)))
+    implicit val caseItem1: Case.Aux[Comment, U] = at[Comment](_ => identity)
+    implicit val caseItem2: Case.Aux[BlankLine, U] = at[BlankLine](_ => identity)
+    implicit val caseItem3: Case.Aux[Link, U] = at[Link](_ => identity)
+    implicit val caseItem4: Case.Aux[Rule, U] = at[Rule](_ => identity)
+    implicit val caseItem5: Case.Aux[Zone, U] = at[Zone]{zone => (x: Param) =>
+        zone.transitions.foreach { transition =>
 
-          /*if (year != null)
-            bld.addWindow(standardOffset, toDateTime(year.getValue), timeDefinition)
-          else {
-            bld.addWindowForever(standardOffset)
+        def windowZero: TimeZoneWindow = FixedTimeZoneWindow(GmtOffset.zero, LocalDateTime.MAX, TimeDefinition.WALL)
+        def windowWithFixedOffset(offset: GmtOffset, until: Until): TimeZoneWindow = FixedTimeZoneWindow(offset, until.toDateTime, until.at.map(At.toTimeDefinition).getOrElse(TimeDefinition.WALL))
+        def windowWithRules(until: Until): TimeZoneWindow = {
+          transition.ruleId match {
+            // Fixed offset at 0
+            case NullRule            => windowZero
+            // Fixed offset
+            case FixedOffset(offset) => windowWithFixedOffset(offset, until)
+            // Offset determined by rules
+            case RuleId(ruleId)      =>
+              // TODO should this halt if a rule is not found
+              val rules: List[Rule] = x._1.getOrElse(ruleId, Nil)
+              val adjustedRules = rules.map(_.adjustForwards)
+              RulesTimeZoneWindow(transition.offset, until.toDateTime, until.at.map(At.toTimeDefinition).getOrElse(TimeDefinition.WALL), adjustedRules)
           }
-          if (fixedSavingsSecs != null)
-            bld.setFixedSavingsToWindow(fixedSavingsSecs)
-          else {
-            val tzdbRules: java.util.List[TzdbZoneRulesCompiler#TZDBRule] = rules.get(savingsRule)
-            if (tzdbRules == null)
-              throw new IllegalArgumentException(s"Rule not found: $savingsRule")
-            val tzdbRulesIterator = tzdbRules.iterator
-            while (tzdbRulesIterator.hasNext) {
-              val tzdbRule = tzdbRulesIterator.next()
-              tzdbRule.addToBuilder(bld)
-            }
-          }
-          bld*/
         }
-          b
-         // tzdbZone.addToBuilder(bld, rules)
+
+        val k = transition.until.fold(windowZero)(windowWithRules)
+      }
+      x
     }
   }
 
   object collectRules extends Poly1 {
     type U = List[Rule] => List[Rule]
 
-    implicit val caseItem1: Case.Aux[Comment, U] = at[Comment](i => identity)
-    implicit val caseItem2: Case.Aux[BlankLine, U] = at[BlankLine](i => identity)
-    implicit val caseItem3: Case.Aux[Link, U] = at[Link](i => identity)
-    implicit val caseItem4: Case.Aux[Rule, U] = at[Rule](i => r => i :: r)
-    implicit val caseItem5: Case.Aux[Zone, U] = at[Zone](i => identity)
+    implicit val caseComment: Case.Aux[Comment, U] = at[Comment](i => identity)
+    implicit val caseBlank: Case.Aux[BlankLine, U] = at[BlankLine](i => identity)
+    implicit val caseLink: Case.Aux[Link, U] = at[Link](i => identity)
+    implicit val caseRule: Case.Aux[Rule, U] = at[Rule](i => r => i :: r)
+    implicit val caseZone: Case.Aux[Zone, U] = at[Zone](i => identity)
 
   }
 
   def calculateTransitions(rows: List[Row]): List[Row] = {
     val builder = new ZoneRulesBuilder()
-    val r = rows.flatMap(_.fold(collectRules).apply(Nil))
-    r.foreach(println)
-    println(r.distinct.length)
-    //val k = rows.map(_.fold(updateCopy).apply(builder))
-    //k.map(_.toRules("Europe/London").standardTransitions).foreach(println)
+    val rulesByName: RulesById = rows.flatMap(_.fold(collectRules).apply(Nil)).groupBy(_.name)
+    val k = rows.map(_.fold(updateCopy).apply((rulesByName, builder)))
     rows
   }
 }
@@ -187,6 +168,10 @@ class ZoneRulesBuilder() {
     * @return this, for chaining
     * @throws IllegalStateException if the window order is invalid
     */
+  def createWindow(standardOffset: GmtOffset, until: LocalDateTime, untilDefinition: ZoneOffsetTransitionRule.TimeDefinition): TimeZoneWindow = {
+    FixedTimeZoneWindow(standardOffset, until, untilDefinition)
+  }
+
   def addWindow(standardOffset: GmtOffset, until: LocalDateTime, untilDefinition: ZoneOffsetTransitionRule.TimeDefinition): ZoneRulesBuilder = {
     Objects.requireNonNull(standardOffset, "standardOffset")
     Objects.requireNonNull(until, "until")
@@ -217,6 +202,10 @@ class ZoneRulesBuilder() {
     */
   def addWindowForever(standardOffset: GmtOffset): ZoneRulesBuilder =
     addWindow(standardOffset, LocalDateTime.MAX, TimeDefinition.WALL)
+
+  def createWindowForever(standardOffset: GmtOffset): TimeZoneWindow = {
+    createWindow(standardOffset, LocalDateTime.MAX, TimeDefinition.WALL)
+  }
 
   /** Sets the previously added window to have fixed savings.
     *
@@ -362,27 +351,14 @@ class ZoneRulesBuilder() {
     var loopWindowStart: LocalDateTime = deduplicate(LocalDateTime.of(Year.MIN_VALUE, 1, 1, 0, 0))
     var loopWindowOffset: ZoneOffset = firstWallOffset
     val windows = windowList.iterator
-    if (zoneId == "Europe/London") {
-      println("FIRST " + firstWallOffset)
-      println("FIRST " + loopWindowStart)
-      println("FIRST " + loopWindowOffset)
-      println("LIST " + windowList.size())
-    }
     while (windows.hasNext) {
       val window = windows.next()
-      if (zoneId == "Europe/London") {
-        println(window.standardOffset)
-        println(window.windowEnd)
-      }
       window.tidy(loopWindowStart.getYear)
       var effectiveSavings: Integer = window.fixedSavingAmountSecs
       if (effectiveSavings == null) {
         effectiveSavings = 0
         scala.util.control.Breaks.breakable {
           val rules = window.ruleList.iterator
-          if (zoneId == "Europe/London") {
-            println("RULE " + window.ruleList.size())
-          }
 
           while (rules.hasNext) {
 
@@ -425,12 +401,6 @@ class ZoneRulesBuilder() {
       loopWindowOffset = deduplicate(window.createWallOffset(loopSavings))
       loopWindowStart = deduplicate(LocalDateTime.ofEpochSecond(window.createDateTimeEpochSecond(loopSavings), 0, loopWindowOffset))
     }
-    if (zoneId == "Europe/London") {
-      println("BUILD RULES")
-      println(standardTransitionList.asScala.size)
-      println(transitionList.asScala.size)
-    }
-
     StandardZoneRules(firstWindow.standardOffset.toZoneOffset, firstWallOffset, standardTransitionList, transitionList, lastTransitionRuleList)
   }
 
@@ -460,7 +430,7 @@ class ZoneRulesBuilder() {
                                              val windowEnd: LocalDateTime,
                                              val timeDefinition: ZoneOffsetTransitionRule.TimeDefinition) {
     /** The fixed amount of the saving to be applied during this window. */
-     var fixedSavingAmountSecs: Integer = null
+     var  fixedSavingAmountSecs: Integer = null
     /** The rules for the current window. */
      var ruleList: java.util.List[ZoneRulesBuilder#TZRule] = new java.util.ArrayList[ZoneRulesBuilder#TZRule]
     /** The latest year that the last year starts at. */
