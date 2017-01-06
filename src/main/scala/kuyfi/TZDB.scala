@@ -36,8 +36,12 @@ object TZDB {
   case class GmtOffset(h: Int, m: Int, s: Int) {
     // TODO move to an aux class
     def toZoneOffset: ZoneOffset = ZoneOffset.ofHoursMinutesSeconds(h, m, s)
-
   }
+
+  object GmtOffset {
+    val zero: GmtOffset = GmtOffset(0, 0, 0)
+  }
+
   case class Until(y: Int, m: Option[Month], d: Option[DayOfTheMonth], at: Option[At]) {
     // TODO move to an aux class
     def toDateTime: LocalDateTime = {
@@ -69,7 +73,14 @@ object TZDB {
     }
 
   }
-  case class ZoneTransition(offset: GmtOffset, rules: String, format: String, until: Option[Until])
+
+  sealed trait ZoneRule extends Product with Serializable
+
+  case object NullRule extends ZoneRule
+  case class FixedOffset(offset: GmtOffset) extends ZoneRule
+  case class RuleId(id: String) extends ZoneRule
+
+  case class ZoneTransition(offset: GmtOffset, ruleId: ZoneRule, format: String, until: Option[Until])
   case class Zone(name: String, transitions: List[ZoneTransition])  extends Product with Serializable
 
   /**

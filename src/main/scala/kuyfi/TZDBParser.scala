@@ -1,6 +1,6 @@
 package kuyfi
 
-import java.time.{DayOfWeek, LocalTime, Month}
+import java.time.{DayOfWeek, Duration, LocalTime, Month}
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -201,24 +201,27 @@ object TZDBParser {
   val commentParser: Parser[Comment] =
     chr('#') ~> toEndLine.map(Comment.apply)
 
+  val zoneRuleParser: Parser[ZoneRule] =
+    chr('-').map(_ => NullRule) | gmtOffsetParser.map(d => FixedOffset(d): ZoneRule) | identifier.map(RuleId.apply)
+
   val zoneTransitionParser: Parser[ZoneTransition] =
     for {
-      gmtOff <- many(whitespace) ~> gmtOffsetParser <~ whitespace
-      rules  <- identifier <~ many(whitespace)
-      format <- identifier <~ many(whitespace)
-      until  <- opt(untilParser)
-      _      <- opt(many(commentParser))
-    } yield ZoneTransition(gmtOff, rules, format, until)
+      gmtOff   <- many(whitespace) ~> gmtOffsetParser <~ whitespace
+      zoneRule <- zoneRuleParser <~ many(whitespace)
+      format   <- identifier <~ many(whitespace)
+      until    <- opt(untilParser)
+      _        <- opt(many(commentParser))
+    } yield ZoneTransition(gmtOff, zoneRule, format, until)
 
   val continuationZoneTransitionParser: Parser[ZoneTransition] =
     for {
-      _      <- manyN(3, whitespace)
-      gmtOff <- gmtOffsetParser <~ whitespace
-      rules  <- opt(whitespace) ~> identifier <~ many(whitespace)
-      format <- identifier <~ many(whitespace)
-      until  <- opt(untilParser)
-      _      <- opt(many(many(whitespace) ~> commentParser))
-    } yield ZoneTransition(gmtOff, rules, format, until)
+      _        <- manyN(3, whitespace)
+      gmtOff   <- gmtOffsetParser <~ whitespace
+      zoneRule <- opt(whitespace) ~> zoneRuleParser <~ many(whitespace)
+      format   <- identifier <~ many(whitespace)
+      until    <- opt(untilParser)
+      _        <- opt(many(many(whitespace) ~> commentParser))
+    } yield ZoneTransition(gmtOff, zoneRule, format, until)
 
   val zoneTransitionListParser: Parser[List[ZoneTransition]] =
     (zoneTransitionParser ~ many(continuationZoneTransitionParser)).map { case (a, b) => a :: b }
