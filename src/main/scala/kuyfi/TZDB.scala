@@ -105,6 +105,17 @@ object TZDB {
   }
 
   case class Rule(name: String, from: RuleYear, to: RuleYear, month: Month, on: On, at: At, save: Save, letter: Letter) extends Product with Serializable {
+    private def toInt(y: RuleYear, defaultY: Int): Int =
+      y match {
+        case GivenYear(x) => x
+        case Maximum      => Year.MAX_VALUE
+        case Minimum      => Year.MIN_VALUE
+        case Only         => defaultY
+      }
+
+    val startYear: Int = toInt(from, 0)
+    val endYear: Int   = toInt(to, startYear)
+
     def adjustForwards: Rule = on match {
       case BeforeWeekday(weekDay, dayOfMonth) =>
         val adjustedDate: LocalDate = LocalDate.of(2004, this.month, dayOfMonth).minusDays(6)
