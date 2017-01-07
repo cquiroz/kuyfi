@@ -60,14 +60,21 @@ object TZDB {
 
   }
 
-  sealed trait ZoneRule extends Product with Serializable
+  sealed trait ZoneRule extends Product with Serializable {
+    def fixedOffset: Option[Int] = None
+  }
 
-  case object NullRule extends ZoneRule
-  case class FixedOffset(offset: GmtOffset) extends ZoneRule
+  case object NullRule extends ZoneRule {
+    override val fixedOffset: Option[Int] = Some(0)
+  }
+  case class FixedOffset(offset: GmtOffset) extends ZoneRule {
+    override val fixedOffset: Option[Int] = Some(Duration.ofHours(offset.h).plusMinutes(offset.m).plusSeconds(offset.s).getSeconds.toInt)
+  }
   case class RuleId(id: String) extends ZoneRule
 
   case class ZoneTransition(offset: GmtOffset, ruleId: ZoneRule, format: String, until: Option[Until])
   case class Zone(name: String, transitions: List[ZoneTransition])  extends Product with Serializable
+
 
   /**
     * Model for Rule Entries
