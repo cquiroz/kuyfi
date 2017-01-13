@@ -1,13 +1,17 @@
 package kuyfi
 
 import java.time._
+import java.time.chrono.IsoChronology
 import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
+import java.time.temporal.TemporalAdjusters
+import java.time.zone.{ZoneOffsetTransition, ZoneOffsetTransitionRule}
 
 import shapeless._
 import shapeless.ops.coproduct.Inject
 
 import scalaz.Order
 import scalaz.Ordering
+import scalaz.syntax.std.boolean._
 
 /**
   * Model of the TimeZone Database
@@ -19,18 +23,38 @@ object TZDB {
     */
   sealed trait At extends Product with Serializable {
     def time: LocalTime
-    val endOfDay: Boolean = (time.getHour == 0 || time.getHour == 24) && time.getMinute == 0 && time.getSecond == 0
+    def endOfDay: Boolean
+    def noEndOfDay: At
   }
-  case class AtWallTime(time: LocalTime) extends At
-  case class AtStandardTime(time: LocalTime) extends At
-  case class AtUniversalTime(time: LocalTime) extends At
+  case class AtWallTime(time: LocalTime, endOfDay: Boolean) extends At {
+    override def noEndOfDay = copy(endOfDay = false)
+  }
+  object AtWallTime {
+    def apply(time: LocalTime): At = AtWallTime(time, (time.getHour == 0 || time.getHour == 24) && time.getMinute == 0 && time.getSecond == 0)
+  }
+
+  case class AtStandardTime(time: LocalTime, endOfDay: Boolean) extends At {
+    override def noEndOfDay = copy(endOfDay = false)
+  }
+  object AtStandardTime {
+    def apply(time: LocalTime): At = this(time, (time.getHour == 0 || time.getHour == 24) && time.getMinute == 0 && time.getSecond == 0)
+  }
+
+  case class AtUniversalTime(time: LocalTime, endOfDay: Boolean) extends At{
+    override def noEndOfDay = copy(endOfDay = false)
+  }
+  object AtUniversalTime {
+    def apply(time: LocalTime): At = this(time, (time.getHour == 0 || time.getHour == 24) && time.getMinute == 0 && time.getSecond == 0)
+  }
 
   object At {
+    implicit val order: Order[At] = Order.order { (a, b) => Ordering.fromInt(a.time.compareTo(b.time)) }
+
     // TODO move to an aux class
     def toTimeDefinition(at: At): TimeDefinition = at match {
-      case AtWallTime(_)      => TimeDefinition.WALL
-      case AtStandardTime(_)  => TimeDefinition.STANDARD
-      case AtUniversalTime(_) => TimeDefinition.UTC
+      case AtWallTime(_, _)      => TimeDefinition.WALL
+      case AtStandardTime(_, _)  => TimeDefinition.STANDARD
+      case AtUniversalTime(_, _) => TimeDefinition.UTC
     }
   }
 
@@ -86,16 +110,25 @@ object TZDB {
 
   sealed trait On extends Product with Serializable {
     def dayOfMonthIndicator: Option[Int] = None
+    def dayOfWeek: Option[DayOfWeek] = None
+    def onDay(d: Int): On = this
   }
   case class DayOfTheMonth(i: Int) extends On {
     override val dayOfMonthIndicator = Some(i)
+    override def onDay(d: Int) = DayOfTheMonth(d)
   }
-  case class LastWeekday(d: DayOfWeek) extends On
+  case class LastWeekday(d: DayOfWeek) extends On {
+    override def dayOfWeek: Option[DayOfWeek] = Some(d)
+  }
   case class AfterWeekday(d: DayOfWeek, day: Int) extends On {
     override val dayOfMonthIndicator = Some(day)
+    override def onDay(i: Int) = AfterWeekday(d.plus(1), i)
+    override def dayOfWeek: Option[DayOfWeek] = Some(d)
   }
   case class BeforeWeekday(d: DayOfWeek, day: Int) extends On {
     override val dayOfMonthIndicator = Some(day)
+    override def onDay(i: Int) = BeforeWeekday(d.plus(1), i)
+    override def dayOfWeek: Option[DayOfWeek] = Some(d)
   }
 
   sealed trait RuleYear extends Product with Serializable
@@ -141,6 +174,53 @@ object TZDB {
         copy(month = month, on = before)
       case _                   => this
     }
+
+    def toLocalDate: LocalDate = {
+      val date = on match {
+        case LastWeekday(d)   =>
+          val monthLen: Int = month.length(IsoChronology.INSTANCE.isLeapYear(startYear))
+          LocalDate.of(startYear, month, monthLen).`with`(TemporalAdjusters.previousOrSame(d))
+        case DayOfTheMonth(d) =>
+          LocalDate.of(startYear, month, d)
+        case AfterWeekday(dayOfWeek, d) =>
+          LocalDate.of(startYear, month, d).`with`(TemporalAdjusters.nextOrSame(dayOfWeek))
+        case BeforeWeekday(dayOfWeek, d) =>
+          LocalDate.of(startYear, month, d).`with`(TemporalAdjusters.nextOrSame(dayOfWeek))
+      }
+
+      if (at.endOfDay) {
+        date.plusDays(1)
+      } else {
+        date
+      }
+    }
+
+    def toTransition(standardOffset: ZoneOffset, savingsBeforeSecs: Int): ZoneOffsetTransition = {
+      val ldt: LocalDateTime = LocalDateTime.of(toLocalDate, at.time)
+      val wallOffset: ZoneOffset = ZoneOffset.ofTotalSeconds(standardOffset.getTotalSeconds + savingsBeforeSecs)
+      val dt: LocalDateTime = At.toTimeDefinition(at).createDateTime(ldt, standardOffset, wallOffset)
+      val offsetAfter: ZoneOffset = ZoneOffset.ofTotalSeconds(standardOffset.getTotalSeconds + save.seconds)
+      ZoneOffsetTransition.of(dt, wallOffset, offsetAfter)
+    }
+
+    def toTransitionRule(standardOffset: ZoneOffset, savingsBeforeSecs: Int): (ZoneOffsetTransitionRule, Rule) = {
+      def transitionRule(dayOfMonthIndicator: Int, dayOfWeek: DayOfWeek) = {
+        val trans = toTransition(standardOffset, savingsBeforeSecs)
+        ZoneOffsetTransitionRule.of(month, dayOfMonthIndicator, dayOfWeek, at.time, at.endOfDay, At.toTimeDefinition(at), standardOffset, trans.getOffsetBefore, trans.getOffsetAfter)
+      }
+
+      val dayOfMonth = on.dayOfMonthIndicator.orElse((month != Month.FEBRUARY) option month.maxLength - 6)
+      dayOfMonth.fold((transitionRule(-1, on.dayOfWeek.orNull), this)){ d =>
+        if (at.endOfDay && !(d == 28 && (month == Month.FEBRUARY))) {
+          val date: LocalDate = LocalDate.of(2004, month, d).plusDays(1)
+          (transitionRule(d, on.dayOfWeek.orNull), copy(on = on.onDay(date.getDayOfMonth), month = date.getMonth, at = at.noEndOfDay))
+        } else {
+          (transitionRule(d, on.dayOfWeek.orNull), this)
+        }
+      }
+    }
+
+
   }
 
   /**

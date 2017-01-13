@@ -43,10 +43,11 @@ import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 
 import kuyfi.TZDB._
 import kuyfi.ZoneRulesBuilder.{FixedTimeZoneWindow, TimeZoneWindow}
-import shapeless._
+import shapeless.Poly1
 
 import scalaz._
 import Scalaz._
+import scala.annotation.tailrec
 
 object ZoneRulesBuilder {
 
@@ -54,14 +55,103 @@ object ZoneRulesBuilder {
     def standardOffset: GmtOffset
     def windowEnd: LocalDateTime
     def timeDefinition: ZoneOffsetTransitionRule.TimeDefinition
-    def fixedOffsetSec: Option[Int]
+    def fixedSavingAmountSeconds: Option[Int]
+    def createWallOffset(savingsSecs: Int): ZoneOffset =
+      ZoneOffset.ofTotalSeconds(standardOffset.toZoneOffset.getTotalSeconds + savingsSecs)
+    def createDateTimeEpochSecond(savingsSecs: Int): Long = {
+      val wallOffset = createWallOffset(savingsSecs)
+      val ldt = timeDefinition.createDateTime(windowEnd, standardOffset.toZoneOffset, wallOffset)
+      ldt.toEpochSecond(wallOffset)
+    }
+    def tidy(windowStartYear: Int): TimeZoneWindow = this
   }
 
-  case class FixedTimeZoneWindow(standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: ZoneOffsetTransitionRule.TimeDefinition, fixedOffsetSec: Option[Int]) extends TimeZoneWindow
-  case class RulesTimeZoneWindow(standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: ZoneOffsetTransitionRule.TimeDefinition, fixedOffsetSec: Option[Int], rules: List[Rule]) extends TimeZoneWindow {
-    case class SplitRules(lastRuleList: List[Rule], maxLastRuleStartYear: Int, ruleList: List[Rule])
+  implicit val ruleOrdering: scala.Ordering[Rule] = new scala.Ordering[Rule]() {
+    val ruleOrdering = RuleYear.order.toScalaOrdering
+    val atOrdering = At.order.toScalaOrdering
+    override def compare(x: Rule, y: Rule): Int = {
+      val rulesCmp = ruleOrdering.compare(x.from, y.from)
+      if (rulesCmp == 0) {
+        val monthCmp = x.month.compareTo(y.month)
+        if (monthCmp == 0) {
+          val thisDate = x.toLocalDate
+          val otherDate = y.toLocalDate
+          val dateCmp = thisDate.compareTo(otherDate)
+          if (dateCmp == 0) {
+            atOrdering.compare(x.at, y.at)
+          } else {
+            dateCmp
+          }
+        } else {
+          monthCmp
+        }
+      } else {
+        rulesCmp
+      }
+    }
+  }
 
-    val acc: SplitRules = rules.foldLeft(SplitRules(Nil, Year.MIN_VALUE, Nil)) { (acc, rule) =>
+
+  case class SplitRules(lastRuleList: List[Rule], maxLastRuleStartYear: Int, ruleList: List[Rule]) {
+    def sorted: SplitRules = copy(lastRuleList = lastRuleList.sorted, ruleList = ruleList.sorted)
+  }
+
+  object SplitRules {
+    val zero: SplitRules = SplitRules(Nil, Year.MIN_VALUE, Nil)
+  }
+
+  case class FixedTimeZoneWindow(standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: ZoneOffsetTransitionRule.TimeDefinition, fixedSavingAmountSeconds: Option[Int]) extends TimeZoneWindow
+  case class RulesTimeZoneWindow private (standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: ZoneOffsetTransitionRule.TimeDefinition, fixedSavingAmountSeconds: Option[Int], splitRules: SplitRules) extends TimeZoneWindow {
+
+    override def tidy(windowStartYear: Int): TimeZoneWindow = {
+      val newSplitRules = if (windowEnd == LocalDateTime.MAX) {
+        val maxLastRuleStartYear = Math.max(splitRules.maxLastRuleStartYear, windowStartYear) + 1
+        val lastRules = splitRules.lastRuleList
+        RulesTimeZoneWindow.acc(splitRules, lastRules.map(_.copy(to = GivenYear(maxLastRuleStartYear)))).copy(lastRuleList = lastRules.map(_.copy(to = GivenYear(maxLastRuleStartYear + 1))),  maxLastRuleStartYear = Year.MAX_VALUE)
+        /*while (lastRules.hasNext) {
+          val lastRule = lastRules.next()
+          addRule(lastRule.year, maxLastRuleStartYear, lastRule.month, lastRule.dayOfMonthIndicator, lastRule.dayOfWeek, lastRule.time, lastRule.timeEndOfDay, lastRule.timeDefinition, lastRule.savingAmountSecs)
+          lastRule.year = maxLastRuleStartYear + 1
+        }*/
+        if (maxLastRuleStartYear == Year.MAX_VALUE) {
+          splitRules.copy(lastRuleList = Nil, maxLastRuleStartYear = maxLastRuleStartYear)
+        } else {
+          splitRules.copy(maxLastRuleStartYear = maxLastRuleStartYear + 1)
+        }
+      } else {
+        val endYear: Int = windowEnd.getYear
+        val lastRules = splitRules.lastRuleList
+        RulesTimeZoneWindow.acc(splitRules, lastRules.map(_.copy(to = GivenYear(endYear + 1)))).copy(lastRuleList = Nil,  maxLastRuleStartYear = Year.MAX_VALUE)
+        /*lastRules.foldLeft(splitRules)
+        while (lastRules.hasNext) {
+          val lastRule = lastRules.next()
+          addRule(lastRule.year, endYear + 1, lastRule.month, lastRule.dayOfMonthIndicator, lastRule.dayOfWeek, lastRule.time, lastRule.timeEndOfDay, lastRule.timeDefinition, lastRule.savingAmountSecs)
+        }
+        lastRuleList.clear()*/
+
+        //splitRules.copy(lastRuleList = Nil,  maxLastRuleStartYear = Year.MAX_VALUE)
+      }
+      /*Collections.sort(ruleList)
+      Collections.sort(lastRuleList)*/
+      val newFixedAmountSecs = if (splitRules.ruleList.isEmpty && fixedSavingAmountSeconds.isEmpty) {
+        None
+      } else {
+        fixedSavingAmountSeconds
+      }
+      println("TIDY Rule " + windowStartYear)
+      newSplitRules.sorted.lastRuleList.foreach(x => println(x.from + " " + x.month + " " + x.on + " " + x.at))
+      println("MAX " + newSplitRules.sorted.maxLastRuleStartYear)
+      newSplitRules.sorted.ruleList.foreach(x => println(x.from + " " + x.month + " " + x.on + " " + x.at))
+      println("COMPPPPPPPPPPP")
+      RulesTimeZoneWindow(standardOffset, windowEnd, timeDefinition, newFixedAmountSecs, newSplitRules.sorted)
+    }
+  }
+
+  object RulesTimeZoneWindow {
+
+    private def acc(rules: List[Rule]): SplitRules = acc(SplitRules.zero, rules)
+
+    private def acc(originalRules: SplitRules, rules: List[Rule]): SplitRules = rules.foldLeft(originalRules) { (acc, rule) =>
       val (lastRule, endYear) = if (rule.to == Maximum) {
           (true, rule.startYear)
         } else {
@@ -82,6 +172,9 @@ object ZoneRulesBuilder {
       println("COMPPPPPPPPPPP")*/
       p
     }
+
+    def apply(standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: ZoneOffsetTransitionRule.TimeDefinition, fixedOffsetSec: Option[Int], rules: List[Rule]): RulesTimeZoneWindow =
+      RulesTimeZoneWindow(standardOffset, windowEnd, timeDefinition, fixedOffsetSec, acc(rules))
   }
 
   type RulesById = Map[String, List[Rule]]
@@ -91,7 +184,7 @@ object ZoneRulesBuilder {
       //println("WINDOWS")
       //windows.foreach(println)
       windows.headOption.map { firstWindow =>
-        val loopSavings = firstWindow.fixedOffsetSec.getOrElse(0)
+        val loopSavings = firstWindow.fixedSavingAmountSeconds.getOrElse(0)
         // NOTE should windows be a NonEmptyList?
         val loopStandardOffset: ZoneOffset = firstWindow.standardOffset.toZoneOffset
         val firstWallOffset: ZoneOffset = ZoneOffset.ofTotalSeconds(loopStandardOffset.getTotalSeconds + loopSavings)
@@ -103,9 +196,75 @@ object ZoneRulesBuilder {
         println(firstWindow.timeDefinition)
         println(loopSavings)
 
-        windows.map { w =>
+        println(firstWallOffset)
+        println(loopWindowStart)
+        println(loopWindowOffset)
 
+
+        val q = windows.foldLeft((loopWindowStart, loopWindowOffset, loopStandardOffset, loopSavings, List.empty[ZoneOffsetTransition], List.empty[ZoneOffsetTransition], List.empty[ZoneOffsetTransitionRule])) { case ((lws, lwo, lso, ls, standardTransitions, transitionList, transitionRules), timeZoneWindow) =>
+          println("WINDOW " + timeZoneWindow.windowEnd  + " LWS " + lws.getYear)
+          println("------------------------")
+          timeZoneWindow.tidy(lws.getYear)
+
+          val effectiveSavings: Int = timeZoneWindow.fixedSavingAmountSeconds.getOrElse {
+            timeZoneWindow match {
+              case RulesTimeZoneWindow(_, _, _, _, splitRules) =>
+                @tailrec
+                def go(savings: Int, rule: List[Rule]): Int = rule match {
+                  case h :: rest =>
+                    val trans = h.toTransition(lso, ls)
+                    if (trans.toEpochSecond > loopWindowStart.toEpochSecond(lwo)) {
+                      savings
+                    } else {
+                      go(h.save.seconds, rest)
+                    }
+                  case Nil => 0
+                }
+                go(0, splitRules.ruleList)
+              case _                                           => 0
+            }
+          }
+          val (newStdTransitions, newLso) = if (lso != timeZoneWindow.standardOffset.toZoneOffset) {
+            (List(ZoneOffsetTransition.of(LocalDateTime.ofEpochSecond(lws.toEpochSecond(lwo), 0, lso), lso, timeZoneWindow.standardOffset.toZoneOffset)), timeZoneWindow.standardOffset.toZoneOffset)
+          } else {
+            (Nil, lso)
+          }
+          val effectiveWallOffset: ZoneOffset = ZoneOffset.ofTotalSeconds(newLso.getTotalSeconds + effectiveSavings)
+          val newTransitions = if (lwo != effectiveWallOffset) {
+            List(ZoneOffsetTransition.of(lws, lwo, effectiveWallOffset))
+          } else {
+            Nil
+          }
+          val (newLs, moreTransitions) = timeZoneWindow match {
+            case RulesTimeZoneWindow(_, _, _, _, splitRules) =>
+              splitRules.ruleList.foldLeft((effectiveSavings, List.empty[ZoneOffsetTransition])) { case ((savings, transitions), r) =>
+                val transition = r.toTransition(lso, savings)
+
+                if ((transition.toEpochSecond >= lws.toEpochSecond(loopWindowOffset)) && (transition.toEpochSecond < timeZoneWindow.createDateTimeEpochSecond(loopSavings)) && (transition.getOffsetBefore != transition.getOffsetAfter)) {
+                  (r.save.seconds, transitions :+ transition)
+                } else {
+                  (savings, transitions)
+                }
+              }
+            case _ =>
+              (effectiveSavings, Nil)
+          }
+
+          val (finalLs, finalRules) = timeZoneWindow match {
+            case RulesTimeZoneWindow(_, _, _, _, splitRules) =>
+              splitRules.lastRuleList.foldLeft((newLs, List.empty[ZoneOffsetTransitionRule])) { case ((savings, tr), r) =>
+                val transitionRule = r.toTransitionRule(loopStandardOffset, loopSavings)
+                (r.save.seconds, tr :+ transitionRule._1)
+              }
+            case _ =>
+              (newLs, Nil)
+          }
+
+          val newLoopWindowOffset = timeZoneWindow.createWallOffset(finalLs)
+          val newLoopWindowStart = LocalDateTime.ofEpochSecond(timeZoneWindow.createDateTimeEpochSecond(finalLs), 0, loopWindowOffset)
+          (newLoopWindowStart, newLoopWindowOffset, newLso, finalLs, standardTransitions ::: newStdTransitions, transitionList ::: newTransitions ::: moreTransitions, transitionRules ::: finalRules)
         }
+        println(q)
         ???
       }
     }
@@ -130,16 +289,12 @@ object ZoneRulesBuilder {
         val w: TimeZoneWindow = transition.ruleId match {
           // Fixed offset at 0
           case r @ NullRule            =>
-            println("null")
-            println("null " + transition.offset)
             transition.until.fold(windowForever(GmtOffset.zero))(windowWithFixedOffset(transition.offset))
           // Fixed offset
           case FixedOffset(offset) =>
-            println("fixed " + offset)
             transition.until.fold(windowForever(GmtOffset.zero))(windowWithFixedOffset(offset))
           // Offset determined by rules
           case RuleId(ruleId)      =>
-            println("rule")
             // TODO should this halt if a rule is not found
             val rules: List[Rule] = c.rules.getOrElse(ruleId, Nil)
             val adjustedRules = rules.map(_.adjustForwards)
