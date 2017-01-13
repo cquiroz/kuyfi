@@ -1,6 +1,6 @@
 package kuyfi
 
-import java.time.{DayOfWeek, Duration, LocalTime, Month}
+import java.time.{DayOfWeek, LocalTime, Month}
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -153,6 +153,8 @@ object TZDBParser {
   val atParser: Parser[At] =
     (timeParser ~ chr('w')).map(x => AtWallTime(x._1): At) |
     (timeParser ~ chr('s')).map(x => AtStandardTime(x._1): At) |
+    (timeParser ~ chr('z')).map(x => AtUniversalTime(x._1): At) |
+    (timeParser ~ chr('g')).map(x => AtUniversalTime(x._1): At) |
     (timeParser ~ chr('u')).map(x => AtUniversalTime(x._1): At) |
     timeParser.map(x => AtWallTime(x): At)
 

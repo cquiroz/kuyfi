@@ -19,6 +19,7 @@ object TZDB {
     */
   sealed trait At extends Product with Serializable {
     def time: LocalTime
+    val endOfDay: Boolean = (time.getHour == 0 || time.getHour == 24) && time.getMinute == 0 && time.getSecond == 0
   }
   case class AtWallTime(time: LocalTime) extends At
   case class AtStandardTime(time: LocalTime) extends At
@@ -75,18 +76,27 @@ object TZDB {
   case class ZoneTransition(offset: GmtOffset, ruleId: ZoneRule, format: String, until: Option[Until])
   case class Zone(name: String, transitions: List[ZoneTransition])  extends Product with Serializable
 
-
   /**
     * Model for Rule Entries
     */
   case class Letter(letter: String)
-  case class Save(time: LocalTime)
+  case class Save(time: LocalTime) {
+    val seconds: Int = time.getHour * 3600 + time.getMinute * 60 + time.getSecond
+  }
 
-  sealed trait On extends Product with Serializable
-  case class DayOfTheMonth(i: Int) extends On
+  sealed trait On extends Product with Serializable {
+    def dayOfMonthIndicator: Option[Int] = None
+  }
+  case class DayOfTheMonth(i: Int) extends On {
+    override val dayOfMonthIndicator = Some(i)
+  }
   case class LastWeekday(d: DayOfWeek) extends On
-  case class AfterWeekday(d: DayOfWeek, day: Int) extends On
-  case class BeforeWeekday(d: DayOfWeek, day: Int) extends On
+  case class AfterWeekday(d: DayOfWeek, day: Int) extends On {
+    override val dayOfMonthIndicator = Some(day)
+  }
+  case class BeforeWeekday(d: DayOfWeek, day: Int) extends On {
+    override val dayOfMonthIndicator = Some(day)
+  }
 
   sealed trait RuleYear extends Product with Serializable
   case class GivenYear(year: Int) extends RuleYear
@@ -97,16 +107,16 @@ object TZDB {
   object RuleYear {
     implicit val order: Order[RuleYear] = Order.order { (a, b) => (a, b) match {
         case (GivenYear(x), GivenYear(y)) => Ordering.fromInt(x.compareTo(y))
-        case (Maximum, Maximum) => Ordering.EQ
-        case (Minimum, Minimum) => Ordering.EQ
-        case (Only, Only)       => Ordering.EQ
-        case (Only, _)          => Ordering.LT
-        case (_, Only)          => Ordering.GT
-        case (_, Maximum)       => Ordering.LT
-        case (Maximum, _)       => Ordering.GT
-        case (Minimum, _)       => Ordering.LT
-        case (_, Minimum)       => Ordering.GT
-        case _                  => Ordering.EQ
+        case (Maximum, Maximum)           => Ordering.EQ
+        case (Minimum, Minimum)           => Ordering.EQ
+        case (Only, Only)                 => Ordering.EQ
+        case (Only, _)                    => Ordering.LT
+        case (_, Only)                    => Ordering.GT
+        case (_, Maximum)                 => Ordering.LT
+        case (Maximum, _)                 => Ordering.GT
+        case (Minimum, _)                 => Ordering.LT
+        case (_, Minimum)                 => Ordering.GT
+        case _                            => Ordering.EQ
       }
     }
   }

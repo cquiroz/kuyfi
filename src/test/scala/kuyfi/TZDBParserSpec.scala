@@ -79,6 +79,23 @@ class TZDBParserSpec extends FlatSpec with Matchers {
       (lastWeekdayParser parseOnly "lastMon") shouldBe Done("", LastWeekday(DayOfWeek.MONDAY))
     }
 
+  "TZDBParser on" should
+    "fixed day" in {
+      (onParser parseOnly "24") shouldBe Done("", DayOfTheMonth(24))
+    }
+    it should "calculate dayOfMontIndicator for fixed day" in {
+      (onParser parseOnly "24").map(_.dayOfMonthIndicator) shouldBe Done("", Some(24))
+    }
+    it should "calculate dayOfMontIndicator for lastSun" in {
+      (onParser parseOnly "lastSun").map(_.dayOfMonthIndicator) shouldBe Done("", None)
+    }
+    it should "calculate dayOfMontIndicator for Sat>=5" in {
+      (onParser parseOnly "Sat>=5").map(_.dayOfMonthIndicator) shouldBe Done("", Some(5))
+    }
+    it should "calculate dayOfMontIndicator for Sat<=5" in {
+      (onParser parseOnly "Sat<=5").map(_.dayOfMonthIndicator) shouldBe Done("", Some(5))
+    }
+
   "TZDBParser AtTime parser" should
     "parse single number time" in {
       (atParser parseOnly "2") shouldBe Done("", AtWallTime(LocalTime.of(2, 0)))
@@ -128,8 +145,23 @@ class TZDBParserSpec extends FlatSpec with Matchers {
     it should "parse explicit universal time h:m 24h time" in {
       (atParser parseOnly "15:00u") shouldBe Done("", AtUniversalTime(LocalTime.of(15, 0)))
     }
+    it should "parse explicit gmt time h:m 24h time" in {
+      (atParser parseOnly "15:00g") shouldBe Done("", AtUniversalTime(LocalTime.of(15, 0)))
+    }
+    it should "parse explicit z time h:m 24h time" in {
+      (atParser parseOnly "15:00z") shouldBe Done("", AtUniversalTime(LocalTime.of(15, 0)))
+    }
     it should "parse explicit universal time h:m:s time" in {
       (atParser parseOnly "1:28:14u") shouldBe Done("", AtUniversalTime(LocalTime.of(1, 28, 14)))
+    }
+    it should "calculate if at the end of day" in {
+      (atParser parseOnly "2:20").map(_.endOfDay) shouldBe Done("", false)
+      (atParser parseOnly "2:20s").map(_.endOfDay) shouldBe Done("", false)
+      (atParser parseOnly "2:20u").map(_.endOfDay) shouldBe Done("", false)
+      (atParser parseOnly "24:00g").map(_.endOfDay) shouldBe Done("", true)
+      //(atParser parseOnly "-").map(_.endOfDay) shouldBe Done("", false)
+      (atParser parseOnly "3z").map(_.endOfDay) shouldBe Done("", false)
+      (atParser parseOnly "0:00").map(_.endOfDay) shouldBe Done("", true)
     }
 
   "TZDBParser" should
