@@ -154,6 +154,11 @@ object TZDB {
     }
   }
 
+  case class ZoneOffsetParams(transition: LocalDateTime, offsetBefore: ZoneOffset, offsetAfter: ZoneOffset) {
+    def toEpochSecond: Long = transition.toEpochSecond(offsetBefore)
+    def toZoneOffsetTransition: ZoneOffsetTransition = ZoneOffsetTransition.of(transition, offsetBefore, offsetAfter)
+  }
+
   case class Rule(name: String, from: RuleYear, to: RuleYear, month: Month, on: On, at: At, save: Save, letter: Letter) extends Product with Serializable {
     private def toInt(y: RuleYear, defaultY: Int): Int =
       y match {
@@ -195,18 +200,42 @@ object TZDB {
       }
     }
 
-    def toTransition(standardOffset: ZoneOffset, savingsBeforeSecs: Int): ZoneOffsetTransition = {
+    def toTransitio(standardOffset: ZoneOffset, savingsBeforeSecs: Int): ZoneOffsetTransition = {
       val ldt: LocalDateTime = LocalDateTime.of(toLocalDate, at.time)
+      println("ldt " + ldt)
       val wallOffset: ZoneOffset = ZoneOffset.ofTotalSeconds(standardOffset.getTotalSeconds + savingsBeforeSecs)
+      println("WOF " + wallOffset)
       val dt: LocalDateTime = At.toTimeDefinition(at).createDateTime(ldt, standardOffset, wallOffset)
+      println("dt " + dt)
       val offsetAfter: ZoneOffset = ZoneOffset.ofTotalSeconds(standardOffset.getTotalSeconds + save.seconds)
+      println("of aff " + offsetAfter)
+      //println(offsetAfter)
+      if (wallOffset == offsetAfter) {
+        println("EXPLODES")
+      }
       ZoneOffsetTransition.of(dt, wallOffset, offsetAfter)
+    }
+
+    def toTransition2(standardOffset: ZoneOffset, savingsBeforeSecs: Int): ZoneOffsetParams = {
+      val ldt: LocalDateTime = LocalDateTime.of(toLocalDate, at.time)
+      //println("ldt " + ldt)
+      val wallOffset: ZoneOffset = ZoneOffset.ofTotalSeconds(standardOffset.getTotalSeconds + savingsBeforeSecs)
+      //println("WOF " + wallOffset)
+      val dt: LocalDateTime = At.toTimeDefinition(at).createDateTime(ldt, standardOffset, wallOffset)
+      //println("dt " + dt)
+      val offsetAfter: ZoneOffset = ZoneOffset.ofTotalSeconds(standardOffset.getTotalSeconds + save.seconds)
+      //println("of aff " + offsetAfter)
+      //println(offsetAfter)
+      if (wallOffset == offsetAfter) {
+        //println("EXPLODES")
+      }
+      ZoneOffsetParams(dt, wallOffset, offsetAfter)
     }
 
     def toTransitionRule(standardOffset: ZoneOffset, savingsBeforeSecs: Int): (ZoneOffsetTransitionRule, Rule) = {
       def transitionRule(dayOfMonthIndicator: Int, dayOfWeek: DayOfWeek) = {
-        val trans = toTransition(standardOffset, savingsBeforeSecs)
-        ZoneOffsetTransitionRule.of(month, dayOfMonthIndicator, dayOfWeek, at.time, at.endOfDay, At.toTimeDefinition(at), standardOffset, trans.getOffsetBefore, trans.getOffsetAfter)
+        val trans = toTransition2(standardOffset, savingsBeforeSecs)
+        ZoneOffsetTransitionRule.of(month, dayOfMonthIndicator, dayOfWeek, at.time, at.endOfDay, At.toTimeDefinition(at), standardOffset, trans.offsetBefore, trans.offsetAfter)
       }
 
       val dayOfMonth = on.dayOfMonthIndicator.orElse((month != Month.FEBRUARY) option month.maxLength - 6)
