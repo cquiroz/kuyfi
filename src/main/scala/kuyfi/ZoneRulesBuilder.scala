@@ -105,10 +105,16 @@ object ZoneRulesBuilder {
     val zero: SplitRules = SplitRules(Nil, Year.MIN_VALUE, Nil)
   }
 
-  case class FixedTimeZoneWindow(standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: ZoneOffsetTransitionRule.TimeDefinition, fixedSavingAmountSeconds: Option[Int]) extends TimeZoneWindow
+  case class FixedTimeZoneWindow(standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: ZoneOffsetTransitionRule.TimeDefinition, fixedSavingAmountSeconds: Option[Int]) extends TimeZoneWindow {
+    override def tidy(windowStartYear: Int): TimeZoneWindow = {
+      println("TIDY Fixed " + windowEnd)
+      this
+    }
+  }
   case class RulesTimeZoneWindow private (standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: ZoneOffsetTransitionRule.TimeDefinition, fixedSavingAmountSeconds: Option[Int], splitRules: SplitRules) extends TimeZoneWindow {
 
     override def tidy(windowStartYear: Int): TimeZoneWindow = {
+      //println("TIDY " + windowEnd)
       val newSplitRules = if (windowEnd == LocalDateTime.MAX) {
         val maxLastRuleStartYear = Math.max(splitRules.maxLastRuleStartYear, windowStartYear) + 1
         val lastRules = splitRules.lastRuleList
@@ -190,6 +196,7 @@ object ZoneRulesBuilder {
         println(loopWindowStart)
         println(loopWindowOffset)
         println("BEGIN LOOP")
+        windows.map(w => println(w.windowEnd))
 
 
         val q = windows.foldLeft((loopWindowStart, loopWindowOffset, loopStandardOffset, loopSavings, List.empty[ZoneOffsetTransition], List.empty[ZoneOffsetTransition], List.empty[ZoneOffsetTransitionRule])) { case ((lws, lwo, lso, ls, standardTransitions, transitionList, transitionRules), timeZoneWindow) =>
@@ -203,9 +210,9 @@ object ZoneRulesBuilder {
                 @tailrec
                 def go(savings: Int, rule: List[Rule]): Int = rule match {
                   case h :: rest =>
-                    println("offsets XXX")
-                    println(lso)
-                    println(ls)
+                    //println("offsets XXX")
+                    //println(lso)
+                    //println(ls)
                     val trans = h.toTransition2(lso, ls)
                     if (trans.toEpochSecond > loopWindowStart.toEpochSecond(lwo)) {
                       savings
@@ -221,11 +228,11 @@ object ZoneRulesBuilder {
           println("EFF Savings " + effectiveSavings)
           val (newStdTransitions, newLso) =
             if (lso != tzw.standardOffset.toZoneOffset) {
-              println("New std " + lws)
-              println("New std " + lwo)
-              println("New std " + lws.toEpochSecond(lwo))
-              println("New std " + lso)
-              println("New std " + LocalDateTime.ofEpochSecond(lws.toEpochSecond(lwo), 0, lso))
+              //println("New std " + lws)
+              //println("New std " + lwo)
+              //println("New std " + lws.toEpochSecond(lwo))
+              //println("New std " + lso)
+              //println("New std " + LocalDateTime.ofEpochSecond(lws.toEpochSecond(lwo), 0, lso))
               //println("New std " + lso)
               //println("New std " + tzw.standardOffset.toZoneOffset)
               (List(ZoneOffsetTransition.of(LocalDateTime.ofEpochSecond(lws.toEpochSecond(lwo), 0, lso), lso, tzw.standardOffset.toZoneOffset)), tzw.standardOffset.toZoneOffset)
@@ -253,7 +260,7 @@ object ZoneRulesBuilder {
                 val transition = r.toTransition2(newLso, savings)
 
                 if ((transition.toEpochSecond >= lws.toEpochSecond(lwo)) && (transition.toEpochSecond < tzw.createDateTimeEpochSecond(savings)) && (transition.offsetBefore != transition.offsetAfter)) {
-                  println("TO OUT")
+                  //println("TO OUT")
                   (r.save.seconds, transitions :+ transition.toZoneOffsetTransition)
                 } else {
                   (savings, transitions)
@@ -263,12 +270,17 @@ object ZoneRulesBuilder {
               (effectiveSavings, newTransitions)
           }
 
-          println("new3 " + newLs + " " + (transitionList ::: moreTransitions))
+          println("new3 " + newLs + " ")
+          (transitionList ::: moreTransitions).foreach(println)
 
-          val (finalLs, finalRules) = timeZoneWindow match {
+          println("NEW 4 " )
+          val (finalLs, finalRules) = tzw match {
             case RulesTimeZoneWindow(_, _, _, _, splitRules) =>
+              println("NEW 4 " + splitRules.lastRuleList.size)
               splitRules.lastRuleList.foldLeft((newLs, List.empty[ZoneOffsetTransitionRule])) { case ((savings, tr), r) =>
-                val transitionRule = r.toTransitionRule(lso, newLs)
+                println(savings)
+                val transitionRule = r.toTransitionRule(lso, savings)
+
                 (r.save.seconds, tr :+ transitionRule._1)
               }
             case _ =>
@@ -304,7 +316,10 @@ object ZoneRulesBuilder {
 
         def windowForever(offset: GmtOffset): TimeZoneWindow = FixedTimeZoneWindow(offset, LocalDateTime.MAX, TimeDefinition.WALL, transition.ruleId.fixedOffset)
 
-        def windowWithFixedOffset(offset: GmtOffset)(until: Until): TimeZoneWindow = FixedTimeZoneWindow(offset, until.toDateTime, until.at.map(At.toTimeDefinition).getOrElse(TimeDefinition.WALL), transition.ruleId.fixedOffset)
+        def windowWithFixedOffset(offset: GmtOffset)(until: Until): TimeZoneWindow = {
+          println("FIXED UNTIL " + until.toDateTime)
+          FixedTimeZoneWindow(offset, until.toDateTime, until.at.map(At.toTimeDefinition).getOrElse(TimeDefinition.WALL), transition.ruleId.fixedOffset)
+        }
 
         val w: TimeZoneWindow = transition.ruleId match {
           // Fixed offset at 0
@@ -319,6 +334,8 @@ object ZoneRulesBuilder {
             val rules: List[Rule] = c.rules.getOrElse(ruleId, Nil)
             val adjustedRules = rules.map(_.adjustForwards)
             transition.until.fold(RulesTimeZoneWindow(transition.offset, LocalDateTime.MAX, TimeDefinition.WALL, transition.ruleId.fixedOffset, adjustedRules)) { until =>
+              println("CREATED " + until)
+              println("CREATED " + until.toDateTime)
               RulesTimeZoneWindow(transition.offset, until.toDateTime, until.at.map(At.toTimeDefinition).getOrElse(TimeDefinition.WALL), transition.ruleId.fixedOffset, adjustedRules)
             }
         }

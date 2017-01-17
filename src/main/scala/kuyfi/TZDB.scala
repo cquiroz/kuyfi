@@ -72,7 +72,7 @@ object TZDB {
 
   case class Until(y: Int, m: Option[Month], d: Option[DayOfTheMonth], at: Option[At]) {
     // TODO move to an aux class
-    def toDateTime: LocalDateTime = {
+    def toDateTime2: LocalDateTime = {
       val month = m.getOrElse(Month.JANUARY)
       val date: LocalDate = d.fold {
         val dayOfMonth = month.length(Year.isLeap(y))
@@ -83,6 +83,26 @@ object TZDB {
       LocalDateTime.of(date, LocalTime.MIDNIGHT)
     }
 
+    def toDateTime: LocalDateTime = {
+      val month = m.getOrElse(Month.JANUARY)
+      println("TDT " + d)
+      val date = d.fold {
+
+        val dm = month.length(Year.isLeap(y))
+        println("NON " + y + month + dm)
+        LocalDate.of(y, month, 1)
+      } { dm =>
+        LocalDate.of(y, month, dm.i)
+      }
+
+      val ldt: LocalDateTime = LocalDateTime.of(date, at.map(_.time).getOrElse(LocalTime.MIDNIGHT))
+      println("TO end " + at.map(_.endOfDay))
+      if (at.map(_.endOfDay).getOrElse(false)) {
+        ldt.plusDays(1)
+      } else {
+        ldt
+      }
+    }
   }
 
   sealed trait ZoneRule extends Product with Serializable {
