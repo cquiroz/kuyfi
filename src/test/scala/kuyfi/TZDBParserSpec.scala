@@ -161,7 +161,7 @@ class TZDBParserSpec extends FlatSpec with Matchers {
       (atParser parseOnly "24:00g").map(_.endOfDay) shouldBe Done("", true)
       //(atParser parseOnly "-").map(_.endOfDay) shouldBe Done("", false)
       (atParser parseOnly "3z").map(_.endOfDay) shouldBe Done("", false)
-      (atParser parseOnly "0:00").map(_.endOfDay) shouldBe Done("", true)
+      (atParser parseOnly "0:00").map(_.endOfDay) shouldBe Done("", false)
     }
 
   "TZDBParser" should
@@ -172,7 +172,7 @@ class TZDBParserSpec extends FlatSpec with Matchers {
         "Rule	Egypt	1995	2010	-	Apr	lastFri	 0:00s	1:00	S" ->
           Rule("Egypt", GivenYear(1995), GivenYear(2010), Month.APRIL, LastWeekday(DayOfWeek.FRIDAY), AtStandardTime(LocalTime.of(0, 0)), Save(LocalTime.of(1, 0)), Letter("S")),
         "Rule	Egypt	2007	only	-	Sep	Thu>=1	24:00	0	-" ->
-          Rule("Egypt", GivenYear(2007), Only, Month.SEPTEMBER, AfterWeekday(DayOfWeek.THURSDAY, 1), AtWallTime(LocalTime.of(0, 0)), Save(LocalTime.of(0, 0)), Letter("-")),
+          Rule("Egypt", GivenYear(2007), Only, Month.SEPTEMBER, AfterWeekday(DayOfWeek.THURSDAY, 1), AtWallTime(LocalTime.of(0, 0), true), Save(LocalTime.of(0, 0)), Letter("-")),
         "Rule	Ghana	1920	1942	-	Sep	 1	0:00	0:20	GHST" ->
           Rule("Ghana", GivenYear(1920), GivenYear(1942), Month.SEPTEMBER, DayOfTheMonth(1), AtWallTime(LocalTime.of(0, 0)), Save(LocalTime.of(0, 20)), Letter("GHST")),
         "Rule RussiaAsia	1981	1984	-	Apr	1	 0:00	1:00	S" ->

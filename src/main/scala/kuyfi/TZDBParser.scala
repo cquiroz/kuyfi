@@ -109,8 +109,10 @@ object TZDBParser {
       m <- int
     } yield (n.isDefined, h, m)
 
-  val hourMinParserLT: Parser[LocalTime] = hourMinParser.map {
-    case (_, h, m) => LocalTime.of(fixHourRange(h), m)
+  val hourMinParserLT: Parser[(Boolean, LocalTime)] = hourMinParser.map {
+    case (_, h, m) =>
+      val (endOfDay, hours) = fixHourRange(h)
+      (endOfDay, LocalTime.of(hours, m))
   }
 
   val hourMinParserOf: Parser[GmtOffset] = hourMinParser.map {
@@ -128,8 +130,10 @@ object TZDBParser {
       s <- int
     } yield (n.isDefined, h, m, s)
 
-  val hourMinSecParserLT: Parser[LocalTime] = hourMinSecParser.map {
-      case (_, h, m, s) => LocalTime.of(fixHourRange(h), m, s)
+  val hourMinSecParserLT: Parser[(Boolean, LocalTime)] = hourMinSecParser.map {
+      case (_, h, m, s) =>
+        val (endOfDay, hours) = fixHourRange(h)
+        (endOfDay, LocalTime.of(hours, m, s))
     }
 
   val hourMinSecParserOf: Parser[GmtOffset] = hourMinSecParser.map {
@@ -137,13 +141,13 @@ object TZDBParser {
       case (_  , h, m, s)        => GmtOffset( h,  m,  s)
     }
 
-  val timeParser: Parser[LocalTime] =
+  val timeParser: Parser[(Boolean, LocalTime)] =
     opt(many(whitespace)) ~>
     hourMinSecParserLT |
     hourMinParserLT |
-    int.map(h => LocalTime.of(fixHourRange(h), 0))
+    int.map(fixHourRange).map(h => (h._1, LocalTime.of(h._2, 0)))
 
-  private def fixHourRange(h: Int) = (h === 24) ? 0 | h
+  private def fixHourRange(h: Int): (Boolean, Int) = (h === 24, (h === 24) ? 0 | h)
 
   val gmtOffsetParser: Parser[GmtOffset] =
     hourMinSecParserOf |
@@ -151,15 +155,13 @@ object TZDBParser {
     int.map(h => GmtOffset(h, 0, 0))
 
   val atParser: Parser[At] =
-    (timeParser ~ chr('w')).map(x => AtWallTime(x._1): At) |
-    (timeParser ~ chr('s')).map(x => AtStandardTime(x._1): At) |
-    (timeParser ~ chr('z')).map(x => AtUniversalTime(x._1): At) |
-    (timeParser ~ chr('g')).map(x => AtUniversalTime(x._1): At) |
-    (timeParser ~ chr('u')).map(x => AtUniversalTime(x._1): At) |
-    timeParser.map(x => AtWallTime(x): At)
+    (timeParser ~ chr('w')).map { case ((e, t), _) => AtWallTime(t, e): At } |
+    (timeParser ~ chr('s')).map { case ((e, t), _) => AtStandardTime(t, e): At } |
+    (timeParser ~ oneOf("zgu")).map { case ((e, t), _) => AtUniversalTime(t, e): At } |
+    timeParser.map { case (e, t) => AtWallTime(t, e): At }
 
   val saveParser: Parser[Save] =
-    timeParser.map(x => Save(x))
+    timeParser.map(x => Save(x._2))
 
   val toEndLine: Parser[String] = takeWhile(_ =/= '\n') <~ opt(nl)
 

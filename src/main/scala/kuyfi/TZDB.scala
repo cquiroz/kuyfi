@@ -30,21 +30,21 @@ object TZDB {
     override def noEndOfDay = copy(endOfDay = false)
   }
   object AtWallTime {
-    def apply(time: LocalTime): At = AtWallTime(time, (time.getHour == 0 || time.getHour == 24) && time.getMinute == 0 && time.getSecond == 0)
+    def apply(time: LocalTime): At = AtWallTime(time, time.getHour == 24 && time.getMinute == 0 && time.getSecond == 0)
   }
 
   case class AtStandardTime(time: LocalTime, endOfDay: Boolean) extends At {
     override def noEndOfDay = copy(endOfDay = false)
   }
   object AtStandardTime {
-    def apply(time: LocalTime): At = this(time, (time.getHour == 0 || time.getHour == 24) && time.getMinute == 0 && time.getSecond == 0)
+    def apply(time: LocalTime): At = this(time, time.getHour == 24 && time.getMinute == 0 && time.getSecond == 0)
   }
 
   case class AtUniversalTime(time: LocalTime, endOfDay: Boolean) extends At{
     override def noEndOfDay = copy(endOfDay = false)
   }
   object AtUniversalTime {
-    def apply(time: LocalTime): At = this(time, (time.getHour == 0 || time.getHour == 24) && time.getMinute == 0 && time.getSecond == 0)
+    def apply(time: LocalTime): At = this(time, time.getHour == 24 && time.getMinute == 0 && time.getSecond == 0)
   }
 
   object At {
