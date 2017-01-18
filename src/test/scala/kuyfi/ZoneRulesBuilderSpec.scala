@@ -52,5 +52,20 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
       calculatedLondonRules.map(_.isFixedOffset) shouldBe Some(londonRules.isFixedOffset)
       calculatedLondonRules.map(_.toString) shouldBe Some(londonRules.toString)
     }
+    it should "construct the transition zones for Kathmandu" in {
+      val londonRules = ZoneRulesProvider.getRules("Asia/Kathmandu", false)
+
+      val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/asia_kathmandu"), "UTF-8").mkString
+
+      val parsedZoneRules: Option[Map[Zone, ZoneRules]] = TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      parsedZoneRules.map(_.size) shouldBe Some(1)
+      val calculatedLondonRules = parsedZoneRules.flatMap(_.find(_._1.name == "Asia/Kathmandu")).map(_._2)
+      calculatedLondonRules.map(_.getTransitionRules.size) shouldBe Some(londonRules.getTransitionRules.size)
+      calculatedLondonRules.map(_.getTransitionRules) shouldBe Some(londonRules.getTransitionRules)
+      calculatedLondonRules.map(_.getTransitions.size) shouldBe Some(londonRules.getTransitions.size)
+      calculatedLondonRules.map(_.getTransitions) shouldBe Some(londonRules.getTransitions)
+      calculatedLondonRules.map(_.isFixedOffset) shouldBe Some(londonRules.isFixedOffset)
+      calculatedLondonRules.map(_.toString) shouldBe Some(londonRules.toString)
+    }
 
 }

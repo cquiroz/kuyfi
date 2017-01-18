@@ -201,7 +201,7 @@ object ZoneRulesBuilder {
 
 
           val q = windows.foldLeft((loopWindowStart, loopWindowOffset, loopStandardOffset, loopSavings, List.empty[ZoneOffsetTransition], List.empty[ZoneOffsetTransition], List.empty[ZoneOffsetTransitionRule])) { case ((lws, lwo, lso, ls, standardTransitions, transitionList, transitionRules), timeZoneWindow) =>
-            println("WINDOW " + timeZoneWindow.windowEnd + " LWS " + lws.getYear)
+            println("WINDOW " + timeZoneWindow.windowEnd + " LWS " + lws.getYear + " " + timeZoneWindow.standardOffset.toZoneOffset)
             println("------------------------")
             val tzw = timeZoneWindow.tidy(lws.getYear)
 
@@ -230,13 +230,13 @@ object ZoneRulesBuilder {
             println("EFF Savings " + effectiveSavings)
             val (newStdTransitions, newLso) =
               if (lso != tzw.standardOffset.toZoneOffset) {
-                //println("New std " + lws)
-                //println("New std " + lwo)
-                //println("New std " + lws.toEpochSecond(lwo))
-                //println("New std " + lso)
-                //println("New std " + LocalDateTime.ofEpochSecond(lws.toEpochSecond(lwo), 0, lso))
-                //println("New std " + lso)
-                //println("New std " + tzw.standardOffset.toZoneOffset)
+                println("New std " + lws)
+                println("New std " + lwo)
+                println("New std " + lws.toEpochSecond(lwo))
+                println("New std " + lso)
+                println("New std " + LocalDateTime.ofEpochSecond(lws.toEpochSecond(lwo), 0, lso))
+                println("New std wso " + tzw.standardOffset)
+                println("New std " + tzw.standardOffset.toZoneOffset)
                 (List(ZoneOffsetTransition.of(LocalDateTime.ofEpochSecond(lws.toEpochSecond(lwo), 0, lso), lso, tzw.standardOffset.toZoneOffset)), tzw.standardOffset.toZoneOffset)
               } else {
                 (Nil, lso)
@@ -256,8 +256,8 @@ object ZoneRulesBuilder {
                 splitRules.ruleList.foldLeft((effectiveSavings, newTransitions)) { case ((savings, transitions), r) =>
                   println("offsets " + i + " " + tzw.windowEnd)
                   i = i + 1
-                  //println(newLso)
-                  //println(savings)
+                  println(newLso)
+                  println(savings)
 
                   val transition = r.toTransition2(newLso, savings)
 
@@ -330,7 +330,8 @@ object ZoneRulesBuilder {
         val w: TimeZoneWindow = transition.ruleId match {
           // Fixed offset at 0
           case r @ NullRule            =>
-            transition.until.fold(windowForever(GmtOffset.zero))(windowWithFixedOffset(transition.offset))
+            println("NULL " + transition.until.fold(windowForever(transition.offset))(windowWithFixedOffset(transition.offset)))
+            transition.until.fold(windowForever(transition.offset))(windowWithFixedOffset(transition.offset))
           // Fixed offset
           case FixedOffset(offset) =>
             transition.until.fold(windowForever(GmtOffset.zero))(windowWithFixedOffset(offset))

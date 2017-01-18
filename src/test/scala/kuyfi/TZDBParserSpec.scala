@@ -304,6 +304,15 @@ class TZDBParserSpec extends FlatSpec with Matchers {
             ZoneTransition(GmtOffset(-4, -27, -44), NullRule,  "LMT",   Some(Until(1890, None, None, None))),
             ZoneTransition(GmtOffset(-4, -27, -40), NullRule,  "CMT",   Some(Until(1912, Some(Month.FEBRUARY), Some(DayOfTheMonth(12)), None))),
             ZoneTransition(GmtOffset(-4, -30,   0), NullRule,  "VET",   Some(Until(1965, Some(Month.JANUARY), Some(DayOfTheMonth(1)), Some(AtWallTime(LocalTime.of(0, 0))))))
+          )),
+        """Zone	Asia/Kathmandu	5:41:16 -	LMT	1920
+          |			5:30	-	IST	1986
+          |			5:45	-	NPT	# Nepal Time
+          |""".stripMargin ->
+          Zone("Asia/Kathmandu", List(
+            ZoneTransition(GmtOffset(5, 41, 16), NullRule,  "LMT",   Some(Until(1920, None, None, None))),
+            ZoneTransition(GmtOffset(5, 30,  0), NullRule,  "IST",   Some(Until(1986, None, None, None))),
+            ZoneTransition(GmtOffset(5, 45,  0), NullRule,  "NPT",   None)
           ))
       )
       zones.foreach { zone =>
@@ -323,6 +332,9 @@ class TZDBParserSpec extends FlatSpec with Matchers {
       // The third zone has a fixed offset
       val thirdRule = zones.headOption.flatMap { _._2.transitions.lift(2).map(_.ruleId) }
       thirdRule shouldBe Some(FixedOffset(GmtOffset(1, 0, 0)))
+      // The third zone has a fixed offset
+      val fifthRule = zones.lift(5).flatMap { _._2.transitions.lift(2).map(_.offset) }
+      fifthRule shouldBe Some(GmtOffset(-4, -30, 0))
     }
     it should "parse contiguous Zones" in {
       val zones = List(
