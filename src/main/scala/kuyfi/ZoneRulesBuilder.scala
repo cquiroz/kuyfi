@@ -176,7 +176,7 @@ object ZoneRulesBuilder {
   type RulesById = Map[String, List[Rule]]
 
   case class WindowsCollector(rules: RulesById, windows: List[TimeZoneWindow]) {
-    def toRules: Any = {
+    def toRules: Option[ZoneRules] = {
       //println("WINDOWS")
       //windows.foreach(println)
       windows.headOption.map { firstWindow =>
@@ -357,11 +357,11 @@ object ZoneRulesBuilder {
 
   }
 
-  def calculateTransitions(rows: List[Row]): List[Row] = {
+  def calculateTransitions(rows: List[Row]): List[ZoneRules] = {
     val rulesByName: RulesById = rows.flatMap(_.fold(collectRules).apply(Nil)).groupBy(_.name)
-    val k = rows.map(_.fold(toWindows).apply(WindowsCollector(rulesByName, Nil)))
-    k.filter(_.windows.nonEmpty).map(_.toRules).foreach(println)
-    rows
+    val k: List[WindowsCollector] = rows.map(_.fold(toWindows).apply(WindowsCollector(rulesByName, Nil)))
+    val rules: List[ZoneRules] = k.filter(_.windows.nonEmpty).flatMap(_.toRules)
+    rules
   }
 }
 
