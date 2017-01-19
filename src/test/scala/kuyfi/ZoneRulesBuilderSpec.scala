@@ -10,6 +10,8 @@ import kuyfi.TZDB.Zone
 class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
   import better.files._
 
+  // NOTE These tests are fragile as they depend on the timezone db of the JVM
+
   val r = file"src/test/resources/"
   val rows = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitions).unsafePerformIO()
 
@@ -37,35 +39,42 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
       val calculatedRules = rows.find(_._1.name == "America/New_York").map(_._2)
       compareZoneRules(calculatedRules, "America/New_York")
     }
+    it should "calculate the transitions for Asia/Kathmandu" in {
+      val calculatedRules = rows.find(_._1.name == "Asia/Kathmandu").map(_._2)
+      compareZoneRules(calculatedRules, "Asia/Kathmandu")
+    }
+    it should "calculate the transitions for Europe/Paris" in {
+      val calculatedRules = rows.find(_._1.name == "Europe/Paris").map(_._2)
+      compareZoneRules(calculatedRules, "Europe/Paris")
+    }
+    it should "calculate the transitions for Australia/Adelaide" in {
+      val calculatedRules = rows.find(_._1.name == "Australia/Adelaide").map(_._2)
+      compareZoneRules(calculatedRules, "Australia/Adelaide")
+    }
     it should "construct the transition zones for London" in {
-      val londonRules = ZoneRulesProvider.getRules("Europe/London", false)
-
       val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/europe_london"), "UTF-8").mkString
 
       val parsedZoneRules: Option[Map[Zone, ZoneRules]] = TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
       parsedZoneRules.map(_.size) shouldBe Some(1)
+
       val calculatedLondonRules = parsedZoneRules.flatMap(_.find(_._1.name == "Europe/London")).map(_._2)
-      calculatedLondonRules.map(_.getTransitionRules.size) shouldBe Some(londonRules.getTransitionRules.size)
-      calculatedLondonRules.map(_.getTransitionRules) shouldBe Some(londonRules.getTransitionRules)
-      calculatedLondonRules.map(_.getTransitions.size) shouldBe Some(londonRules.getTransitions.size)
-      calculatedLondonRules.map(_.getTransitions) shouldBe Some(londonRules.getTransitions)
-      calculatedLondonRules.map(_.isFixedOffset) shouldBe Some(londonRules.isFixedOffset)
-      calculatedLondonRules.map(_.toString) shouldBe Some(londonRules.toString)
+      compareZoneRules(calculatedLondonRules, "Europe/London")
     }
     it should "construct the transition zones for Kathmandu" in {
-      val londonRules = ZoneRulesProvider.getRules("Asia/Kathmandu", false)
-
       val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/asia_kathmandu"), "UTF-8").mkString
 
       val parsedZoneRules: Option[Map[Zone, ZoneRules]] = TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
       parsedZoneRules.map(_.size) shouldBe Some(1)
-      val calculatedLondonRules = parsedZoneRules.flatMap(_.find(_._1.name == "Asia/Kathmandu")).map(_._2)
-      calculatedLondonRules.map(_.getTransitionRules.size) shouldBe Some(londonRules.getTransitionRules.size)
-      calculatedLondonRules.map(_.getTransitionRules) shouldBe Some(londonRules.getTransitionRules)
-      calculatedLondonRules.map(_.getTransitions.size) shouldBe Some(londonRules.getTransitions.size)
-      calculatedLondonRules.map(_.getTransitions) shouldBe Some(londonRules.getTransitions)
-      calculatedLondonRules.map(_.isFixedOffset) shouldBe Some(londonRules.isFixedOffset)
-      calculatedLondonRules.map(_.toString) shouldBe Some(londonRules.toString)
+      val calculatedKathmanduRules = parsedZoneRules.flatMap(_.find(_._1.name == "Asia/Kathmandu")).map(_._2)
+      compareZoneRules(calculatedKathmanduRules, "Asia/Kathmandu")
+    }
+    it should "construct the transition zones for Paris" in {
+      val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/europe_paris"), "UTF-8").mkString
+
+      val parsedZoneRules: Option[Map[Zone, ZoneRules]] = TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      parsedZoneRules.map(_.size) shouldBe Some(1)
+      val calculatedParisRules = parsedZoneRules.flatMap(_.find(_._1.name == "Europe/Paris")).map(_._2)
+      compareZoneRules(calculatedParisRules, "Europe/Paris")
     }
 
 }

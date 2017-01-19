@@ -215,7 +215,7 @@ object ZoneRulesBuilder {
                       ////println(lso)
                       ////println(ls)
                       val trans = h.toTransition2(lso, ls)
-                      if (trans.toEpochSecond > loopWindowStart.toEpochSecond(lwo)) {
+                      if (trans.toEpochSecond > lws.toEpochSecond(lwo)) {
                         savings
                       } else {
                         go(h.save.seconds, rest)
