@@ -71,11 +71,12 @@ object ZoneRulesBuilder {
     }
   }
 
-  implicit val ruleOrdering: scala.Ordering[Rule] = new scala.Ordering[Rule]() {
+  def ruleOrderings(f: Rule => RuleYear): scala.Ordering[Rule] = new scala.Ordering[Rule]() {
+
     val ruleOrdering = RuleYear.order.toScalaOrdering
     val atOrdering = At.order.toScalaOrdering
     override def compare(x: Rule, y: Rule): Int = {
-      val rulesCmp = ruleOrdering.compare(x.from, y.from)
+      val rulesCmp = ruleOrdering.compare(f(x), f(y))
       if (rulesCmp == 0) {
         val monthCmp = x.month.compareTo(y.month)
         if (monthCmp == 0) {
@@ -96,9 +97,14 @@ object ZoneRulesBuilder {
     }
   }
 
+  val ruleOrdering: scala.Ordering[Rule] = ruleOrderings(_.from)
+
+  val ruleOrderingLast: scala.Ordering[Rule] = ruleOrderings(_.to)
 
   case class SplitRules(lastRuleList: List[Rule], maxLastRuleStartYear: Int, ruleList: List[Rule]) {
-    def sorted: SplitRules = copy(lastRuleList = lastRuleList.sorted, ruleList = ruleList.sorted)
+    def sorted: SplitRules =
+      // Note the rules are sorted different with respect to the year
+      copy(lastRuleList = lastRuleList.sorted(ruleOrderingLast), ruleList = ruleList.sorted(ruleOrdering))
   }
 
   object SplitRules {
@@ -127,9 +133,9 @@ object ZoneRulesBuilder {
       } else {
         val endYear: Int = windowEnd.getYear
         val lastRules = splitRules.lastRuleList
-        RulesTimeZoneWindow.acc(splitRules, lastRules.map(_.copy(to = GivenYear(endYear + 1)))).copy(lastRuleList = Nil,  maxLastRuleStartYear = Year.MAX_VALUE)
+        RulesTimeZoneWindow.acc(splitRules, lastRules.map(_.copy(to = GivenYear(endYear + 1)))).copy(lastRuleList = Nil, maxLastRuleStartYear = Year.MAX_VALUE)
       }
-      val newFixedAmountSecs = if (splitRules.ruleList.isEmpty && fixedSavingAmountSeconds.isEmpty) {
+      val newFixedAmountSecs = if (newSplitRules.ruleList.isEmpty && fixedSavingAmountSeconds.isEmpty) {
         None
       } else {
         fixedSavingAmountSeconds
@@ -280,9 +286,7 @@ object ZoneRulesBuilder {
               case RulesTimeZoneWindow(_, _, _, _, splitRules) =>
                 //println("NEW 4 " + splitRules.lastRuleList.size)
                 splitRules.lastRuleList.foldLeft((newLs, List.empty[ZoneOffsetTransitionRule])) { case ((savings, tr), r) =>
-                  //println(savings)
-                  val transitionRule = r.toTransitionRule(lso, savings)
-
+                  val transitionRule = r.toTransitionRule(newLso, savings)
                   (r.save.seconds, tr :+ transitionRule._1)
                 }
               case _ =>

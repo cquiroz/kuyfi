@@ -11,6 +11,7 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
   import better.files._
 
   // NOTE These tests are fragile as they depend on the timezone db of the JVM
+  // These tests are for 2014j matching the JVM on travis
 
   val r = file"src/test/resources/"
   val rows = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitions).unsafePerformIO()
@@ -29,7 +30,7 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
   "ZoneRulesBuilder" should
     "do a full calculation for all tzdb" in {
       rows.foreach(println)
-      rows.size shouldBe 382
+      rows.size shouldBe 385
     }
     it should "calculate the transitions for europe/london" in {
       val calculatedRules = rows.find(_._1.name == "Europe/London").map(_._2)
@@ -50,6 +51,10 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
     it should "calculate the transitions for Australia/Adelaide" in {
       val calculatedRules = rows.find(_._1.name == "Australia/Adelaide").map(_._2)
       compareZoneRules(calculatedRules, "Australia/Adelaide")
+    }
+    it should "calculate the transitions for Africa/Casablanca" in {
+      val calculatedRules = rows.find(_._1.name == "Africa/Casablanca").map(_._2)
+      compareZoneRules(calculatedRules, "Africa/Casablanca")
     }
     it should "construct the transition zones for London" in {
       val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/europe_london"), "UTF-8").mkString
@@ -75,6 +80,15 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
       parsedZoneRules.map(_.size) shouldBe Some(1)
       val calculatedParisRules = parsedZoneRules.flatMap(_.find(_._1.name == "Europe/Paris")).map(_._2)
       compareZoneRules(calculatedParisRules, "Europe/Paris")
+    }
+    it should "construct the transition zones for Casablanca" in {
+      val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/africa_casablanca"), "UTF-8").mkString
+
+      val parsedZoneRules: Option[Map[Zone, ZoneRules]] = TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      parsedZoneRules.map(_.size) shouldBe Some(1)
+
+      val calculatedCasablancaRules = parsedZoneRules.flatMap(_.find(_._1.name == "Africa/Casablanca")).map(_._2)
+      compareZoneRules(calculatedCasablancaRules, "Africa/Casablanca")
     }
 
 }

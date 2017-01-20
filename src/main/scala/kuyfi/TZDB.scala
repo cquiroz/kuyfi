@@ -97,7 +97,7 @@ object TZDB {
 
       val ldt: LocalDateTime = LocalDateTime.of(date, at.map(_.time).getOrElse(LocalTime.MIDNIGHT))
       println("TO end " + at.map(_.endOfDay))
-      if (at.map(_.endOfDay).getOrElse(false)) {
+      if (at.exists(_.endOfDay)) {
         ldt.plusDays(1)
       } else {
         ldt
