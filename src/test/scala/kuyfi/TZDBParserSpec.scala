@@ -187,6 +187,8 @@ class TZDBParserSpec extends FlatSpec with Matchers {
           Rule("Indianapolis", GivenYear(1941), Only, Month.JUNE, DayOfTheMonth(22), AtWallTime(LocalTime.of(2, 0)), Save(LocalTime.of(1, 0)), Letter("D")),
         "Rule	Syria	2007	only	-	Nov	 Fri>=1	0:00	0	-" ->
           Rule("Syria", GivenYear(2007), Only, Month.NOVEMBER, AfterWeekday(DayOfWeek.FRIDAY, 1), AtWallTime(LocalTime.of(0, 0)), Save(LocalTime.of(0, 0)), Letter("-")),
+        "Rule	Morocco	2011	only	-	Jul	31	 0	0	-" ->
+          Rule("Morocco", GivenYear(2011), Only, Month.JULY, DayOfTheMonth(31), AtWallTime(LocalTime.of(0, 0)), Save(LocalTime.of(0, 0)), Letter("-")),
         "Rule	SystemV	1974	only	-	Jan	6	2:00	1:00	D" ->
           Rule("SystemV", GivenYear(1974), Only, Month.JANUARY, DayOfTheMonth(6), AtWallTime(LocalTime.of(2, 0)), Save(LocalTime.of(1, 0)), Letter("D"))
       )
@@ -285,13 +287,15 @@ class TZDBParserSpec extends FlatSpec with Matchers {
             ZoneTransition(GmtOffset(-6,   0,  0), RuleId("US"),    "C%sT", None)
           )),
         """Zone America/Guadeloupe	-4:06:08 -	LMT	1911 Jun  8 # Pointe-à-Pitre
-          |			-4:00	 -	AST""".stripMargin ->
+          |			-4:00	 -	AST
+          |""".stripMargin ->
           Zone("America/Guadeloupe", List(
             ZoneTransition(GmtOffset(-4, -6, -8), NullRule, "LMT", Some(Until(1911, Some(Month.JUNE), Some(DayOfTheMonth(8)), None))),
             ZoneTransition(GmtOffset(-4,  0,  0), NullRule, "AST", None)
           )),
         """Zone America/Juneau	 15:02:19 -	LMT	1867 Oct 18
-          |			 -8:57:41 -	LMT	1900 Aug 20 12:00""".stripMargin ->
+          |			 -8:57:41 -	LMT	1900 Aug 20 12:00
+          |""".stripMargin ->
           Zone("America/Juneau", List(
             ZoneTransition(GmtOffset(15,  2, 19),   NullRule,  "LMT",   Some(Until(1867, Some(Month.OCTOBER),  Some(DayOfTheMonth(18)), None))),
             ZoneTransition(GmtOffset(-8, -57, -41), NullRule,  "LMT",   Some(Until(1900, Some(Month.AUGUST),   Some(DayOfTheMonth(20)), Some(AtWallTime(LocalTime.of(12, 0))))))
@@ -313,10 +317,20 @@ class TZDBParserSpec extends FlatSpec with Matchers {
             ZoneTransition(GmtOffset(5, 41, 16), NullRule,  "LMT",   Some(Until(1920, None, None, None))),
             ZoneTransition(GmtOffset(5, 30,  0), NullRule,  "IST",   Some(Until(1986, None, None, None))),
             ZoneTransition(GmtOffset(5, 45,  0), NullRule,  "NPT",   None)
+          )),
+        """Zone Africa/Casablanca	-0:30:20 -	LMT	1913 Oct 26
+          |			 0:00	Morocco	WE%sT	1984 Mar 16
+          |			 1:00	-	CET	1986
+          |			 0:00	Morocco	WE%sT""".stripMargin ->
+          Zone("Africa/Casablanca", List(
+            ZoneTransition(GmtOffset(-0, -30, -20), NullRule,          "LMT",   Some(Until(1913, Some(Month.OCTOBER), Some(DayOfTheMonth(26)), None))),
+            ZoneTransition(GmtOffset( 0,   0,   0), RuleId("Morocco"), "WE%sT", Some(Until(1984, Some(Month.MARCH), Some(DayOfTheMonth(16)), None))),
+            ZoneTransition(GmtOffset( 1,   0,   0), NullRule,          "CET",   Some(Until(1986, None, None, None))),
+            ZoneTransition(GmtOffset( 0,   0,   0), RuleId("Morocco"), "WE%sT", None)
           ))
       )
       zones.foreach { zone =>
-        (zoneParser parseOnly zone._1) shouldBe Done("", zone._2)
+        (zoneParserNl parseOnly zone._1) shouldBe Done("", zone._2)
       }
       // Tests some special cases
       // The first zone has an unknown rule
@@ -381,7 +395,7 @@ class TZDBParserSpec extends FlatSpec with Matchers {
           )))
         )
       zones.foreach { zone =>
-        (many(zoneParser <~ char('\n')) parseOnly zone._1) shouldBe Done("", zone._2)
+        (many(zoneParserNl) parseOnly zone._1) shouldBe Done("", zone._2)
       }
     }
     it should "parse Zones with comments" in {

@@ -158,7 +158,7 @@ object TZDBParser {
     (timeParser ~ chr('w')).map { case ((e, t), _) => AtWallTime(t, e): At } |
     (timeParser ~ chr('s')).map { case ((e, t), _) => AtStandardTime(t, e): At } |
     (timeParser ~ oneOf("zgu")).map { case ((e, t), _) => AtUniversalTime(t, e): At } |
-    timeParser.map { case (e, t) => AtWallTime(t, e): At }
+    (opt(whitespace) ~> timeParser).map { case (e, t) => AtWallTime(t, e): At }
 
   val saveParser: Parser[Save] =
     timeParser.map(x => Save(x._2))
@@ -237,12 +237,15 @@ object TZDBParser {
       trans  <- zoneTransitionListParser
     } yield Zone(name, trans)
 
+  val zoneParserNl: Parser[Zone] =
+    zoneParser <~ opt(nl)
+
   val blankLine: Parser[BlankLine] =
     nl.map(_ => BlankLine(""))
 
   val fileParser: Parser[List[Row]] =
     for {
-      c <- many(commentParser.liftC[Row] | ruleParser.liftC[Row] | zoneParser.liftC[Row] | linkParser.liftC[Row] | blankLine.liftC[Row])
+      c <- many(commentParser.liftC[Row] | ruleParser.liftC[Row] | zoneParserNl.liftC[Row] | linkParser.liftC[Row] | blankLine.liftC[Row])
     } yield c
 
   def parseFile(text: String): ParseResult[List[Row]] =
