@@ -1,0 +1,11 @@
+# RULE	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule	Namibia	1994	max	-	Sep	Sun>=1	2:00	1:00	S
+Rule	Namibia	1995	max	-	Apr	Sun>=1	2:00	0	-
+# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+Zone	Africa/Windhoek	1:08:24 -	LMT	1892 Feb 8
+			1:30	-	SWAT	1903 Mar    # SW Africa Time
+			2:00	-	SAST	1942 Sep 20  2:00
+			2:00	1:00	SAST	1943 Mar 21  2:00
+			2:00	-	SAST	1990 Mar 21 # independence
+			2:00	-	CAT	1994 Apr  3
+			1:00	Namibia	WA%sT

@@ -338,7 +338,7 @@ object ZoneRulesBuilder {
             transition.until.fold(windowForever(transition.offset))(windowWithFixedOffset(transition.offset))
           // Fixed offset
           case FixedOffset(offset) =>
-            transition.until.fold(windowForever(GmtOffset.zero))(windowWithFixedOffset(offset))
+            transition.until.fold(windowForever(offset))(windowWithFixedOffset(transition.offset))
           // Offset determined by rules
           case RuleId(ruleId)      =>
             // TODO should this halt if a rule is not found

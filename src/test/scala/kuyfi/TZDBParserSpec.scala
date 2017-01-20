@@ -439,6 +439,22 @@ class TZDBParserSpec extends FlatSpec with Matchers {
               ZoneTransition(GmtOffset(1,   0,   0), NullRule,                        "BST",     Some(Until(1971, Some(Month.OCTOBER), Some(DayOfTheMonth(31)), Some(AtUniversalTime(LocalTime.of(2, 0)))))),
               ZoneTransition(GmtOffset(0,   0,   0), RuleId("GB-Eire"),               "%s",      Some(Until(1996, None,                None,                    None))),
               ZoneTransition(GmtOffset(0,   0,   0), RuleId("EU"),                    "GMT/BST", None)
+          )),
+        """Zone	Africa/Windhoek	1:08:24 -	LMT	1892 Feb 8
+          |			1:30	-	SWAT	1903 Mar    # SW Africa Time
+          |			2:00	-	SAST	1942 Sep 20  2:00
+          |			2:00	1:00	SAST	1943 Mar 21  2:00
+          |			2:00	-	SAST	1990 Mar 21 # independence
+          |			2:00	-	CAT	1994 Apr  3
+          |			1:00	Namibia	WA%sT""".stripMargin ->
+          Zone("Africa/Windhoek", List(
+              ZoneTransition(GmtOffset(1,  8, 24), NullRule,                        "LMT",   Some(Until(1892, Some(Month.FEBRUARY),  Some(DayOfTheMonth(8)),  None))),
+              ZoneTransition(GmtOffset(1, 30,  0), NullRule,                        "SWAT",  Some(Until(1903, Some(Month.MARCH), None, None))),
+              ZoneTransition(GmtOffset(2,  0,  0), NullRule,                        "SAST",  Some(Until(1942, Some(Month.SEPTEMBER), Some(DayOfTheMonth(20)),  Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset(2,  0,  0), FixedOffset(GmtOffset(1, 0, 0)), "SAST",  Some(Until(1943, Some(Month.MARCH), Some(DayOfTheMonth(21)),  Some(AtWallTime(LocalTime.of(2, 0)))))),
+              ZoneTransition(GmtOffset(2,  0,  0), NullRule,                        "SAST",  Some(Until(1990, Some(Month.MARCH), Some(DayOfTheMonth(21)), None))),
+              ZoneTransition(GmtOffset(2,  0,  0), NullRule,                        "CAT",   Some(Until(1994, Some(Month.APRIL), Some(DayOfTheMonth(3)), None))),
+              ZoneTransition(GmtOffset(1,  0,  0), RuleId("Namibia"),               "WA%sT", None)
           ))
         )
       zones.foreach { zone =>
