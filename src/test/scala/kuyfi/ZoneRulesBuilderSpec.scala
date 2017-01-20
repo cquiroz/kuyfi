@@ -68,6 +68,10 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
       val calculatedRules = rows.find(_._1.name == "Africa/Windhoek").map(_._2)
       compareZoneRules(calculatedRules, "Africa/Windhoek")
     }
+    it should "calculate the transitions for Africa/Cairo" in {
+      val calculatedRules = rows.find(_._1.name == "Africa/Cairo").map(_._2)
+      compareZoneRules(calculatedRules, "Africa/Cairo")
+    }
     it should "construct the transition zones for London" in {
       val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/europe_london"), "UTF-8").mkString
 
