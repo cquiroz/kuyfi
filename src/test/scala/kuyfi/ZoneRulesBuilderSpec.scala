@@ -72,6 +72,82 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
       val calculatedRules = rows.find(_._1.name == "Africa/Cairo").map(_._2)
       compareZoneRules(calculatedRules, "Africa/Cairo")
     }
+    it should "calculate the transitions for Africa/Algiers" in {
+      val calculatedRules = rows.find(_._1.name == "Africa/Algiers").map(_._2)
+      compareZoneRules(calculatedRules, "Africa/Algiers")
+    }
+    it should "calculate the transitions for Africa/Tripoli" in {
+      val calculatedRules = rows.find(_._1.name == "Africa/Tripoli").map(_._2)
+      compareZoneRules(calculatedRules, "Africa/Tripoli")
+    }
+    it should "calculate the transitions for Antarctica/Casey" in {
+      val calculatedRules = rows.find(_._1.name == "Antarctica/Casey").map(_._2)
+      compareZoneRules(calculatedRules, "Antarctica/Casey")
+    }
+    it should "calculate the transitions for Antarctica/DumontDUrville" in {
+      val calculatedRules = rows.find(_._1.name == "Antarctica/DumontDUrville").map(_._2)
+      compareZoneRules(calculatedRules, "Antarctica/DumontDUrville")
+    }
+    it should "calculate the transitions for Antarctica/Palmer" in {
+      val calculatedRules = rows.find(_._1.name == "Antarctica/Palmer").map(_._2)
+      compareZoneRules(calculatedRules, "Antarctica/Palmer")
+    }
+    it should "calculate the transitions for Antarctica/Davis" in {
+      val calculatedRules = rows.find(_._1.name == "Antarctica/Davis").map(_._2)
+      compareZoneRules(calculatedRules, "Antarctica/Davis")
+    }
+    it should "calculate the transitions for Asia/Kabul" in {
+      val calculatedRules = rows.find(_._1.name == "Asia/Kabul").map(_._2)
+      compareZoneRules(calculatedRules, "Asia/Kabul")
+    }
+    it should "calculate the transitions for Asia/Baku" in {
+      val calculatedRules = rows.find(_._1.name == "Asia/Baku").map(_._2)
+      compareZoneRules(calculatedRules, "Asia/Baku")
+    }
+    it should "calculate the transitions for Asia/Shanghai" in {
+      val calculatedRules = rows.find(_._1.name == "Asia/Shanghai").map(_._2)
+      compareZoneRules(calculatedRules, "Asia/Shanghai")
+    }
+    it should "calculate the transitions for Asia/Pontianak" in {
+      val calculatedRules = rows.find(_._1.name == "Asia/Pontianak").map(_._2)
+      compareZoneRules(calculatedRules, "Asia/Pontianak")
+    }
+    it should "calculate the transitions for Asia/Jerusalem" in {
+      val calculatedRules = rows.find(_._1.name == "Asia/Jerusalem").map(_._2)
+      compareZoneRules(calculatedRules, "Asia/Jerusalem")
+    }
+    it should "calculate the transitions for Asia/Oral" in {
+      val calculatedRules = rows.find(_._1.name == "Asia/Oral").map(_._2)
+      compareZoneRules(calculatedRules, "Asia/Oral")
+    }
+    it should "calculate the transitions for Asia/Gaza" in {
+      val calculatedRules = rows.find(_._1.name == "Asia/Gaza").map(_._2)
+      compareZoneRules(calculatedRules, "Asia/Gaza")
+    }
+    it should "calculate the transitions for Asia/Ho_Chi_Minh" in {
+      val calculatedRules = rows.find(_._1.name == "Asia/Ho_Chi_Minh").map(_._2)
+      compareZoneRules(calculatedRules, "Asia/Ho_Chi_Minh")
+    }
+    it should "calculate the transitions for Australia/Lindeman" in {
+      val calculatedRules = rows.find(_._1.name == "Australia/Lindeman").map(_._2)
+      compareZoneRules(calculatedRules, "Australia/Lindeman")
+    }
+    it should "calculate the transitions for Australia/Lord_Howe" in {
+      val calculatedRules = rows.find(_._1.name == "Australia/Lord_Howe").map(_._2)
+      compareZoneRules(calculatedRules, "Australia/Lord_Howe")
+    }
+    it should "calculate the transitions for Pacific/Guam" in {
+      val calculatedRules = rows.find(_._1.name == "Pacific/Guam").map(_._2)
+      compareZoneRules(calculatedRules, "Pacific/Guam")
+    }
+    it should "calculate the transitions for Pacific/Tongatapu" in {
+      val calculatedRules = rows.find(_._1.name == "Pacific/Tongatapu").map(_._2)
+      compareZoneRules(calculatedRules, "Pacific/Tongatapu")
+    }
+    it should "calculate the transitions for Pacific/Midway" in {
+      val calculatedRules = rows.find(_._1.name == "Pacific/Midway").map(_._2)
+      compareZoneRules(calculatedRules, "Pacific/Midway")
+    }
     it should "construct the transition zones for London" in {
       val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/europe_london"), "UTF-8").mkString
 
