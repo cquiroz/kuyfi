@@ -1,0 +1,197 @@
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule	Egypt	1940	only	-	Jul	15	0:00	1:00	S
+Rule	Egypt	1940	only	-	Oct	 1	0:00	0	-
+Rule	Egypt	1941	only	-	Apr	15	0:00	1:00	S
+Rule	Egypt	1941	only	-	Sep	16	0:00	0	-
+Rule	Egypt	1942	1944	-	Apr	 1	0:00	1:00	S
+Rule	Egypt	1942	only	-	Oct	27	0:00	0	-
+Rule	Egypt	1943	1945	-	Nov	 1	0:00	0	-
+Rule	Egypt	1945	only	-	Apr	16	0:00	1:00	S
+Rule	Egypt	1957	only	-	May	10	0:00	1:00	S
+Rule	Egypt	1957	1958	-	Oct	 1	0:00	0	-
+Rule	Egypt	1958	only	-	May	 1	0:00	1:00	S
+Rule	Egypt	1959	1981	-	May	 1	1:00	1:00	S
+Rule	Egypt	1959	1965	-	Sep	30	3:00	0	-
+Rule	Egypt	1966	1994	-	Oct	 1	3:00	0	-
+Rule	Egypt	1982	only	-	Jul	25	1:00	1:00	S
+Rule	Egypt	1983	only	-	Jul	12	1:00	1:00	S
+Rule	Egypt	1984	1988	-	May	 1	1:00	1:00	S
+Rule	Egypt	1989	only	-	May	 6	1:00	1:00	S
+Rule	Egypt	1990	1994	-	May	 1	1:00	1:00	S
+# IATA (after 1990) says transitions are at 0:00.
+# Go with IATA starting in 1995, except correct 1995 entry from 09-30 to 09-29.
+
+# From Alexander Krivenyshev (2011-04-20):
+# "...Egypt's interim cabinet decided on Wednesday to cancel daylight
+# saving time after a poll posted on its website showed the majority of
+# Egyptians would approve the cancellation."
+#
+# Egypt to cancel daylight saving time
+# http://www.almasryalyoum.com/en/node/407168
+# or
+# http://www.worldtimezone.com/dst_news/dst_news_egypt04.html
+Rule	Egypt	1995	2010	-	Apr	lastFri	 0:00s	1:00	S
+Rule	Egypt	1995	2005	-	Sep	lastThu	24:00	0	-
+# From Steffen Thorsen (2006-09-19):
+# The Egyptian Gazette, issue 41,090 (2006-09-18), page 1, reports:
+# Egypt will turn back clocks by one hour at the midnight of Thursday
+# after observing the daylight saving time since May.
+# http://news.gom.com.eg/gazette/pdf/2006/09/18/01.pdf
+Rule	Egypt	2006	only	-	Sep	21	24:00	0	-
+# From Dirk Losch (2007-08-14):
+# I received a mail from an airline which says that the daylight
+# saving time in Egypt will end in the night of 2007-09-06 to 2007-09-07.
+# From Jesper Nørgaard Welen (2007-08-15): [The following agree:]
+# http://www.nentjes.info/Bill/bill5.htm
+# http://www.timeanddate.com/worldclock/city.html?n=53
+# From Steffen Thorsen (2007-09-04): The official information...:
+# http://www.sis.gov.eg/En/EgyptOnline/Miscellaneous/000002/0207000000000000001580.htm
+Rule	Egypt	2007	only	-	Sep	Thu>=1	24:00	0	-
+# From Abdelrahman Hassan (2007-09-06):
+# Due to the Hijri (lunar Islamic calendar) year being 11 days shorter
+# than the year of the Gregorian calendar, Ramadan shifts earlier each
+# year. This year it will be observed September 13 (September is quite
+# hot in Egypt), and the idea is to make fasting easier for workers by
+# shifting business hours one hour out of daytime heat. Consequently,
+# unless discontinued, next DST may end Thursday 28 August 2008.
+# From Paul Eggert (2007-08-17):
+# For lack of better info, assume the new rule is last Thursday in August.
+
+# From Petr Machata (2009-04-06):
+# The following appeared in Red Hat bugzilla[1] (edited):
+#
+# > $ zdump -v /usr/share/zoneinfo/Africa/Cairo | grep 2009
+# > /usr/share/zoneinfo/Africa/Cairo  Thu Apr 23 21:59:59 2009 UTC = Thu =
+# Apr 23
+# > 23:59:59 2009 EET isdst=0 gmtoff=7200
+# > /usr/share/zoneinfo/Africa/Cairo  Thu Apr 23 22:00:00 2009 UTC = Fri =
+# Apr 24
+# > 01:00:00 2009 EEST isdst=1 gmtoff=10800
+# > /usr/share/zoneinfo/Africa/Cairo  Thu Aug 27 20:59:59 2009 UTC = Thu =
+# Aug 27
+# > 23:59:59 2009 EEST isdst=1 gmtoff=10800
+# > /usr/share/zoneinfo/Africa/Cairo  Thu Aug 27 21:00:00 2009 UTC = Thu =
+# Aug 27
+# > 23:00:00 2009 EET isdst=0 gmtoff=7200
+#
+# > end date should be Thu Sep 24 2009 (Last Thursday in September at 23:59=
+# :59)
+# > http://support.microsoft.com/kb/958729/
+#
+# timeanddate[2] and another site I've found[3] also support that.
+#
+# [1] https://bugzilla.redhat.com/show_bug.cgi?id=492263
+# [2] http://www.timeanddate.com/worldclock/clockchange.html?n=53
+# [3] http://wwp.greenwichmeantime.com/time-zone/africa/egypt/
+
+# From Arthur David Olson (2009-04-20):
+# In 2009 (and for the next several years), Ramadan ends before the fourth
+# Thursday in September; Egypt is expected to revert to the last Thursday
+# in September.
+
+# From Steffen Thorsen (2009-08-11):
+# We have been able to confirm the August change with the Egyptian Cabinet
+# Information and Decision Support Center:
+# http://www.timeanddate.com/news/time/egypt-dst-ends-2009.html
+#
+# The Middle East News Agency
+# http://www.mena.org.eg/index.aspx
+# also reports "Egypt starts winter time on August 21"
+# today in article numbered "71, 11/08/2009 12:25 GMT."
+# Only the title above is available without a subscription to their service,
+# and can be found by searching for "winter" in their search engine
+# (at least today).
+
+# From Alexander Krivenyshev (2010-07-20):
+# According to News from Egypt - Al-Masry Al-Youm Egypt's cabinet has
+# decided that Daylight Saving Time will not be used in Egypt during
+# Ramadan.
+#
+# Arabic translation:
+# "Clocks to go back during Ramadan - and then forward again"
+# http://www.almasryalyoum.com/en/news/clocks-go-back-during-ramadan-and-then-forward-again
+# http://www.worldtimezone.com/dst_news/dst_news_egypt02.html
+
+# From Ahmad El-Dardiry (2014-05-07):
+# Egypt is to change back to Daylight system on May 15
+# http://english.ahram.org.eg/NewsContent/1/64/100735/Egypt/Politics-/Egypts-government-to-reapply-daylight-saving-time-.aspx
+
+# From Gunther Vermier (2014-05-13):
+# our Egypt office confirms that the change will be at 15 May "midnight" (24:00)
+
+# From Imed Chihi (2014-06-04):
+# We have finally "located" a precise official reference about the DST changes
+# in Egypt.  The Ministers Cabinet decision is explained at
+# http://www.cabinet.gov.eg/Media/CabinetMeetingsDetails.aspx?id=347 ...
+# [T]his (Arabic) site is not accessible outside Egypt, but the page ...
+# translates into: "With regard to daylight saving time, it is scheduled to
+# take effect at exactly twelve o'clock this evening, Thursday, 15 MAY 2014,
+# to be suspended by twelve o'clock on the evening of Thursday, 26 JUN 2014,
+# and re-established again at the end of the month of Ramadan, at twelve
+# o'clock on the evening of Thursday, 31 JUL 2014."  This statement has been
+# reproduced by other (more accessible) sites[, e.g.,]...
+# http://elgornal.net/news/news.aspx?id=4699258
+
+# From Paul Eggert (2014-06-04):
+# Sarah El Deeb and Lee Keath of AP report that the Egyptian government says
+# the change is because of blackouts in Cairo, even though Ahram Online (cited
+# above) says DST had no affect on electricity consumption.  There is
+# no information about when DST will end this fall.  See:
+# http://abcnews.go.com/International/wireStory/el-sissi-pushes-egyptians-line-23614833
+#
+# For now, guess that later spring and fall transitions will use
+# 2010's rules, and guess that Egypt will switch to standard time at
+# 24:00 the last Thursday before Ramadan, and back to DST at 00:00 the
+# first Friday after Ramadan.  To implement this,
+# transition dates for 2015 through 2037 were determined by running
+# the following program under GNU Emacs 24.3, with the results integrated
+# by hand into the table below.  Ramadan again intrudes on the guessed
+# DST starting in 2038, but that's beyond our somewhat-arbitrary cutoff.
+# (let ((islamic-year 1436))
+#   (while (< islamic-year 1460)
+#     (let ((a (calendar-islamic-to-absolute (list 9 1 islamic-year)))
+#           (b (calendar-islamic-to-absolute (list 10 1 islamic-year)))
+#           (friday 5))
+#       (while (/= friday (mod a 7))
+#         (setq a (1- a)))
+#       (while (/= friday (mod b 7))
+#         (setq b (1+ b)))
+#       (setq a (1- a))
+#       (setq b (1- b))
+#       (setq a (calendar-gregorian-from-absolute a))
+#       (setq b (calendar-gregorian-from-absolute b))
+#       (insert
+#        (format
+#         (concat "Rule\tEgypt\t%d\tonly\t-\t%s\t%2d\t24:00\t0\t-\n"
+#                 "Rule\tEgypt\t%d\tonly\t-\t%s\t%2d\t24:00\t1:00\tS\n")
+#         (car (cdr (cdr a))) (calendar-month-name (car a) t) (car (cdr a))
+#         (car (cdr (cdr b))) (calendar-month-name (car b) t) (car (cdr b)))))
+#     (setq islamic-year (+ 1 islamic-year))))
+Rule	Egypt	2008	only	-	Aug	lastThu	24:00	0	-
+Rule	Egypt	2009	only	-	Aug	20	24:00	0	-
+Rule	Egypt	2010	only	-	Aug	10	24:00	0	-
+Rule	Egypt	2010	only	-	Sep	 9	24:00	1:00	S
+Rule	Egypt	2010	only	-	Sep	lastThu	24:00	0	-
+Rule	Egypt	2014	only	-	May	15	24:00	1:00	S
+Rule	Egypt	2014	only	-	Jun	26	24:00	0	-
+Rule	Egypt	2014	only	-	Jul	31	24:00	1:00	S
+Rule	Egypt	2014	max	-	Sep	lastThu	24:00	0	-
+Rule	Egypt	2015	2019	-	Apr	lastFri	 0:00s	1:00	S
+Rule	Egypt	2015	only	-	Jun	11	24:00	0	-
+Rule	Egypt	2015	only	-	Jul	23	24:00	1:00	S
+Rule	Egypt	2016	only	-	Jun	 2	24:00	0	-
+Rule	Egypt	2016	only	-	Jul	 7	24:00	1:00	S
+Rule	Egypt	2017	only	-	May	25	24:00	0	-
+Rule	Egypt	2017	only	-	Jun	29	24:00	1:00	S
+Rule	Egypt	2018	only	-	May	10	24:00	0	-
+Rule	Egypt	2018	only	-	Jun	14	24:00	1:00	S
+Rule	Egypt	2019	only	-	May	 2	24:00	0	-
+Rule	Egypt	2019	only	-	Jun	 6	24:00	1:00	S
+Rule	Egypt	2020	only	-	May	28	24:00	1:00	S
+Rule	Egypt	2021	only	-	May	13	24:00	1:00	S
+Rule	Egypt	2022	only	-	May	 5	24:00	1:00	S
+Rule	Egypt	2023	max	-	Apr	lastFri	 0:00s	1:00	S
+
+# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+Zone	Africa/Cairo	2:05:09 -	LMT	1900 Oct
+			2:00	Egypt	EE%sT

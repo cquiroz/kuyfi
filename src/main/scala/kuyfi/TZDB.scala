@@ -253,18 +253,18 @@ object TZDB {
     }
 
     def toTransitionRule(standardOffset: ZoneOffset, savingsBeforeSecs: Int): (ZoneOffsetTransitionRule, Rule) = {
-      def transitionRule(dayOfMonthIndicator: Int, dayOfWeek: DayOfWeek) = {
+      def transitionRule(dayOfMonthIndicator: Int, dayOfWeek: DayOfWeek, endOfDay: Boolean) = {
         val trans = toTransition2(standardOffset, savingsBeforeSecs)
-        ZoneOffsetTransitionRule.of(month, dayOfMonthIndicator, dayOfWeek, at.time, at.endOfDay, At.toTimeDefinition(at), standardOffset, trans.offsetBefore, trans.offsetAfter)
+        ZoneOffsetTransitionRule.of(month, dayOfMonthIndicator, dayOfWeek, at.time, endOfDay, At.toTimeDefinition(at), standardOffset, trans.offsetBefore, trans.offsetAfter)
       }
 
       val dayOfMonth = on.dayOfMonthIndicator.orElse((month != Month.FEBRUARY) option month.maxLength - 6)
-      dayOfMonth.fold((transitionRule(-1, on.dayOfWeek.orNull), this)){ d =>
+      dayOfMonth.fold((transitionRule(-1, on.dayOfWeek.orNull, at.endOfDay), this)){ d =>
         if (at.endOfDay && !(d == 28 && (month == Month.FEBRUARY))) {
           val date: LocalDate = LocalDate.of(2004, month, d).plusDays(1)
-          (transitionRule(d, on.dayOfWeek.orNull), copy(on = on.onDay(date.getDayOfMonth), month = date.getMonth, at = at.noEndOfDay))
+          (transitionRule(date.getDayOfMonth, on.dayOfWeek.map(_.plus(1)).orNull, false), copy(on = on.onDay(date.getDayOfMonth), month = date.getMonth, at = at.noEndOfDay))
         } else {
-          (transitionRule(d, on.dayOfWeek.orNull), this)
+          (transitionRule(d, on.dayOfWeek.orNull, at.endOfDay), this)
         }
       }
     }

@@ -115,5 +115,14 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
       val calculatedWindhoekRules = parsedZoneRules.flatMap(_.find(_._1.name == "Africa/Windhoek")).map(_._2)
       compareZoneRules(calculatedWindhoekRules, "Africa/Windhoek")
     }
+    it should "construct the transition zones for Cairo" in {
+      val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/africa_cairo"), "UTF-8").mkString
+
+      val parsedZoneRules: Option[Map[Zone, ZoneRules]] = TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      parsedZoneRules.map(_.size) shouldBe Some(1)
+
+      val calculatedCairoRules = parsedZoneRules.flatMap(_.find(_._1.name == "Africa/Cairo")).map(_._2)
+      compareZoneRules(calculatedCairoRules, "Africa/Cairo")
+    }
 
 }
