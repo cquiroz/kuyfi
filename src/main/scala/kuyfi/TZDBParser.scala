@@ -197,10 +197,10 @@ object TZDBParser {
     for {
       year  <- int <~ opt(whitespace)
       month <- opt(monthParser) <~ many(whitespace)
-      day   <- opt(int.map(DayOfTheMonth.apply)) <~ many(whitespace)
+      on    <- opt(onParser) <~ many(whitespace)
       at    <- opt(atParser)
       _     <- toEndLine
-    } yield Until(year, month, day, at)
+    } yield Until(year, month, on, at)
 
   val commentParser: Parser[Comment] =
     chr('#') ~> toEndLine.map(Comment.apply)

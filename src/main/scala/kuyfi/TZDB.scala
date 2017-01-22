@@ -70,9 +70,9 @@ object TZDB {
     val zero: GmtOffset = GmtOffset(0, 0, 0)
   }
 
-  case class Until(y: Int, m: Option[Month], d: Option[DayOfTheMonth], at: Option[At]) {
+  case class Until(y: Int, m: Option[Month], d: Option[On], at: Option[At]) {
     // TODO move to an aux class
-    def toDateTime2: LocalDateTime = {
+    /*def toDateTime2: LocalDateTime = {
       val month = m.getOrElse(Month.JANUARY)
       val date: LocalDate = d.fold {
         val dayOfMonth = month.length(Year.isLeap(y))
@@ -81,7 +81,7 @@ object TZDB {
         LocalDate.of(y, month, dayOfTheMonth.i)
       }
       LocalDateTime.of(date, LocalTime.MIDNIGHT)
-    }
+    }*/
 
     def toDateTime: LocalDateTime = {
       val month = m.getOrElse(Month.JANUARY)
@@ -92,7 +92,13 @@ object TZDB {
         println("NON " + y + month + dm)
         LocalDate.of(y, month, 1)
       } { dm =>
-        LocalDate.of(y, month, dm.i)
+        dm.dayOfMonthIndicator.fold {
+          val dm = month.length(Year.isLeap(y))
+          println("NON " + y + month + dm)
+          LocalDate.of(y, month, dm)
+        } { k =>
+          LocalDate.of(y, month, k)
+        }
       }
 
       val ldt: LocalDateTime = LocalDateTime.of(date, at.map(_.time).getOrElse(LocalTime.MIDNIGHT))

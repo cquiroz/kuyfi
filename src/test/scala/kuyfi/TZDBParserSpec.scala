@@ -327,6 +327,19 @@ class TZDBParserSpec extends FlatSpec with Matchers {
             ZoneTransition(GmtOffset( 0,   0,   0), RuleId("Morocco"), "WE%sT", Some(Until(1984, Some(Month.MARCH), Some(DayOfTheMonth(16)), None))),
             ZoneTransition(GmtOffset( 1,   0,   0), NullRule,          "CET",   Some(Until(1986, None, None, None))),
             ZoneTransition(GmtOffset( 0,   0,   0), RuleId("Morocco"), "WE%sT", None)
+          )),
+        """Zone America/Swift_Current -7:11:20 -	LMT	1905 Sep
+          |			-7:00	Canada	M%sT	1946 Apr lastSun  2:00
+          |			-7:00	Regina	M%sT	1950
+          |			-7:00	Swift	M%sT	1972 Apr lastSun  2:00
+          |			-6:00	-	CST
+          |""".stripMargin ->
+          Zone("America/Swift_Current", List(
+            ZoneTransition(GmtOffset(-7, -11, -20), NullRule,         "LMT",  Some(Until(1905, Some(Month.SEPTEMBER), None, None))),
+            ZoneTransition(GmtOffset(-7,   0,   0), RuleId("Canada"), "M%sT", Some(Until(1946, Some(Month.APRIL), Some(LastWeekday(DayOfWeek.SUNDAY)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-7,   0,   0), RuleId("Regina"), "M%sT", Some(Until(1950, None, None, None))),
+            ZoneTransition(GmtOffset(-7,   0,   0), RuleId("Swift"),  "M%sT", Some(Until(1972, Some(Month.APRIL), Some(LastWeekday(DayOfWeek.SUNDAY)), Some(AtWallTime(LocalTime.of(2, 0)))))),
+            ZoneTransition(GmtOffset(-6,   0,   0), NullRule,         "CST",  None)
           ))
       )
       zones.foreach { zone =>

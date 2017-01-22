@@ -1,0 +1,42 @@
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule	Canada	1918	only	-	Apr	14	2:00	1:00	D
+Rule	Canada	1918	only	-	Oct	27	2:00	0	S
+Rule	Canada	1942	only	-	Feb	 9	2:00	1:00	W # War
+Rule	Canada	1945	only	-	Aug	14	23:00u	1:00	P # Peace
+Rule	Canada	1945	only	-	Sep	30	2:00	0	S
+Rule	Canada	1974	1986	-	Apr	lastSun	2:00	1:00	D
+Rule	Canada	1974	2006	-	Oct	lastSun	2:00	0	S
+Rule	Canada	1987	2006	-	Apr	Sun>=1	2:00	1:00	D
+Rule	Canada	2007	max	-	Mar	Sun>=8	2:00	1:00	D
+Rule	Canada	2007	max	-	Nov	Sun>=1	2:00	0	S
+
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule	Regina	1918	only	-	Apr	14	2:00	1:00	D
+Rule	Regina	1918	only	-	Oct	27	2:00	0	S
+Rule	Regina	1930	1934	-	May	Sun>=1	0:00	1:00	D
+Rule	Regina	1930	1934	-	Oct	Sun>=1	0:00	0	S
+Rule	Regina	1937	1941	-	Apr	Sun>=8	0:00	1:00	D
+Rule	Regina	1937	only	-	Oct	Sun>=8	0:00	0	S
+Rule	Regina	1938	only	-	Oct	Sun>=1	0:00	0	S
+Rule	Regina	1939	1941	-	Oct	Sun>=8	0:00	0	S
+Rule	Regina	1942	only	-	Feb	 9	2:00	1:00	W # War
+Rule	Regina	1945	only	-	Aug	14	23:00u	1:00	P # Peace
+Rule	Regina	1945	only	-	Sep	lastSun	2:00	0	S
+Rule	Regina	1946	only	-	Apr	Sun>=8	2:00	1:00	D
+Rule	Regina	1946	only	-	Oct	Sun>=8	2:00	0	S
+Rule	Regina	1947	1957	-	Apr	lastSun	2:00	1:00	D
+Rule	Regina	1947	1957	-	Sep	lastSun	2:00	0	S
+Rule	Regina	1959	only	-	Apr	lastSun	2:00	1:00	D
+Rule	Regina	1959	only	-	Oct	lastSun	2:00	0	S
+#
+Rule	Swift	1957	only	-	Apr	lastSun	2:00	1:00	D
+Rule	Swift	1957	only	-	Oct	lastSun	2:00	0	S
+Rule	Swift	1959	1961	-	Apr	lastSun	2:00	1:00	D
+Rule	Swift	1959	only	-	Oct	lastSun	2:00	0	S
+Rule	Swift	1960	1961	-	Sep	lastSun	2:00	0	S
+# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+Zone America/Swift_Current -7:11:20 -	LMT	1905 Sep
+			-7:00	Canada	M%sT	1946 Apr lastSun  2:00
+			-7:00	Regina	M%sT	1950
+			-7:00	Swift	M%sT	1972 Apr lastSun  2:00
+			-6:00	-	CST
