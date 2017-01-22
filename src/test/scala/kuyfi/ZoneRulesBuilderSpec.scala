@@ -100,10 +100,10 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
       val calculatedRules = rows.find(_._1.name == "Asia/Kabul").map(_._2)
       compareZoneRules(calculatedRules, "Asia/Kabul")
     }
-    /*it should "calculate the transitions for Asia/Baku" in {
+    it should "calculate the transitions for Asia/Baku" in {
       val calculatedRules = rows.find(_._1.name == "Asia/Baku").map(_._2)
       compareZoneRules(calculatedRules, "Asia/Baku")
-    }*/
+    }
     it should "calculate the transitions for Asia/Shanghai" in {
       val calculatedRules = rows.find(_._1.name == "Asia/Shanghai").map(_._2)
       compareZoneRules(calculatedRules, "Asia/Shanghai")
@@ -196,6 +196,10 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
       val calculatedRules = rows.find(_._1.name == "America/Montreal").map(_._2)
       compareZoneRules(calculatedRules, "America/Montreal")
     }
+    it should "calculate the transitions for America/Swift_Current" in {
+      val calculatedRules = rows.find(_._1.name == "America/Swift_Current").map(_._2)
+      compareZoneRules(calculatedRules, "America/Swift_Current")
+    }
     it should "calculate the transitions for America/Cancun" in {
       val calculatedRules = rows.find(_._1.name == "America/Cancun").map(_._2)
       compareZoneRules(calculatedRules, "America/Cancun")
@@ -256,5 +260,15 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
       val calculatedCairoRules = parsedZoneRules.flatMap(_.find(_._1.name == "Africa/Cairo")).map(_._2)
       compareZoneRules(calculatedCairoRules, "Africa/Cairo")
     }
+    it should "construct the transition zones for Swift_current" in {
+      val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/america_swift_current"), "UTF-8").mkString
+
+      val parsedZoneRules: Option[Map[Zone, ZoneRules]] = TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      parsedZoneRules.map(_.size) shouldBe Some(1)
+
+      val calculatedLondonRules = parsedZoneRules.flatMap(_.find(_._1.name == "America/Swift_Current")).map(_._2)
+      compareZoneRules(calculatedLondonRules, "America/Swift_Current")
+    }
+
 
 }

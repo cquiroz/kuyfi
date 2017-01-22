@@ -93,9 +93,13 @@ object TZDB {
         LocalDate.of(y, month, 1)
       } { dm =>
         dm.dayOfMonthIndicator.fold {
-          val dm = month.length(Year.isLeap(y))
-          println("NON " + y + month + dm)
-          LocalDate.of(y, month, dm)
+          val dr = month.length(Year.isLeap(y))
+          println("NON " + y + month + dr)
+          dm.dayOfWeek.fold {
+            LocalDate.of(y, month, dr)
+          } { dw =>
+            LocalDate.of(y, month, dr).`with`(TemporalAdjusters.lastInMonth(dw))
+          }
         } { k =>
           LocalDate.of(y, month, k)
         }
