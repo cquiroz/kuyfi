@@ -101,7 +101,7 @@ object TZDB {
             LocalDate.of(y, month, dr).`with`(TemporalAdjusters.lastInMonth(dw))
           }
         } { k =>
-          LocalDate.of(y, month, k)
+          LocalDate.of(y, month, dm.dayOnYear(y, month))
         }
       }
 
@@ -140,25 +140,33 @@ object TZDB {
 
   sealed trait On extends Product with Serializable {
     def dayOfMonthIndicator: Option[Int] = None
+    def dayOnYear(y: Int, m: Month): Int = ???
     def dayOfWeek: Option[DayOfWeek] = None
     def onDay(d: Int): On = this
   }
   case class DayOfTheMonth(i: Int) extends On {
     override val dayOfMonthIndicator = Some(i)
     override def onDay(d: Int) = DayOfTheMonth(d)
+    override def dayOnYear(y: Int, m: Month): Int = i
   }
   case class LastWeekday(d: DayOfWeek) extends On {
     override def dayOfWeek: Option[DayOfWeek] = Some(d)
+    override def dayOnYear(y: Int, m: Month): Int = {
+      val lastDay = m.length(Year.isLeap(y))
+      LocalDate.of(y, m, lastDay).`with`(TemporalAdjusters.previousOrSame(d)).getDayOfMonth
+    }
   }
   case class AfterWeekday(d: DayOfWeek, day: Int) extends On {
     override val dayOfMonthIndicator = Some(day)
     override def onDay(i: Int) = AfterWeekday(d.plus(1), i)
     override def dayOfWeek: Option[DayOfWeek] = Some(d)
+    override def dayOnYear(y: Int, m: Month): Int = LocalDate.of(y, m, day).`with`(TemporalAdjusters.nextOrSame(d)).getDayOfMonth
   }
   case class BeforeWeekday(d: DayOfWeek, day: Int) extends On {
     override val dayOfMonthIndicator = Some(day)
     override def onDay(i: Int) = BeforeWeekday(d.plus(1), i)
     override def dayOfWeek: Option[DayOfWeek] = Some(d)
+    override def dayOnYear(y: Int, m: Month): Int = LocalDate.of(y, m, day).`with`(TemporalAdjusters.previousOrSame(d)).getDayOfMonth
   }
 
   sealed trait RuleYear extends Product with Serializable
@@ -272,7 +280,8 @@ object TZDB {
       dayOfMonth.fold((transitionRule(-1, on.dayOfWeek.orNull, at.endOfDay), this)){ d =>
         if (at.endOfDay && !(d == 28 && (month == Month.FEBRUARY))) {
           val date: LocalDate = LocalDate.of(2004, month, d).plusDays(1)
-          (transitionRule(date.getDayOfMonth, on.dayOfWeek.map(_.plus(1)).orNull, false), copy(on = on.onDay(date.getDayOfMonth), month = date.getMonth, at = at.noEndOfDay))
+
+          (transitionRule(date.getDayOfMonth, on.dayOfWeek.map(_.plus(1)).orNull, endOfDay = false), copy(on = on.onDay(date.getDayOfMonth), month = date.getMonth, at = at.noEndOfDay))
         } else {
           (transitionRule(d, on.dayOfWeek.orNull, at.endOfDay), this)
         }

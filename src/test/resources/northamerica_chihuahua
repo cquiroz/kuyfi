@@ -1,0 +1,204 @@
+
+###############################################################################
+
+# Mexico
+
+# From Paul Eggert (2001-03-05):
+# The Investigation and Analysis Service of the
+# Mexican Library of Congress (MLoC) has published a
+# history of Mexican local time (in Spanish)
+# http://www.cddhcu.gob.mx/bibliot/publica/inveyana/polisoc/horver/
+#
+# Here are the discrepancies between Shanks & Pottenger (S&P) and the MLoC.
+# (In all cases we go with the MLoC.)
+# S&P report that Baja was at -8:00 in 1922/1923.
+# S&P say the 1930 transition in Baja was 1930-11-16.
+# S&P report no DST during summer 1931.
+# S&P report a transition at 1932-03-30 23:00, not 1932-04-01.
+
+# From Gwillim Law (2001-02-20):
+# There are some other discrepancies between the Decrees page and the
+# tz database.  I think they can best be explained by supposing that
+# the researchers who prepared the Decrees page failed to find some of
+# the relevant documents.
+
+# From Alan Perry (1996-02-15):
+# A guy from our Mexico subsidiary finally found the Presidential Decree
+# outlining the timezone changes in Mexico.
+#
+# ------------- Begin Forwarded Message -------------
+#
+# I finally got my hands on the Official Presidential Decree that sets up the
+# rules for the DST changes. The rules are:
+#
+# 1. The country is divided in 3 timezones:
+#    - Baja California Norte (the Mexico/BajaNorte TZ)
+#    - Baja California Sur, Nayarit, Sinaloa and Sonora (the Mexico/BajaSur TZ)
+#    - The rest of the country (the Mexico/General TZ)
+#
+# 2. From the first Sunday in April at 2:00 AM to the last Sunday in October
+#    at 2:00 AM, the times in each zone are as follows:
+#    BajaNorte: GMT+7
+#    BajaSur:   GMT+6
+#    General:   GMT+5
+#
+# 3. The rest of the year, the times are as follows:
+#    BajaNorte: GMT+8
+#    BajaSur:   GMT+7
+#    General:   GMT+6
+#
+# The Decree was published in Mexico's Official Newspaper on January 4th.
+#
+# -------------- End Forwarded Message --------------
+# From Paul Eggert (1996-06-12):
+# For an English translation of the decree, see
+# "Diario Oficial: Time Zone Changeover" (1996-01-04).
+# http://mexico-travel.com/extra/timezone_eng.html
+
+# From Rives McDow (1998-10-08):
+# The State of Quintana Roo has reverted back to central STD and DST times
+# (i.e. UTC -0600 and -0500 as of 1998-08-02).
+
+# From Rives McDow (2000-01-10):
+# Effective April 4, 1999 at 2:00 AM local time, Sonora changed to the time
+# zone 5 hours from the International Date Line, and will not observe daylight
+# savings time so as to stay on the same time zone as the southern part of
+# Arizona year round.
+
+# From Jesper Nørgaard, translating
+# <http://www.reforma.com/nacional/articulo/064327/> (2001-01-17):
+# In Oaxaca, the 55.000 teachers from the Section 22 of the National
+# Syndicate of Education Workers, refuse to apply daylight saving each
+# year, so that the more than 10,000 schools work at normal hour the
+# whole year.
+
+# From Gwillim Law (2001-01-19):
+# <http://www.reforma.com/negocios_y_dinero/articulo/064481/> ... says
+# (translated):...
+# January 17, 2000 - The Energy Secretary, Ernesto Martens, announced
+# that Summer Time will be reduced from seven to five months, starting
+# this year....
+# http://www.publico.com.mx/scripts/texto3.asp?action=pagina&pag=21&pos=p&secc=naci&date=01/17/2001
+# [translated], says "summer time will ... take effect on the first Sunday
+# in May, and end on the last Sunday of September.
+
+# From Arthur David Olson (2001-01-25):
+# The 2001-01-24 traditional Washington Post contained the page one
+# story "Timely Issue Divides Mexicans."...
+# http://www.washingtonpost.com/wp-dyn/articles/A37383-2001Jan23.html
+# ... Mexico City Mayor López Obrador "...is threatening to keep
+# Mexico City and its 20 million residents on a different time than
+# the rest of the country..." In particular, López Obrador would abolish
+# observation of Daylight Saving Time.
+
+# Official statute published by the Energy Department
+# http://www.conae.gob.mx/ahorro/decretohorver2001.html#decre
+# (2001-02-01) shows Baja and Chihauhua as still using US DST rules,
+# and Sonora with no DST.  This was reported by Jesper Nørgaard (2001-02-03).
+
+# From Paul Eggert (2001-03-03):
+#
+# http://www.latimes.com/news/nation/20010303/t000018766.html
+# James F. Smith writes in today's LA Times
+# * Sonora will continue to observe standard time.
+# * Last week Mexico City's mayor Andrés Manuel López Obrador decreed that
+#   the Federal District will not adopt DST.
+# * 4 of 16 district leaders announced they'll ignore the decree.
+# * The decree does not affect federal-controlled facilities including
+#   the airport, banks, hospitals, and schools.
+#
+# For now we'll assume that the Federal District will bow to federal rules.
+
+# From Jesper Nørgaard (2001-04-01):
+# I found some references to the Mexican application of daylight
+# saving, which modifies what I had already sent you, stating earlier
+# that a number of northern Mexican states would go on daylight
+# saving. The modification reverts this to only cover Baja California
+# (Norte), while all other states (except Sonora, who has no daylight
+# saving all year) will follow the original decree of president
+# Vicente Fox, starting daylight saving May 6, 2001 and ending
+# September 30, 2001.
+# References: "Diario de Monterrey" <http://www.diariodemonterrey.com/index.asp>
+# Palabra <http://palabra.infosel.com/010331/primera/ppri3101.pdf> (2001-03-31)
+
+# From Reuters (2001-09-04):
+# Mexico's Supreme Court on Tuesday declared that daylight savings was
+# unconstitutional in Mexico City, creating the possibility the
+# capital will be in a different time zone from the rest of the nation
+# next year....  The Supreme Court's ruling takes effect at 2:00
+# a.m. (0800 GMT) on Sept. 30, when Mexico is scheduled to revert to
+# standard time. "This is so residents of the Federal District are not
+# subject to unexpected time changes," a statement from the court said.
+
+# From Jesper Nørgaard Welen (2002-03-12):
+# ... consulting my local grocery store(!) and my coworkers, they all insisted
+# that a new decision had been made to reinstate US style DST in Mexico....
+# http://www.conae.gob.mx/ahorro/horaver2001_m1_2002.html (2002-02-20)
+# confirms this.  Sonora as usual is the only state where DST is not applied.
+
+# From Steffen Thorsen (2009-12-28):
+#
+# Steffen Thorsen wrote:
+# > Mexico's House of Representatives has approved a proposal for northern
+# > Mexico's border cities to share the same daylight saving schedule as
+# > the United States.
+# Now this has passed both the Congress and the Senate, so starting from
+# 2010, some border regions will be the same:
+# http://www.signonsandiego.com/news/2009/dec/28/clocks-will-match-both-sides-border/
+# http://www.elmananarey.com/diario/noticia/nacional/noticias/empatan_horario_de_frontera_con_eu/621939
+# (Spanish)
+#
+# Could not find the new law text, but the proposed law text changes are here:
+# http://gaceta.diputados.gob.mx/Gaceta/61/2009/dic/20091210-V.pdf
+# (Gaceta Parlamentaria)
+#
+# There is also a list of the votes here:
+# http://gaceta.diputados.gob.mx/Gaceta/61/2009/dic/V2-101209.html
+#
+# Our page:
+# http://www.timeanddate.com/news/time/north-mexico-dst-change.html
+
+# From Arthur David Olson (2010-01-20):
+# The page
+# http://dof.gob.mx/nota_detalle.php?codigo=5127480&fecha=06/01/2010
+# includes this text:
+# En los municipios fronterizos de Tijuana y Mexicali en Baja California;
+# Juárez y Ojinaga en Chihuahua; Acuña y Piedras Negras en Coahuila;
+# Anáhuac en Nuevo León; y Nuevo Laredo, Reynosa y Matamoros en
+# Tamaulipas, la aplicación de este horario estacional surtirá efecto
+# desde las dos horas del segundo domingo de marzo y concluirá a las dos
+# horas del primer domingo de noviembre.
+# En los municipios fronterizos que se encuentren ubicados en la franja
+# fronteriza norte en el territorio comprendido entre la línea
+# internacional y la línea paralela ubicada a una distancia de veinte
+# kilómetros, así como la Ciudad de Ensenada, Baja California, hacia el
+# interior del país, la aplicación de este horario estacional surtirá
+# efecto desde las dos horas del segundo domingo de marzo y concluirá a
+# las dos horas del primer domingo de noviembre.
+
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule	Mexico	1939	only	-	Feb	5	0:00	1:00	D
+Rule	Mexico	1939	only	-	Jun	25	0:00	0	S
+Rule	Mexico	1940	only	-	Dec	9	0:00	1:00	D
+Rule	Mexico	1941	only	-	Apr	1	0:00	0	S
+Rule	Mexico	1943	only	-	Dec	16	0:00	1:00	W # War
+Rule	Mexico	1944	only	-	May	1	0:00	0	S
+Rule	Mexico	1950	only	-	Feb	12	0:00	1:00	D
+Rule	Mexico	1950	only	-	Jul	30	0:00	0	S
+Rule	Mexico	1996	2000	-	Apr	Sun>=1	2:00	1:00	D
+Rule	Mexico	1996	2000	-	Oct	lastSun	2:00	0	S
+Rule	Mexico	2001	only	-	May	Sun>=1	2:00	1:00	D
+Rule	Mexico	2001	only	-	Sep	lastSun	2:00	0	S
+Rule	Mexico	2002	max	-	Apr	Sun>=1	2:00	1:00	D
+Rule	Mexico	2002	max	-	Oct	lastSun	2:00	0	S
+# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+Zone America/Chihuahua	-7:04:20 -	LMT	1921 Dec 31 23:55:40
+			-7:00	-	MST	1927 Jun 10 23:00
+			-6:00	-	CST	1930 Nov 15
+			-7:00	-	MST	1931 May  1 23:00
+			-6:00	-	CST	1931 Oct
+			-7:00	-	MST	1932 Apr  1
+			-6:00	-	CST	1996
+			-6:00	Mexico	C%sT	1998
+			-6:00	-	CST	1998 Apr Sun>=1  3:00
+			-7:00	Mexico	M%sT

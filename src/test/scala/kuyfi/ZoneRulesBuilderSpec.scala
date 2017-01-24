@@ -1,11 +1,11 @@
 package kuyfi
 
 import org.scalatest.{FlatSpec, Matchers}
-import atto.ParseResult.{Done, Fail}
-import atto.ParseResult
 import java.time.zone.{ZoneRules, ZoneRulesProvider}
 
 import kuyfi.TZDB.Zone
+
+import scala.collection.JavaConverters._
 
 class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
   import better.files._
@@ -32,9 +32,24 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
       rows.foreach(println)
       rows.size shouldBe 385
     }
-    it should "calculate the transitions for Europe/london" in {
+    it should "calculate the transitions for Europe/London" in {
       val calculatedRules = rows.find(_._1.name == "Europe/London").map(_._2)
       compareZoneRules(calculatedRules, "Europe/London")
+    }
+    it should "calculate the transitions for any rule" in {
+      ZoneRulesProvider.getAvailableZoneIds.asScala.foreach {z =>
+        println("CHECK " + z)
+        val calculatedRules = rows.find(_._1.name == z).map(_._2)
+        if (calculatedRules.isDefined) {
+          compareZoneRules(calculatedRules, z)
+        } else {
+          println("NOT FOUND " + z)
+        }
+      }
+    }
+    it should "calculate the transitions for America/Chihuahua" in {
+      val calculatedRules = rows.find(_._1.name == "America/Chihuahua").map(_._2)
+      compareZoneRules(calculatedRules, "America/Chihuahua")
     }
     it should "calculate the transitions for America/New York" in {
       val calculatedRules = rows.find(_._1.name == "America/New_York").map(_._2)
@@ -289,6 +304,14 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
       val calculatedLondonRules = parsedZoneRules.flatMap(_.find(_._1.name == "America/Swift_Current")).map(_._2)
       compareZoneRules(calculatedLondonRules, "America/Swift_Current")
     }
+    it should "construct the transition zones for Chihuahua" in {
+      val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/northamerica_chihuahua"), "UTF-8").mkString
 
+      val parsedZoneRules: Option[Map[Zone, ZoneRules]] = TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      parsedZoneRules.map(_.size) shouldBe Some(1)
+
+      val calculatedLondonRules = parsedZoneRules.flatMap(_.find(_._1.name == "America/Chihuahua")).map(_._2)
+      compareZoneRules(calculatedLondonRules, "America/Chihuahua")
+    }
 
 }
