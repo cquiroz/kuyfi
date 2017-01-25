@@ -162,7 +162,32 @@ object ZoneRulesBuilder {
     */
   def calculateTransitions(rows: List[Row]): Map[Zone, ZoneRules] = {
     val rulesByName: RulesById = rows.flatMap(_.fold(collectRules).apply(Nil)).groupBy(_.name)
-    val k: List[WindowsCollector] = rows.map(_.fold(toWindows).apply(WindowsCollector(rulesByName, Map.empty)))
-    k.filter(_.zoneWindows.nonEmpty).flatMap(_.toRules).toMap
+    val collectedRules: List[WindowsCollector] = rows.map(_.fold(toWindows).apply(WindowsCollector(rulesByName, Map.empty)))
+    collectedRules.filter(_.zoneWindows.nonEmpty).flatMap(_.toRules).toMap
+  }
+
+  /**
+    * Calculates all the zone rules for the rows
+    * and adds copies for the linked rules
+    */
+  def calculateTransitionsWithLinks(rows: List[Row]): Map[String, ZoneRules] = {
+    val rules = calculateTransitions(rows).map(x => (x._1.name, x._2))
+    val links = rows.flatMap(_.select[Link])
+
+    def go(toResolve: List[Link]): Map[String, ZoneRules] = toResolve match {
+      case Nil => Map.empty
+      case r   =>
+        val (in, out) = r.partition(l => rules.exists(x => x._1 == l.from))
+        val found = in.flatMap { link =>
+          rules.get(link.from).map(u => link.to -> u)
+        }
+
+        val rel = out.flatMap { link =>
+          val recursive = links.find(x => x.to == link.from)
+          recursive.map(l => link.copy(from = l.from))
+        }
+        found.toMap ++ go(rel)
+    }
+    rules ++ go(links)
   }
 }
