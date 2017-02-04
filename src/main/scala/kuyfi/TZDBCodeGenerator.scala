@@ -88,7 +88,8 @@ object TZDBCodeGenerator {
     implicit val zoneRules: TreeGenerator[ZoneRulesParams] =
       instance( l =>
         BLOCK(List(
-          LAZYVAL("offset", "bso") := l.baseStandardOffset.toTree
+          VAL("bso", "ZoneOffset") := l.baseStandardOffset.toTree,
+          VAL("bwo", "ZoneOffset") := l.baseWallOffset.toTree
         ))
       )
   }

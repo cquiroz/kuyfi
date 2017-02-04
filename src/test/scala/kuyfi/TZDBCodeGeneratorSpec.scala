@@ -2,7 +2,7 @@ package kuyfi
 
 import java.time.{Duration, LocalTime, Month, ZoneOffset}
 
-import kuyfi.TZDB.{AtStandardTime, AtUniversalTime, AtWallTime, DayOfTheMonth, FixedOffset, GmtOffset, Link, NullRule, Row, RuleId, Until, Zone, ZoneTransition}
+import kuyfi.TZDB._
 import org.scalatest.{FlatSpec, Matchers}
 
 class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
@@ -59,9 +59,18 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
       treeToString(TreeGenerator[List[Zone]].generateTree(List(zone1, zone2))) shouldBe "lazy val allZones: Map[String, ZoneRules] = Map((\"Europe/Belfast\", ZoneRules.of(ZoneOffset.ofHoursMinutesSeconds(0, -23, -40))), (\"Africa/Tripoli\", ZoneRules.of(ZoneOffset.ofHoursMinutesSeconds(0, 52, 44))))"
     }
     it should "import a top level package" in {
-      treeToString(TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))) shouldBe  s"ZoneOffset.ofTotalSeconds(${1*3600+2*60+3})"
+      treeToString(TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))) shouldBe s"ZoneOffset.ofTotalSeconds(${1*3600+2*60+3})"
     }
     it should "generate from offset" in {
+      treeToString(exportTzdb("org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil)) should include ("import org.threeten.bp._")
+    }
+    it should "generate from zone rules param" in {
+      val params = ZoneRulesParams(ZoneOffset.ofHours(1), ZoneOffset.ofHours(0), Nil, Nil, Nil)
+      treeToString(TreeGenerator[ZoneRulesParams].generateTree(params)).trim shouldBe s"""{
+      |  val bso: ZoneOffset = ZoneOffset.ofTotalSeconds(3600)
+      |  val bwo: ZoneOffset = ZoneOffset.ofTotalSeconds(0)
+      |}""".stripMargin
+
       treeToString(exportTzdb("org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil)) should include ("import org.threeten.bp._")
     }
     it should "produce code with the rules" in {
