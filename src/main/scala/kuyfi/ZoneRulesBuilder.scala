@@ -24,9 +24,9 @@ object ZoneRulesBuilder {
                                       transitionsList: List[ZoneOffsetTransition],
                                       transitionRules: List[ZoneOffsetTransitionRule])
 
-    def toRules: Map[Zone, ZoneRules] = {
+    def toRules: Map[Zone, ZoneRulesParams] = {
       zoneWindows.map { case (zone, windows) =>
-        val zoneRules: Option[ZoneRules] = windows.headOption.map { firstWindow =>
+        val zoneRules: Option[ZoneRulesParams] = windows.headOption.map { firstWindow =>
           val loopSavings = firstWindow.fixedSavingAmountSeconds.getOrElse(0)
           val loopStandardOffset = firstWindow.standardOffset.toZoneOffset
           val firstWallOffset = ZoneOffset.ofTotalSeconds(loopStandardOffset.getTotalSeconds + loopSavings)
@@ -97,8 +97,7 @@ object ZoneRulesBuilder {
             val newLoopWindowStart = LocalDateTime.ofEpochSecond(tzw.createDateTimeEpochSecond(finalLs), 0, newLoopWindowOffset)
             TransitionsAccumulator(newLoopWindowStart, newLoopWindowOffset, newLso, finalLs, standardTransitions ::: newStdTransitions, transitionList ::: moreTransitions, transitionRules ::: finalRules)
           }
-          import scala.collection.JavaConverters._
-          ZoneRules.of(firstWindow.standardOffset.toZoneOffset, firstWallOffset, accumulator.standardTransitions.asJava, accumulator.transitionsList.asJava, accumulator.transitionRules.asJava)
+          ZoneRulesParams(firstWindow.standardOffset.toZoneOffset, firstWallOffset, accumulator.standardTransitions, accumulator.transitionsList, accumulator.transitionRules)
         }
         zone -> zoneRules
       } collect {
@@ -160,10 +159,18 @@ object ZoneRulesBuilder {
   /**
     * Calculates all the zone rules for the rows
     */
-  def calculateTransitions(rows: List[Row]): Map[Zone, ZoneRules] = {
+  def calculateTransitionParams(rows: List[Row]): Map[Zone, ZoneRulesParams] = {
     val rulesByName: RulesById = rows.flatMap(_.fold(collectRules).apply(Nil)).groupBy(_.name)
     val collectedRules: List[WindowsCollector] = rows.map(_.fold(toWindows).apply(WindowsCollector(rulesByName, Map.empty)))
     collectedRules.filter(_.zoneWindows.nonEmpty).flatMap(_.toRules).toMap
+  }
+
+  /**
+    * Calculates all the zone rules for the rows
+    */
+  def calculateTransitions(rows: List[Row]): Map[Zone, ZoneRules] = {
+    import scala.collection.JavaConverters._
+    calculateTransitionParams(rows).map { case (z, p) => (z, ZoneRules.of(p.baseStandardOffset, p.baseWallOffset, p.standardOffsetTransitionList.asJava, p.transitionList.asJava, p.lastRules.asJava))}
   }
 
   /**

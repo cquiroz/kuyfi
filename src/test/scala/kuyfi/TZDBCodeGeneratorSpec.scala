@@ -1,6 +1,6 @@
 package kuyfi
 
-import java.time.{Duration, LocalTime, Month}
+import java.time.{Duration, LocalTime, Month, ZoneOffset}
 
 import kuyfi.TZDB.{AtStandardTime, AtUniversalTime, AtWallTime, DayOfTheMonth, FixedOffset, GmtOffset, Link, NullRule, Row, RuleId, Until, Zone, ZoneTransition}
 import org.scalatest.{FlatSpec, Matchers}
@@ -59,6 +59,15 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
       treeToString(TreeGenerator[List[Zone]].generateTree(List(zone1, zone2))) shouldBe "lazy val allZones: Map[String, ZoneRules] = Map((\"Europe/Belfast\", ZoneRules.of(ZoneOffset.ofHoursMinutesSeconds(0, -23, -40))), (\"Africa/Tripoli\", ZoneRules.of(ZoneOffset.ofHoursMinutesSeconds(0, 52, 44))))"
     }
     it should "import a top level package" in {
+      treeToString(TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))) shouldBe  s"ZoneOffset.ofTotalSeconds(${1*3600+2*60+3})"
+    }
+    it should "generate from offset" in {
       treeToString(exportTzdb("org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil)) should include ("import org.threeten.bp._")
+    }
+    it should "produce code with the rules" in {
+      /*val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/europe_london"), "UTF-8").mkString
+
+      val parsedZoneRules: Option[Map[Zone, ZoneRulesParams]] = TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option*/
+
     }
 }

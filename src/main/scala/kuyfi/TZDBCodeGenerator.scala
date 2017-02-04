@@ -7,6 +7,7 @@ import TZDB._
 import treehugger.forest._
 import definitions._
 import treehuggerDSL._
+import java.time.ZoneOffset
 
 object TZDBCodeGenerator {
 
@@ -77,6 +78,18 @@ object TZDBCodeGenerator {
     implicit val linkInstances: TreeGenerator[List[Link]] =
       instance( l =>
         LAZYVAL("zoneLinks", "Map[String, String]") := MAKE_MAP(l.map(_.toTree): _*)
+      )
+
+    implicit val zoneOffsetInstance: TreeGenerator[ZoneOffset] =
+      instance( l =>
+        (zoneOffsetSym DOT "ofTotalSeconds")(LIT(l.getTotalSeconds))
+      )
+
+    implicit val zoneRules: TreeGenerator[ZoneRulesParams] =
+      instance( l =>
+        BLOCK(List(
+          LAZYVAL("offset", "bso") := l.baseStandardOffset.toTree
+        ))
       )
   }
 

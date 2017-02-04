@@ -1,6 +1,6 @@
 package kuyfi
 
-import java.time.{DayOfWeek, Duration, LocalTime, Month}
+import java.time.{DayOfWeek, LocalTime, Month}
 
 import org.scalatest.{FlatSpec, Matchers}
 import atto._

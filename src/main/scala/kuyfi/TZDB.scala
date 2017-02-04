@@ -242,6 +242,12 @@ object TZDB {
   case class Comment(comment: String) extends Product with Serializable
   case class BlankLine(line: String) extends Product with Serializable
 
+  case class ZoneRulesParams(baseStandardOffset: ZoneOffset,
+                             baseWallOffset: ZoneOffset,
+                             standardOffsetTransitionList: List[ZoneOffsetTransition],
+                             transitionList: List[ZoneOffsetTransition],
+                             lastRules: List[ZoneOffsetTransitionRule])
+
   /**
     * Coproduct for the content of lines on the parsed files
     */
