@@ -20,8 +20,8 @@ object ZoneRulesBuilder {
                                       lwo: ZoneOffset,
                                       lso: ZoneOffset,
                                       ls: Int,
-                                      standardTransitions: List[ZoneOffsetTransition],
-                                      transitionsList: List[ZoneOffsetTransition],
+                                      standardTransitions: List[ZoneOffsetTransitionParams],
+                                      transitionsList: List[ZoneOffsetTransitionParams],
                                       transitionRules: List[ZoneOffsetTransitionRule])
 
     def toRules: Map[Zone, ZoneRulesParams] = {
@@ -33,7 +33,7 @@ object ZoneRulesBuilder {
           val loopWindowStart = LocalDateTime.of(Year.MIN_VALUE, 1, 1, 0, 0)
           val loopWindowOffset = firstWallOffset
 
-          val start = TransitionsAccumulator(loopWindowStart, loopWindowOffset, loopStandardOffset, loopSavings, List.empty[ZoneOffsetTransition], List.empty[ZoneOffsetTransition], List.empty[ZoneOffsetTransitionRule])
+          val start = TransitionsAccumulator(loopWindowStart, loopWindowOffset, loopStandardOffset, loopSavings, List.empty[ZoneOffsetTransitionParams], List.empty[ZoneOffsetTransitionParams], List.empty[ZoneOffsetTransitionRule])
           val accumulator = windows.foldLeft(start) { case (TransitionsAccumulator(lws, lwo, lso, ls, standardTransitions, transitionList, transitionRules), timeZoneWindow) =>
             val tzw = timeZoneWindow.tidy(lws.getYear)
 
@@ -58,13 +58,13 @@ object ZoneRulesBuilder {
             }
             val (newStdTransitions, newLso) =
               if (lso != tzw.standardOffset.toZoneOffset) {
-                (List(ZoneOffsetTransition.of(LocalDateTime.ofEpochSecond(lws.toEpochSecond(lwo), 0, lso), lso, tzw.standardOffset.toZoneOffset)), tzw.standardOffset.toZoneOffset)
+                (List(ZoneOffsetTransitionParams(LocalDateTime.ofEpochSecond(lws.toEpochSecond(lwo), 0, lso), lso, tzw.standardOffset.toZoneOffset)), tzw.standardOffset.toZoneOffset)
               } else {
                 (Nil, lso)
               }
             val effectiveWallOffset: ZoneOffset = ZoneOffset.ofTotalSeconds(newLso.getTotalSeconds + effectiveSavings)
             val newTransitions = if (lwo != effectiveWallOffset) {
-              List(ZoneOffsetTransition.of(lws, lwo, effectiveWallOffset))
+              List(ZoneOffsetTransitionParams(lws, lwo, effectiveWallOffset))
             } else {
               Nil
             }
@@ -170,7 +170,7 @@ object ZoneRulesBuilder {
     */
   def calculateTransitions(rows: List[Row]): Map[Zone, ZoneRules] = {
     import scala.collection.JavaConverters._
-    calculateTransitionParams(rows).map { case (z, p) => (z, ZoneRules.of(p.baseStandardOffset, p.baseWallOffset, p.standardOffsetTransitionList.asJava, p.transitionList.asJava, p.lastRules.asJava))}
+    calculateTransitionParams(rows).map { case (z, p) => (z, ZoneRules.of(p.baseStandardOffset, p.baseWallOffset, p.standardOffsetTransitionList.map(_.toOffsetTransition).asJava, p.transitionList.map(_.toOffsetTransition).asJava, p.lastRules.asJava))}
   }
 
   /**

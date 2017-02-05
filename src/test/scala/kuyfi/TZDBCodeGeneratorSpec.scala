@@ -1,6 +1,7 @@
 package kuyfi
 
-import java.time.{Duration, LocalTime, Month, ZoneOffset}
+import java.time.{Duration, LocalTime, LocalDateTime, Month, ZoneOffset}
+import java.time.zone.ZoneOffsetTransition
 
 import kuyfi.TZDB._
 import org.scalatest.{FlatSpec, Matchers}
@@ -58,10 +59,16 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
     it should "generate an object from a List of Zones" in {
       treeToString(TreeGenerator[List[Zone]].generateTree(List(zone1, zone2))) shouldBe "lazy val allZones: Map[String, ZoneRules] = Map((\"Europe/Belfast\", ZoneRules.of(ZoneOffset.ofHoursMinutesSeconds(0, -23, -40))), (\"Africa/Tripoli\", ZoneRules.of(ZoneOffset.ofHoursMinutesSeconds(0, 52, 44))))"
     }
-    it should "import a top level package" in {
-      treeToString(TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))) shouldBe s"ZoneOffset.ofTotalSeconds(${1*3600+2*60+3})"
+    it should "generate from zone offset transition" in {
+      treeToString(TreeGenerator[ZoneOffsetTransitionParams].generateTree(ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2)))) shouldBe s"ZoneOffsetTransition.of(LocalDateTime.of(2017, 2, 1, 10, 15, 0, 0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200))"
+    }
+    it should "generate from LocalDateTime" in {
+      treeToString(TreeGenerator[LocalDateTime].generateTree(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15, 25))) shouldBe s"LocalDateTime.of(2017, 2, 1, 10, 15, 25, 0)"
     }
     it should "generate from offset" in {
+      treeToString(TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))) shouldBe s"ZoneOffset.ofTotalSeconds(${1*3600+2*60+3})"
+    }
+    it should "import a top level package" in {
       treeToString(exportTzdb("org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil)) should include ("import org.threeten.bp._")
     }
     it should "generate from zone rules param" in {

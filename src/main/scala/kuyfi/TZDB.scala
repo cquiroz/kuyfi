@@ -165,7 +165,7 @@ object TZDB {
 
   case class ZoneOffsetParams(transition: LocalDateTime, offsetBefore: ZoneOffset, offsetAfter: ZoneOffset) {
     def toEpochSecond: Long = transition.toEpochSecond(offsetBefore)
-    def toZoneOffsetTransition: ZoneOffsetTransition = ZoneOffsetTransition.of(transition, offsetBefore, offsetAfter)
+    def toZoneOffsetTransition: ZoneOffsetTransitionParams = ZoneOffsetTransitionParams(transition, offsetBefore, offsetAfter)
   }
 
   case class Rule(name: String, from: RuleYear, to: RuleYear, month: Month, on: On, at: At, save: Save, letter: Letter) extends Product with Serializable {
@@ -242,10 +242,17 @@ object TZDB {
   case class Comment(comment: String) extends Product with Serializable
   case class BlankLine(line: String) extends Product with Serializable
 
+  case class ZoneOffsetTransitionParams(transition: LocalDateTime,
+                                        offsetBefore: ZoneOffset,
+                                        offsetAfter: ZoneOffset) {
+    def toOffsetTransition: ZoneOffsetTransition =
+      ZoneOffsetTransition.of(transition, offsetBefore, offsetAfter)
+  }
+
   case class ZoneRulesParams(baseStandardOffset: ZoneOffset,
                              baseWallOffset: ZoneOffset,
-                             standardOffsetTransitionList: List[ZoneOffsetTransition],
-                             transitionList: List[ZoneOffsetTransition],
+                             standardOffsetTransitionList: List[ZoneOffsetTransitionParams],
+                             transitionList: List[ZoneOffsetTransitionParams],
                              lastRules: List[ZoneOffsetTransitionRule])
 
   /**
