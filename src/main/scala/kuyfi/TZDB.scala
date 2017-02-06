@@ -91,7 +91,9 @@ object TZDB {
   case class RuleId(id: String) extends ZoneRule
 
   case class ZoneTransition(offset: GmtOffset, ruleId: ZoneRule, format: String, until: Option[Until])
-  case class Zone(name: String, transitions: List[ZoneTransition])  extends Product with Serializable
+  case class Zone(name: String, transitions: List[ZoneTransition])  extends Product with Serializable {
+    def scalaSafeName: String = name.replace("-", "_minus_").replace("+", "_plus_").replaceAll("/|-|\\+", "_")
+  }
 
   /**
     * Model for Rule Entries
