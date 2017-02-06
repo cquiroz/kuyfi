@@ -14,7 +14,7 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
   // These tests are for 2014j matching the JVM on travis
 
   val r = file"src/test/resources/"
-  val rules = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitions).unsafePerformIO()
+  private val rules = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitions).unsafePerformIO()
 
   def compareZoneRules(calculated: Option[ZoneRules], target: String): Assertion = {
     val platformRules = ZoneRulesProvider.getRules(target, false)
