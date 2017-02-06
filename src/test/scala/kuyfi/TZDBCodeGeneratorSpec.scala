@@ -1,7 +1,8 @@
 package kuyfi
 
-import java.time.{Duration, LocalTime, LocalDateTime, Month, ZoneOffset}
-import java.time.zone.ZoneOffsetTransition
+import java.time.{Duration, LocalTime, LocalDateTime, Month, ZoneOffset, DayOfWeek}
+import java.time.zone.{ZoneOffsetTransition, ZoneOffsetTransitionRule}
+import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 
 import kuyfi.TZDB._
 import org.scalatest.{FlatSpec, Matchers}
@@ -59,8 +60,16 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
     it should "generate an object from a List of Zones" in {
       treeToString(TreeGenerator[List[Zone]].generateTree(List(zone1, zone2))) shouldBe "lazy val allZones: Map[String, ZoneRules] = Map((\"Europe/Belfast\", ZoneRules.of(ZoneOffset.ofHoursMinutesSeconds(0, -23, -40))), (\"Africa/Tripoli\", ZoneRules.of(ZoneOffset.ofHoursMinutesSeconds(0, 52, 44))))"
     }
+    it should "generate from zone offset transition rule" in {
+      val rule = ZoneOffsetTransitionRule.of(Month.JANUARY, 3, DayOfWeek.MONDAY, LocalTime.of(12, 0), false, TimeDefinition.UTC, ZoneOffset.ofHours(0), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2))
+      treeToString(TreeGenerator[ZoneOffsetTransitionRule].generateTree(rule)) shouldBe s"ZoneOffsetTransitionRule.of(Month.JANUARY, 3, DayOfWeek.MONDAY, LocalTime.of(12, 0, 0, 0), false, TimeDefinition.UTC, ZoneOffset.ofTotalSeconds(0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200))"
+    }
     it should "generate from zone offset transition" in {
       treeToString(TreeGenerator[ZoneOffsetTransitionParams].generateTree(ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2)))) shouldBe s"ZoneOffsetTransition.of(LocalDateTime.of(2017, 2, 1, 10, 15, 0, 0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200))"
+    }
+    it should "generate from Month" in {
+      treeToString(TreeGenerator[Month].generateTree(Month.JANUARY)) shouldBe s"Month.JANUARY"
+      treeToString(TreeGenerator[Month].generateTree(Month.DECEMBER)) shouldBe s"Month.DECEMBER"
     }
     it should "generate from LocalDateTime" in {
       treeToString(TreeGenerator[LocalDateTime].generateTree(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15, 25))) shouldBe s"LocalDateTime.of(2017, 2, 1, 10, 15, 25, 0)"
