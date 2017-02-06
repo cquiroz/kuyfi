@@ -72,10 +72,14 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
       treeToString(exportTzdb("org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil)) should include ("import org.threeten.bp._")
     }
     it should "generate from zone rules param" in {
-      val params = ZoneRulesParams(ZoneOffset.ofHours(1), ZoneOffset.ofHours(0), Nil, Nil, Nil)
+      val standardTransitions = List(ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2)))
+      val transitions = List(ZoneOffsetTransitionParams(LocalDateTime.of(2005, Month.NOVEMBER, 3, 0, 0), ZoneOffset.ofHours(0), ZoneOffset.ofHours(2)))
+      val params = ZoneRulesParams(ZoneOffset.ofHours(1), ZoneOffset.ofHours(0), standardTransitions, transitions, Nil)
       treeToString(TreeGenerator[ZoneRulesParams].generateTree(params)).trim shouldBe s"""{
       |  val bso: ZoneOffset = ZoneOffset.ofTotalSeconds(3600)
       |  val bwo: ZoneOffset = ZoneOffset.ofTotalSeconds(0)
+      |  val standardTransitions: List[ZoneOffsetTransitionRule] = List(ZoneOffsetTransition.of(LocalDateTime.of(2017, 2, 1, 10, 15, 0, 0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200)))
+      |  val transitionList: List[ZoneOffsetTransitionRule] = List(ZoneOffsetTransition.of(LocalDateTime.of(2005, 11, 3, 0, 0, 0, 0), ZoneOffset.ofTotalSeconds(0), ZoneOffset.ofTotalSeconds(7200)))
       |}""".stripMargin
 
       treeToString(exportTzdb("org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil)) should include ("import org.threeten.bp._")

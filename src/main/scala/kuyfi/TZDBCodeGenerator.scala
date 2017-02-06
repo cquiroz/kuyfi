@@ -101,7 +101,9 @@ object TZDBCodeGenerator {
       instance( l =>
         BLOCK(List(
           VAL("bso", "ZoneOffset") := l.baseStandardOffset.toTree,
-          VAL("bwo", "ZoneOffset") := l.baseWallOffset.toTree
+          VAL("bwo", "ZoneOffset") := l.baseWallOffset.toTree,
+          VAL("standardTransitions", "List[ZoneOffsetTransitionRule]") := LIST(l.standardOffsetTransitionList.map(_.toTree)),
+          VAL("transitionList", "List[ZoneOffsetTransitionRule]") := LIST(l.transitionList.map(_.toTree))
         ))
       )
   }
