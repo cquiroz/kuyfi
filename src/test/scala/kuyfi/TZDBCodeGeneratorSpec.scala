@@ -1,7 +1,7 @@
 package kuyfi
 
-import java.time.{Duration, LocalTime, LocalDateTime, Month, ZoneOffset, DayOfWeek}
-import java.time.zone.{ZoneOffsetTransition, ZoneOffsetTransitionRule}
+import java.time.{LocalTime, LocalDateTime, Month, ZoneOffset, DayOfWeek}
+import java.time.zone.ZoneOffsetTransitionRule
 import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 
 import kuyfi.TZDB._
