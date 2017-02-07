@@ -1,0 +1,6 @@
+options:
+  - title: Kuyfi
+    url: docs/index.html
+
+  - title: Release process
+    url: docs/release_process.html

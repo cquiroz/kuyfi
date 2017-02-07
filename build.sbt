@@ -59,3 +59,17 @@ lazy val kuyfi: Project = project.in(file("."))
       "org.scalatest"        %% "scalatest"            % "3.0.0" % "test"
     )
   )
+
+  lazy val docs = project.in(file("docs")).dependsOn(kuyfi)
+    .settings(commonSettings)
+    .settings(name := "docs")
+    .enablePlugins(MicrositesPlugin)
+    .settings(
+      micrositeName             := "kuyfi",
+      micrositeAuthor           := "Carlos Quiroz",
+      micrositeGithubOwner      := "cquiroz",
+      micrositeGithubRepo       := "kuyfi",
+      micrositeBaseUrl          := "/kuyfi",
+      //micrositeDocumentationUrl := "/scala-java-time/docs/",
+      micrositeHighlightTheme   := "color-brewer"
+    )
