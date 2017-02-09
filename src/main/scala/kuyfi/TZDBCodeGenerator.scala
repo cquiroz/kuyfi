@@ -21,6 +21,7 @@ object TZDBCodeGenerator {
   val zoneRulesSym: Symbol = getModule("ZoneRules")
   val localDateTimeSym: Symbol = getModule("LocalDateTime")
   val localTimeSym: Symbol = getModule("LocalTime")
+  //val LDT: Symbol
 
   // Typeclass of code generator
   trait TreeGenerator[A] {
@@ -56,62 +57,64 @@ object TZDBCodeGenerator {
       case Inl(h) => hInstance.value.generateTree(h)
       case Inr(t) => tInstance.generateTree(t)
     }
+  }
 
+  object PureTreeGenerator {
     implicit val zoneInstance: TreeGenerator[Zone] =
-      instance(z =>
+      TreeGenerator.instance(z =>
         TUPLE(LIT(z.name), REF(s"rules.${z.scalaSafeName}"))
       )
 
     implicit val linkInstance: TreeGenerator[Link] =
-      instance(l => TUPLE(l.to.toTree, l.from.toTree))
+      TreeGenerator.instance(l => TUPLE(l.to.toTree, l.from.toTree))
 
     implicit val zoneListInstance: TreeGenerator[List[Zone]] =
-      instance( z =>
+      TreeGenerator.instance( z =>
         LAZYVAL("allZones", "Map[String, ZoneRules]") := MAKE_MAP(z.map(_.toTree))
       )
 
     implicit val linkInstances: TreeGenerator[List[Link]] =
-      instance( l =>
+      TreeGenerator.instance( l =>
         LAZYVAL("zoneLinks", "Map[String, String]") := MAKE_MAP(l.map(_.toTree): _*)
       )
 
     implicit val zoneOffsetInstance: TreeGenerator[ZoneOffset] =
-      instance( l =>
+      TreeGenerator.instance( l =>
         (zoneOffsetSym DOT "ofTotalSeconds")(LIT(l.getTotalSeconds))
       )
 
     implicit val dayOfWeekInstance: TreeGenerator[DayOfWeek] =
-      instance(l => REF(s"DayOfWeek.${l.toString}"))
+      TreeGenerator.instance(l => REF(s"DayOfWeek.${l.toString}"))
 
     implicit val timeDefinitionInstance: TreeGenerator[TimeDefinition] =
-      instance(l => REF(s"ZoneOffsetTransitionRule.TimeDefinition.${l.toString}"))
+      TreeGenerator.instance(l => REF(s"ZoneOffsetTransitionRule.TimeDefinition.${l.toString}"))
 
     implicit val monthInstance: TreeGenerator[Month] =
-      instance(l => REF(s"Month.${l.toString}"))
+      TreeGenerator.instance(l => REF(s"Month.${l.toString}"))
 
     implicit val localDateTimeInstance: TreeGenerator[LocalDateTime] =
-      instance( l =>
+      TreeGenerator.instance( l =>
         (localDateTimeSym DOT "of")(LIT(l.getYear), LIT(l.getMonthValue), LIT(l.getDayOfMonth), LIT(l.getHour), LIT(l.getMinute), LIT(l.getSecond), LIT(l.getNano))
       )
 
     implicit val localTimeInstance: TreeGenerator[LocalTime] =
-      instance( l =>
+      TreeGenerator.instance( l =>
         (localTimeSym DOT "of")(LIT(l.getHour), LIT(l.getMinute), LIT(l.getSecond), LIT(l.getNano))
       )
 
     implicit val ZoneOffsetTransitionParamsInstance: TreeGenerator[ZoneOffsetTransitionParams] =
-      instance( l =>
+      TreeGenerator.instance( l =>
         (zoneOffsetTransitionSym DOT "of")(l.transition.toTree, l.offsetBefore.toTree, l.offsetAfter.toTree)
       )
 
     implicit val ZoneOffsetTransitionRuleInstance: TreeGenerator[ZoneOffsetTransitionRule] =
-      instance { l =>
+      TreeGenerator.instance { l =>
         val dayOfWeek = Option(l.getDayOfWeek).map(_.toTree).getOrElse(NULL)
         (zoneOffsetTransitionRuleSym DOT "of")(l.getMonth.toTree, LIT(l.getDayOfMonthIndicator), dayOfWeek, l.getLocalTime.toTree, LIT(l.isMidnightEndOfDay), l.getTimeDefinition.toTree, l.getStandardOffset.toTree, l.getOffsetBefore.toTree, l.getOffsetAfter.toTree)
       }
 
     implicit val zoneAndRules: TreeGenerator[Map[Zone, ZoneRulesParams]] =
-      instance { zones => BLOCK(zones.map {
+      TreeGenerator.instance { zones => BLOCK(zones.map {
         case (z, r) =>
           LAZYVAL(z.scalaSafeName, zoneRulesSym) := {
             // Fixed zone offset
@@ -127,7 +130,7 @@ object TZDBCodeGenerator {
       }
 
     implicit val zoneRules: TreeGenerator[ZoneRulesParams] =
-      instance( l =>
+      TreeGenerator.instance( l =>
         BLOCK(List(
           VAL("bso", "ZoneOffset") := l.baseStandardOffset.toTree,
           VAL("bwo", "ZoneOffset") := l.baseWallOffset.toTree,
@@ -135,6 +138,90 @@ object TZDBCodeGenerator {
           VAL("transitionList", "List[ZoneOffsetTransition]") := LIST(l.transitionList.map(_.toTree)),
           VAL("lastRules", "List[ZoneOffsetTransitionRule]") := LIST(l.lastRules.map(_.toTree)),
           (zoneRulesSym DOT "of")(REF("bso"), REF("bwo"), REF("standardTransitions") POSTFIX("asJava"), REF("transitionList") POSTFIX("asJava"), REF("lastRules") POSTFIX("asJava"))
+        ))
+      )
+  }
+
+  object OptimizedTreeGenerator {
+    implicit val zoneInstance: TreeGenerator[Zone] =
+      TreeGenerator.instance(z =>
+        TUPLE(LIT(z.name), REF(s"rules.${z.scalaSafeName}"))
+      )
+
+    implicit val linkInstance: TreeGenerator[Link] =
+      TreeGenerator.instance(l => TUPLE(l.to.toTree, l.from.toTree))
+
+    implicit val zoneListInstance: TreeGenerator[List[Zone]] =
+      TreeGenerator.instance( z =>
+        LAZYVAL("allZones", "Map[String, ZRO]") := MAKE_MAP(z.map(_.toTree))
+      )
+
+    implicit val linkInstances: TreeGenerator[List[Link]] =
+      TreeGenerator.instance( l =>
+        LAZYVAL("zoneLinks", "Map[String, String]") := MAKE_MAP(l.map(_.toTree): _*)
+      )
+
+    implicit val zoneOffsetInstance: TreeGenerator[ZoneOffset] =
+      TreeGenerator.instance( l =>
+        LIT(l.getTotalSeconds)
+      )
+
+    implicit val dayOfWeekInstance: TreeGenerator[DayOfWeek] =
+      TreeGenerator.instance(l => LIT(l.getValue))
+
+    implicit val timeDefinitionInstance: TreeGenerator[TimeDefinition] =
+      TreeGenerator.instance(l => LIT(l.ordinal))
+
+    implicit val monthInstance: TreeGenerator[Month] =
+      TreeGenerator.instance(l => LIT(l.getValue))
+
+    implicit val localDateTimeInstance: TreeGenerator[LocalDateTime] =
+      TreeGenerator.instance( l =>
+        TUPLE(LIT(l.getYear), LIT(l.getMonthValue), LIT(l.getDayOfMonth), LIT(l.getHour), LIT(l.getMinute), LIT(l.getSecond), LIT(l.getNano))
+      )
+
+    implicit val localTimeInstance: TreeGenerator[LocalTime] =
+      TreeGenerator.instance( l =>
+        TUPLE(LIT(l.getHour), LIT(l.getMinute), LIT(l.getSecond), LIT(l.getNano))
+      )
+
+    implicit val ZoneOffsetTransitionParamsInstance: TreeGenerator[ZoneOffsetTransitionParams] =
+      TreeGenerator.instance( l =>
+        TUPLE(l.transition.toTree, l.offsetBefore.toTree, l.offsetAfter.toTree)
+      )
+
+    implicit val ZoneOffsetTransitionRuleInstance: TreeGenerator[ZoneOffsetTransitionRule] =
+      TreeGenerator.instance { l =>
+        val dayOfWeek = Option(l.getDayOfWeek).fold(NONE)(x => SOME(x.toTree))
+        TUPLE(l.getMonth.toTree, LIT(l.getDayOfMonthIndicator), dayOfWeek, l.getLocalTime.toTree, LIT(l.isMidnightEndOfDay), l.getTimeDefinition.toTree, l.getStandardOffset.toTree, l.getOffsetBefore.toTree, l.getOffsetAfter.toTree)
+      }
+
+    implicit val zoneAndRules: TreeGenerator[Map[Zone, ZoneRulesParams]] =
+      TreeGenerator.instance { zones => BLOCK(zones.map {
+        case (z, r) =>
+          LAZYVAL(z.scalaSafeName, TYPE_REF("ZRO")) := {
+            // Fixed zone offset
+            if (z.transitions.length == 1) {
+              val at = z.transitions.head.offset
+              val offset = (zoneOffsetSym DOT "ofHoursMinutesSeconds")(LIT(at.h), LIT(at.m), LIT(at.s))
+              (zoneRulesSym DOT "of")(offset)
+              RIGHT(at.toZoneOffset.toTree)
+            } else {
+              LEFT(r.toTree)
+            }
+          }
+        })
+      }
+
+    implicit val zoneRules: TreeGenerator[ZoneRulesParams] =
+      TreeGenerator.instance( l =>
+        BLOCK(List(
+          VAL("bso", "Int") := l.baseStandardOffset.toTree,
+          VAL("bwo", "Int") := l.baseWallOffset.toTree,
+          VAL("standardTransitions", "List[ZOT]") := LIST(l.standardOffsetTransitionList.map(_.toTree)),
+          VAL("transitionList", "List[ZOT]") := LIST(l.transitionList.map(_.toTree)),
+          VAL("lastRules", "List[ZOR]") := LIST(l.lastRules.map(_.toTree)),
+          TUPLE(REF("bso"), REF("bwo"), REF("standardTransitions"), REF("transitionList"), REF("lastRules"))
         ))
       )
   }
@@ -149,14 +236,27 @@ object TZDBCodeGenerator {
   }
 
   def exportTzdb(tzdbPackage: String, importsPackage: String, rows: List[Row]): Tree = {
+    import OptimizedTreeGenerator._
     val rules = ZoneRulesBuilder.calculateTransitionParams(rows)
+
+    val zoneProviderSym = getModule("ZoneRulesProvider")
+    val register = (zoneProviderSym DOT "registerProvider")(NULL)
+
+    val aliases = List(
+      TYPEVAR("LDT") := TYPE_TUPLE(IntClass, IntClass, IntClass, IntClass, IntClass, IntClass, IntClass),
+      TYPEVAR("LT") := TYPE_TUPLE(IntClass, IntClass, IntClass, IntClass),
+      TYPEVAR("ZOT") := TYPE_TUPLE(TYPE_REF("LDT"): Type, IntClass, IntClass),
+      TYPEVAR("ZOR") := TYPE_TUPLE(IntClass, IntClass, TYPE_OPTION(IntClass), TYPE_REF("LT"): Type, BooleanClass, IntClass, IntClass, IntClass, IntClass),
+      TYPEVAR("ZR") := TYPE_TUPLE(IntClass, IntClass, TYPE_LIST(TYPE_REF("ZOT")), TYPE_LIST(TYPE_REF("ZOT")), TYPE_LIST(TYPE_REF("ZOR"))),
+      TYPEVAR("ZRO") := TYPE_EITHER(TYPE_REF("ZR"), IntClass))
+
     BLOCK (
       List(
         IMPORT(s"$importsPackage._"),
         IMPORT(s"$importsPackage.zone._"),
         IMPORT("scala.collection.JavaConverters._"),
         IMPORT("scala.language.postfixOps"),
-        OBJECTDEF("tzdb") := BLOCK(OBJECTDEF("rules") := rules.toTree, rows.flatMap(_.select[Zone]).toTree, rows.flatMap(_.select[Link]).toTree))
+        OBJECTDEF("tzdb") := BLOCK(aliases ::: List(OBJECTDEF("rules") := rules.toTree, rows.flatMap(_.select[Zone]).toTree, rows.flatMap(_.select[Link]).toTree)))
     ) inPackage tzdbPackage withComment autoGeneratedCommend
   }
 
@@ -170,4 +270,6 @@ object TZDBCodeGenerator {
     } yield ()
   }
 
+  // Add to generated code. It isn't worth generating this with treehugger
+  val paramsToRules = Nil
 }

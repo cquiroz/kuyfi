@@ -7,8 +7,8 @@ import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 import kuyfi.TZDB._
 import org.scalatest.{FlatSpec, Matchers}
 
-class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
-  import TZDBCodeGenerator.PureTreeGenerator._
+class TZDBOptimizedCodeGeneratorSpec extends FlatSpec with Matchers {
+  import TZDBCodeGenerator.OptimizedTreeGenerator._
 
   val zone1 = Zone("Europe/Belfast", List(
                 ZoneTransition(GmtOffset(0, -23, -40), NullRule,                        "LMT",     Some(Until(1880, Some(Month.AUGUST),  Some(DayOfTheMonth(2)),  None))),
@@ -59,24 +59,24 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
       cleanLinks(rows2) should have size 2
     }
     it should "generate an object from a List of Zones" in {
-      treeToString(TreeGenerator[List[Zone]].generateTree(List(zone1, zone2))) shouldBe "lazy val allZones: Map[String, ZoneRules] = Map((\"Europe/Belfast\", rules.Europe_Belfast), (\"Africa/Tripoli\", rules.Africa_Tripoli))"
+      treeToString(TreeGenerator[List[Zone]].generateTree(List(zone1, zone2))) shouldBe "lazy val allZones: Map[String, ZRO] = Map((\"Europe/Belfast\", rules.Europe_Belfast), (\"Africa/Tripoli\", rules.Africa_Tripoli))"
     }
     it should "generate from zone offset transition rule" in {
       val rule = ZoneOffsetTransitionRule.of(Month.JANUARY, 3, DayOfWeek.MONDAY, LocalTime.of(12, 0), false, TimeDefinition.UTC, ZoneOffset.ofHours(0), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2))
-      treeToString(TreeGenerator[ZoneOffsetTransitionRule].generateTree(rule)) shouldBe s"ZoneOffsetTransitionRule.of(Month.JANUARY, 3, DayOfWeek.MONDAY, LocalTime.of(12, 0, 0, 0), false, ZoneOffsetTransitionRule.TimeDefinition.UTC, ZoneOffset.ofTotalSeconds(0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200))"
+      treeToString(TreeGenerator[ZoneOffsetTransitionRule].generateTree(rule)) shouldBe s"(1, 3, Some(1), (12, 0, 0, 0), false, 0, 0, 3600, 7200)"
     }
     it should "generate from zone offset transition" in {
-      treeToString(TreeGenerator[ZoneOffsetTransitionParams].generateTree(ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2)))) shouldBe s"ZoneOffsetTransition.of(LocalDateTime.of(2017, 2, 1, 10, 15, 0, 0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200))"
+      treeToString(TreeGenerator[ZoneOffsetTransitionParams].generateTree(ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2)))) shouldBe s"((2017, 2, 1, 10, 15, 0, 0), 3600, 7200)"
     }
     it should "generate from Month" in {
-      treeToString(TreeGenerator[Month].generateTree(Month.JANUARY)) shouldBe s"Month.JANUARY"
-      treeToString(TreeGenerator[Month].generateTree(Month.DECEMBER)) shouldBe s"Month.DECEMBER"
+      treeToString(TreeGenerator[Month].generateTree(Month.JANUARY)) shouldBe s"1"
+      treeToString(TreeGenerator[Month].generateTree(Month.DECEMBER)) shouldBe s"12"
     }
     it should "generate from LocalDateTime" in {
-      treeToString(TreeGenerator[LocalDateTime].generateTree(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15, 25))) shouldBe s"LocalDateTime.of(2017, 2, 1, 10, 15, 25, 0)"
+      treeToString(TreeGenerator[LocalDateTime].generateTree(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15, 25))) shouldBe s"(2017, 2, 1, 10, 15, 25, 0)"
     }
     it should "generate from offset" in {
-      treeToString(TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))) shouldBe s"ZoneOffset.ofTotalSeconds(${1*3600+2*60+3})"
+      treeToString(TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))) shouldBe s"3723"
     }
     it should "import a top level package" in {
       treeToString(exportTzdb("org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil)) should include ("import org.threeten.bp._")
@@ -87,12 +87,12 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
       val rule = List(ZoneOffsetTransitionRule.of(Month.JANUARY, 3, DayOfWeek.MONDAY, LocalTime.of(12, 0), false, TimeDefinition.UTC, ZoneOffset.ofHours(0), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2)))
       val params = ZoneRulesParams(ZoneOffset.ofHours(1), ZoneOffset.ofHours(0), standardTransitions, transitions, rule)
       treeToString(TreeGenerator[ZoneRulesParams].generateTree(params)).trim shouldBe s"""{
-      |  val bso: ZoneOffset = ZoneOffset.ofTotalSeconds(3600)
-      |  val bwo: ZoneOffset = ZoneOffset.ofTotalSeconds(0)
-      |  val standardTransitions: List[ZoneOffsetTransition] = List(ZoneOffsetTransition.of(LocalDateTime.of(2017, 2, 1, 10, 15, 0, 0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200)))
-      |  val transitionList: List[ZoneOffsetTransition] = List(ZoneOffsetTransition.of(LocalDateTime.of(2005, 11, 3, 0, 0, 0, 0), ZoneOffset.ofTotalSeconds(0), ZoneOffset.ofTotalSeconds(7200)))
-      |  val lastRules: List[ZoneOffsetTransitionRule] = List(ZoneOffsetTransitionRule.of(Month.JANUARY, 3, DayOfWeek.MONDAY, LocalTime.of(12, 0, 0, 0), false, ZoneOffsetTransitionRule.TimeDefinition.UTC, ZoneOffset.ofTotalSeconds(0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200)))
-      |  ZoneRules.of(bso, bwo, standardTransitions asJava, transitionList asJava, lastRules asJava)
+      |  val bso: Int = 3600
+      |  val bwo: Int = 0
+      |  val standardTransitions: List[ZOT] = List(((2017, 2, 1, 10, 15, 0, 0), 3600, 7200))
+      |  val transitionList: List[ZOT] = List(((2005, 11, 3, 0, 0, 0, 0), 0, 7200))
+      |  val lastRules: List[ZOR] = List((1, 3, Some(1), (12, 0, 0, 0), false, 0, 0, 3600, 7200))
+      |  (bso, bwo, standardTransitions, transitionList, lastRules)
       |}""".stripMargin
 
       println(treeToString(exportTzdb("org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil)))
