@@ -7,7 +7,7 @@ import TZDB._
 import treehugger.forest._
 import definitions._
 import treehuggerDSL._
-import java.time.{DayOfWeek, ZoneOffset, LocalDateTime, LocalTime, Month}
+import java.time.{DayOfWeek, ZoneOffset, LocalDateTime, LocalDate, LocalTime, Month}
 import java.time.zone.ZoneOffsetTransitionRule
 import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 
@@ -177,12 +177,17 @@ object TZDBCodeGenerator {
 
     implicit val localDateTimeInstance: TreeGenerator[LocalDateTime] =
       TreeGenerator.instance( l =>
-        TUPLE(LIT(l.getYear), LIT(l.getMonthValue), LIT(l.getDayOfMonth), LIT(l.getHour), LIT(l.getMinute), LIT(l.getSecond), LIT(l.getNano))
+        TUPLE(l.toLocalDate.toTree, l.toLocalTime.toTree)
       )
 
     implicit val localTimeInstance: TreeGenerator[LocalTime] =
       TreeGenerator.instance( l =>
         LIT(l.toSecondOfDay)
+      )
+
+    implicit val localDateInstance: TreeGenerator[LocalDate] =
+      TreeGenerator.instance( l =>
+        TUPLE(LIT(l.getYear), LIT(l.getDayOfYear))
       )
 
     implicit val ZoneOffsetTransitionParamsInstance: TreeGenerator[ZoneOffsetTransitionParams] =
@@ -241,8 +246,9 @@ object TZDBCodeGenerator {
     val register = (zoneProviderSym DOT "registerProvider")(NULL)
 
     val aliases = List(
-      TYPEVAR("LDT") := TYPE_TUPLE(IntClass, IntClass, IntClass, IntClass, IntClass, IntClass, IntClass),
+      TYPEVAR("LD") := TYPE_TUPLE(IntClass, IntClass),
       TYPEVAR("LT") := TYPE_REF(IntClass),
+      TYPEVAR("LDT") := TYPE_TUPLE(TYPE_REF("LD"), TYPE_REF("LT")),
       TYPEVAR("ZOT") := TYPE_TUPLE(TYPE_REF("LDT"): Type, IntClass, IntClass),
       TYPEVAR("ZOR") := TYPE_TUPLE(IntClass, IntClass, TYPE_OPTION(IntClass), TYPE_REF("LT"): Type, BooleanClass, IntClass, IntClass, IntClass, IntClass),
       TYPEVAR("ZR") := TYPE_TUPLE(IntClass, IntClass, TYPE_LIST(TYPE_REF("ZOT")), TYPE_LIST(TYPE_REF("ZOT")), TYPE_LIST(TYPE_REF("ZOR"))),

@@ -66,14 +66,14 @@ class TZDBOptimizedCodeGeneratorSpec extends FlatSpec with Matchers {
       treeToString(TreeGenerator[ZoneOffsetTransitionRule].generateTree(rule)) shouldBe s"(1, 3, Some(1), 43200, false, 0, 0, 3600, 7200)"
     }
     it should "generate from zone offset transition" in {
-      treeToString(TreeGenerator[ZoneOffsetTransitionParams].generateTree(ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2)))) shouldBe s"((2017, 2, 1, 10, 15, 0, 0), 3600, 7200)"
+      treeToString(TreeGenerator[ZoneOffsetTransitionParams].generateTree(ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2)))) shouldBe s"(((2017, 32), 36900), 3600, 7200)"
     }
     it should "generate from Month" in {
       treeToString(TreeGenerator[Month].generateTree(Month.JANUARY)) shouldBe s"1"
       treeToString(TreeGenerator[Month].generateTree(Month.DECEMBER)) shouldBe s"12"
     }
     it should "generate from LocalDateTime" in {
-      treeToString(TreeGenerator[LocalDateTime].generateTree(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15, 25))) shouldBe s"(2017, 2, 1, 10, 15, 25, 0)"
+      treeToString(TreeGenerator[LocalDateTime].generateTree(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15, 25))) shouldBe s"((2017, 32), 36925)"
     }
     it should "generate from offset" in {
       treeToString(TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))) shouldBe s"3723"
@@ -89,8 +89,8 @@ class TZDBOptimizedCodeGeneratorSpec extends FlatSpec with Matchers {
       treeToString(TreeGenerator[ZoneRulesParams].generateTree(params)).trim shouldBe s"""{
       |  val bso: Int = 3600
       |  val bwo: Int = 0
-      |  val standardTransitions: List[ZOT] = List(((2017, 2, 1, 10, 15, 0, 0), 3600, 7200))
-      |  val transitionList: List[ZOT] = List(((2005, 11, 3, 0, 0, 0, 0), 0, 7200))
+      |  val standardTransitions: List[ZOT] = List((((2017, 32), 36900), 3600, 7200))
+      |  val transitionList: List[ZOT] = List((((2005, 307), 0), 0, 7200))
       |  val lastRules: List[ZOR] = List((1, 3, Some(1), 43200, false, 0, 0, 3600, 7200))
       |  (bso, bwo, standardTransitions, transitionList, lastRules)
       |}""".stripMargin
