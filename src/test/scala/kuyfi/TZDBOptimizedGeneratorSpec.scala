@@ -63,7 +63,7 @@ class TZDBOptimizedCodeGeneratorSpec extends FlatSpec with Matchers {
     }
     it should "generate from zone offset transition rule" in {
       val rule = ZoneOffsetTransitionRule.of(Month.JANUARY, 3, DayOfWeek.MONDAY, LocalTime.of(12, 0), false, TimeDefinition.UTC, ZoneOffset.ofHours(0), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2))
-      treeToString(TreeGenerator[ZoneOffsetTransitionRule].generateTree(rule)) shouldBe s"(1, 3, Some(1), (12, 0, 0, 0), false, 0, 0, 3600, 7200)"
+      treeToString(TreeGenerator[ZoneOffsetTransitionRule].generateTree(rule)) shouldBe s"(1, 3, Some(1), 43200, false, 0, 0, 3600, 7200)"
     }
     it should "generate from zone offset transition" in {
       treeToString(TreeGenerator[ZoneOffsetTransitionParams].generateTree(ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2)))) shouldBe s"((2017, 2, 1, 10, 15, 0, 0), 3600, 7200)"
@@ -91,7 +91,7 @@ class TZDBOptimizedCodeGeneratorSpec extends FlatSpec with Matchers {
       |  val bwo: Int = 0
       |  val standardTransitions: List[ZOT] = List(((2017, 2, 1, 10, 15, 0, 0), 3600, 7200))
       |  val transitionList: List[ZOT] = List(((2005, 11, 3, 0, 0, 0, 0), 0, 7200))
-      |  val lastRules: List[ZOR] = List((1, 3, Some(1), (12, 0, 0, 0), false, 0, 0, 3600, 7200))
+      |  val lastRules: List[ZOR] = List((1, 3, Some(1), 43200, false, 0, 0, 3600, 7200))
       |  (bso, bwo, standardTransitions, transitionList, lastRules)
       |}""".stripMargin
 

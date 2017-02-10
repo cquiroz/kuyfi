@@ -182,7 +182,7 @@ object TZDBCodeGenerator {
 
     implicit val localTimeInstance: TreeGenerator[LocalTime] =
       TreeGenerator.instance( l =>
-        TUPLE(LIT(l.getHour), LIT(l.getMinute), LIT(l.getSecond), LIT(l.getNano))
+        LIT(l.toSecondOfDay)
       )
 
     implicit val ZoneOffsetTransitionParamsInstance: TreeGenerator[ZoneOffsetTransitionParams] =
@@ -242,7 +242,7 @@ object TZDBCodeGenerator {
 
     val aliases = List(
       TYPEVAR("LDT") := TYPE_TUPLE(IntClass, IntClass, IntClass, IntClass, IntClass, IntClass, IntClass),
-      TYPEVAR("LT") := TYPE_TUPLE(IntClass, IntClass, IntClass, IntClass),
+      TYPEVAR("LT") := TYPE_REF(IntClass),
       TYPEVAR("ZOT") := TYPE_TUPLE(TYPE_REF("LDT"): Type, IntClass, IntClass),
       TYPEVAR("ZOR") := TYPE_TUPLE(IntClass, IntClass, TYPE_OPTION(IntClass), TYPE_REF("LT"): Type, BooleanClass, IntClass, IntClass, IntClass, IntClass),
       TYPEVAR("ZR") := TYPE_TUPLE(IntClass, IntClass, TYPE_LIST(TYPE_REF("ZOT")), TYPE_LIST(TYPE_REF("ZOT")), TYPE_LIST(TYPE_REF("ZOR"))),
