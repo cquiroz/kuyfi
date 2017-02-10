@@ -153,12 +153,12 @@ object TZDBCodeGenerator {
 
     implicit val zoneListInstance: TreeGenerator[List[Zone]] =
       TreeGenerator.instance( z =>
-        LAZYVAL("allZones", "Map[String, ZRO]") := MAKE_MAP(z.map(_.toTree))
+        LAZYVAL("allZones", TYPE_MAP(StringClass, TYPE_REF("ZRO"))) := MAKE_MAP(z.map(_.toTree))
       )
 
     implicit val linkInstances: TreeGenerator[List[Link]] =
       TreeGenerator.instance( l =>
-        LAZYVAL("zoneLinks", "Map[String, String]") := MAKE_MAP(l.map(_.toTree): _*)
+        LAZYVAL("zoneLinks", TYPE_MAP(StringClass, StringClass)) := MAKE_MAP(l.map(_.toTree): _*)
       )
 
     implicit val zoneOffsetInstance: TreeGenerator[ZoneOffset] =
@@ -203,8 +203,6 @@ object TZDBCodeGenerator {
             // Fixed zone offset
             if (z.transitions.length == 1) {
               val at = z.transitions.head.offset
-              val offset = (zoneOffsetSym DOT "ofHoursMinutesSeconds")(LIT(at.h), LIT(at.m), LIT(at.s))
-              (zoneRulesSym DOT "of")(offset)
               RIGHT(at.toZoneOffset.toTree)
             } else {
               LEFT(r.toTree)
@@ -216,11 +214,11 @@ object TZDBCodeGenerator {
     implicit val zoneRules: TreeGenerator[ZoneRulesParams] =
       TreeGenerator.instance( l =>
         BLOCK(List(
-          VAL("bso", "Int") := l.baseStandardOffset.toTree,
-          VAL("bwo", "Int") := l.baseWallOffset.toTree,
-          VAL("standardTransitions", "List[ZOT]") := LIST(l.standardOffsetTransitionList.map(_.toTree)),
-          VAL("transitionList", "List[ZOT]") := LIST(l.transitionList.map(_.toTree)),
-          VAL("lastRules", "List[ZOR]") := LIST(l.lastRules.map(_.toTree)),
+          VAL("bso", IntClass) := l.baseStandardOffset.toTree,
+          VAL("bwo", IntClass) := l.baseWallOffset.toTree,
+          VAL("standardTransitions", TYPE_LIST(TYPE_REF("ZOT"))) := LIST(l.standardOffsetTransitionList.map(_.toTree)),
+          VAL("transitionList", TYPE_LIST(TYPE_REF("ZOT"))) := LIST(l.transitionList.map(_.toTree)),
+          VAL("lastRules", TYPE_LIST(TYPE_REF("ZOR"))) := LIST(l.lastRules.map(_.toTree)),
           TUPLE(REF("bso"), REF("bwo"), REF("standardTransitions"), REF("transitionList"), REF("lastRules"))
         ))
       )
