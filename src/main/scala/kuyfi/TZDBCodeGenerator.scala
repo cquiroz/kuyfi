@@ -74,15 +74,14 @@ object TZDBCodeGenerator {
       )
 
     implicit val stdListInstance: TreeGenerator[List[(Zone, StandardRulesParams)]] =
-      TreeGenerator.instance{ case l =>
-        LAZYVAL("stdZones", TYPE_MAP(StringClass, TYPE_REF("ZR"))) := MAKE_MAP(l.map { case (z, r) => TUPLE(List(LIT(z.name), REF("rules." + z.scalaSafeName)): _*)})
+      TreeGenerator.instance{ l =>
+        LAZYVAL("stdZones", TYPE_MAP(StringClass, TYPE_REF("ZR"))) := MAKE_MAP(l.map { case (z, _) => TUPLE(List(LIT(z.name), REF("rules." + z.scalaSafeName)): _*)})
       }
 
     implicit val fixedListInstance: TreeGenerator[List[(Zone, FixedZoneRulesParams)]] =
       TreeGenerator.instance( l =>
-        LAZYVAL("fixedZones", TYPE_MAP(StringClass, TYPE_REF("ZF"))) := MAKE_MAP(l.map { case (z, r) => TUPLE(List(LIT(z.name), REF("rules." + z.scalaSafeName)): _*)})
+        LAZYVAL("fixedZones", TYPE_MAP(StringClass, TYPE_REF("ZF"))) := MAKE_MAP(l.map { case (z, _) => TUPLE(List(LIT(z.name), REF("rules." + z.scalaSafeName)): _*)})
       )
-
 
     implicit val linkInstances: TreeGenerator[List[Link]] =
       TreeGenerator.instance( l =>
@@ -179,7 +178,7 @@ object TZDBCodeGenerator {
           VAL("standardTransitions", "List[ZoneOffsetTransition]") := LIST(l.standardOffsetTransitionList.map(_.toTree)),
           VAL("transitionList", "List[ZoneOffsetTransition]") := LIST(l.transitionList.map(_.toTree)),
           VAL("lastRules", "List[ZoneOffsetTransitionRule]") := LIST(l.lastRules.map(_.toTree)),
-          (zoneRulesSym DOT "of")(REF("bso"), REF("bwo"), REF("standardTransitions") POSTFIX("asJava"), REF("transitionList") POSTFIX("asJava"), REF("lastRules") POSTFIX("asJava"))
+          (zoneRulesSym DOT "of")(REF("bso"), REF("bwo"), REF("standardTransitions") POSTFIX "asJava", REF("transitionList") POSTFIX "asJava", REF("lastRules") POSTFIX "asJava")
         ))
       )
   }
@@ -202,13 +201,13 @@ object TZDBCodeGenerator {
       )
 
     implicit val stdListInstance: TreeGenerator[List[(Zone, StandardRulesParams)]] =
-      TreeGenerator.instance{ case l =>
-        LAZYVAL("stdZones", TYPE_MAP(StringClass, TYPE_REF("ZR"))) := MAKE_MAP(l.map { case (z, r) => TUPLE(List(LIT(z.name), REF("rules." + z.scalaSafeName)): _*)})
+      TreeGenerator.instance{ l =>
+        LAZYVAL("stdZones", TYPE_MAP(StringClass, TYPE_REF("ZR"))) := MAKE_MAP(l.map { case (z, _) => TUPLE(List(LIT(z.name), REF("rules." + z.scalaSafeName)): _*)})
       }
 
     implicit val fixedListInstance: TreeGenerator[List[(Zone, FixedZoneRulesParams)]] =
       TreeGenerator.instance( l =>
-        LAZYVAL("fixedZones", TYPE_MAP(StringClass, TYPE_REF("ZF"))) := MAKE_MAP(l.map { case (z, r) => TUPLE(List(LIT(z.name), REF("rules." + z.scalaSafeName)): _*)})
+        LAZYVAL("fixedZones", TYPE_MAP(StringClass, TYPE_REF("ZF"))) := MAKE_MAP(l.map { case (z, _) => TUPLE(List(LIT(z.name), REF("rules." + z.scalaSafeName)): _*)})
       )
 
     implicit val linkInstances: TreeGenerator[List[Link]] =
@@ -327,15 +326,17 @@ object TZDBCodeGenerator {
     val zoneProviderSym = getModule("ZoneRulesProvider")
     val register = (zoneProviderSym DOT "registerProvider")(NULL)
 
-    // Group all the offsets for deduplication
-    val uniqueOffsets: List[Tree] = ((standard.flatMap { case(_, l) =>
+    val baseOffsets = standard.flatMap { case (_, l) =>
       List(l.baseStandardOffset, l.baseWallOffset)
-    }).toList ::: (
-      standard.flatMap { case(_, l) =>
-        l.standardOffsetTransitionList.flatMap(x => List(x.offsetBefore, x.offsetAfter)) :::
-        l.transitionList.flatMap(x => List(x.offsetBefore, x.offsetAfter))
-      }
-    ).toList).distinct.map(_.toTree)
+    }
+
+    val ruleOffsets = standard.flatMap { case(_, l) =>
+      l.standardOffsetTransitionList.flatMap(x => List(x.offsetBefore, x.offsetAfter)) :::
+      l.transitionList.flatMap(x => List(x.offsetBefore, x.offsetAfter))
+    }
+
+    // Group all the offsets for deduplication
+    val uniqueOffsets: List[Tree] = (baseOffsets ::: ruleOffsets).distinct.map(_.toTree)
 
     // Group all the distinct rules per year
     val uniqueRulesPerYear =
@@ -345,7 +346,7 @@ object TZDBCodeGenerator {
 
     // Generate an object with all the rules per year
     val rulesPerYear: List[Tree] = uniqueRulesPerYear.map { case (y, r) =>
-      (OBJECTDEF("zot_" + y) := BLOCK(r.toList.distinct.map(_.toTree))): Tree
+      OBJECTDEF("zot_" + y) := BLOCK(r.distinct.map(_.toTree)): Tree
     }.toList
 
     val aliases = List(
@@ -366,7 +367,7 @@ object TZDBCodeGenerator {
         OBJECTDEF("tpe") := BLOCK(aliases),
         OBJECTDEF("zo") := BLOCK(IMPORT("tpe._") :: uniqueOffsets),
         OBJECTDEF("zot") := BLOCK(IMPORT("tpe._") :: rulesPerYear),
-        OBJECTDEF("tzdb") := BLOCK(IMPORT("tpe._") :: List(OBJECTDEF("rules") := BLOCK(fixed.map(_.toTree).toList ::: standard.map(_.toTree).toList), fixed.toTree, standard.toTree, rows.flatMap(_.select[Link]).toTree)))
+        OBJECTDEF("tzdb") := BLOCK(IMPORT("tpe._") :: List(OBJECTDEF("rules") := BLOCK(fixed.map(_.toTree) ::: standard.map(_.toTree).toList), fixed.toTree, standard.toTree, rows.flatMap(_.select[Link]).toTree)))
     ) inPackage tzdbPackage withComment autoGeneratedCommend
   }
 

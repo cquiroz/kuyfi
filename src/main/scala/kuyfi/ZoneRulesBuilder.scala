@@ -1,14 +1,13 @@
 package kuyfi
 
 import java.time._
-import java.time.zone.{ZoneOffsetTransition, ZoneOffsetTransitionRule, ZoneRules}
+import java.time.zone.{ZoneOffsetTransitionRule, ZoneRules}
 import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 
 import kuyfi.TZDB._
 import kuyfi.TimeZoneWindow._
 import shapeless.Poly1
 
-import scalaz._
 import scala.annotation.tailrec
 
 object ZoneRulesBuilder {
@@ -173,7 +172,6 @@ object ZoneRulesBuilder {
     * Calculates all the zone rules for the rows
     */
   def calculateTransitions(rows: List[Row]): Map[Zone, ZoneRules] = {
-    import scala.collection.JavaConverters._
     calculateTransitionParams(rows).map { case (z, p) => (z, p.toZoneRules) }
   }
 
