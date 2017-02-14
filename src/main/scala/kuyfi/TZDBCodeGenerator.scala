@@ -143,6 +143,9 @@ object TZDBCodeGenerator {
   }
 
   object OptimizedTreeGenerator {
+    def zoneOffsetSafeName(zo: Int): String = s"zo_${if (zo <0) s"_${-zo}" else zo.toString}"
+    def zoneRuleSafeName(zo: ZoneOffsetTransitionParams): String = s"zot_${if (zo.hashCode < 0) s"_${-zo.hashCode}" else zo.hashCode}"
+
     implicit val zoneInstance: TreeGenerator[Zone] =
       TreeGenerator.instance(z =>
         TUPLE(LIT(z.name), REF(s"rules.${z.scalaSafeName}"))
@@ -163,7 +166,7 @@ object TZDBCodeGenerator {
 
     implicit val zoneOffsetInstance: TreeGenerator[ZoneOffset] =
       TreeGenerator.instance( l =>
-        LIT(l.getTotalSeconds)
+        VAL(zoneOffsetSafeName(l.getTotalSeconds), IntClass) := LIT(l.getTotalSeconds)
       )
 
     implicit val dayOfWeekInstance: TreeGenerator[DayOfWeek] =
@@ -192,13 +195,13 @@ object TZDBCodeGenerator {
 
     implicit val ZoneOffsetTransitionParamsInstance: TreeGenerator[ZoneOffsetTransitionParams] =
       TreeGenerator.instance( l =>
-        TUPLE(l.transition.toTree, l.offsetBefore.toTree, l.offsetAfter.toTree)
+        VAL(zoneRuleSafeName(l), TYPE_REF("ZOT")) := TUPLE(l.transition.toTree, REF("zo." + zoneOffsetSafeName(l.offsetBefore.getTotalSeconds)), REF("zo." + zoneOffsetSafeName(l.offsetAfter.getTotalSeconds)))
       )
 
     implicit val ZoneOffsetTransitionRuleInstance: TreeGenerator[ZoneOffsetTransitionRule] =
       TreeGenerator.instance { l =>
         val dayOfWeek = Option(l.getDayOfWeek).fold(NONE)(x => SOME(x.toTree))
-        TUPLE(l.getMonth.toTree, LIT(l.getDayOfMonthIndicator), dayOfWeek, l.getLocalTime.toTree, LIT(l.isMidnightEndOfDay), l.getTimeDefinition.toTree, l.getStandardOffset.toTree, l.getOffsetBefore.toTree, l.getOffsetAfter.toTree)
+        TUPLE(l.getMonth.toTree, LIT(l.getDayOfMonthIndicator), dayOfWeek, l.getLocalTime.toTree, LIT(l.isMidnightEndOfDay), l.getTimeDefinition.toTree, REF(zoneOffsetSafeName(l.getStandardOffset.getTotalSeconds)), REF(zoneOffsetSafeName(l.getOffsetBefore.getTotalSeconds)), REF(zoneOffsetSafeName(l.getOffsetAfter.getTotalSeconds)))
       }
 
     implicit val zoneAndRules: TreeGenerator[Map[Zone, ZoneRulesParams]] =
@@ -208,7 +211,7 @@ object TZDBCodeGenerator {
             // Fixed zone offset
             if (z.transitions.length == 1) {
               val at = z.transitions.head.offset
-              RIGHT(at.toZoneOffset.toTree)
+              RIGHT(REF(zoneOffsetSafeName(at.toZoneOffset.getTotalSeconds)))
             } else {
               LEFT(r.toTree)
             }
@@ -218,14 +221,7 @@ object TZDBCodeGenerator {
 
     implicit val zoneRules: TreeGenerator[ZoneRulesParams] =
       TreeGenerator.instance( l =>
-        BLOCK(List(
-          VAL("bso", IntClass) := l.baseStandardOffset.toTree,
-          VAL("bwo", IntClass) := l.baseWallOffset.toTree,
-          VAL("standardTransitions", TYPE_LIST(TYPE_REF("ZOT"))) := LIST(l.standardOffsetTransitionList.map(_.toTree)),
-          VAL("transitionList", TYPE_LIST(TYPE_REF("ZOT"))) := LIST(l.transitionList.map(_.toTree)),
-          VAL("lastRules", TYPE_LIST(TYPE_REF("ZOR"))) := LIST(l.lastRules.map(_.toTree)),
-          TUPLE(REF("bso"), REF("bwo"), REF("standardTransitions"), REF("transitionList"), REF("lastRules"))
-        ))
+        TUPLE(REF("zo." + zoneOffsetSafeName(l.baseStandardOffset.getTotalSeconds)), REF("zo." + zoneOffsetSafeName(l.baseWallOffset.getTotalSeconds)), LIST(l.standardOffsetTransitionList.map(r => REF("zot.zot_" + r.transition.getYear + "." + zoneRuleSafeName(r)))), LIST(l.transitionList.map(r => REF("zot.zot_" + r.transition.getYear + "." + zoneRuleSafeName(r)))), LIST(l.lastRules.map(_.toTree)))
       )
   }
 
@@ -239,11 +235,34 @@ object TZDBCodeGenerator {
   }
 
   def exportTzdb(tzdbPackage: String, importsPackage: String, rows: List[Row])
-    (implicit genParams: TreeGenerator[Map[Zone, ZoneRulesParams]], genZones: TreeGenerator[List[Zone]], genLinks: TreeGenerator[List[Link]]): Tree = {
+    (implicit genParams: TreeGenerator[Map[Zone, ZoneRulesParams]], genZO: TreeGenerator[ZoneOffset], genZOT: TreeGenerator[ZoneOffsetTransitionParams], genZones: TreeGenerator[List[Zone]], genLinks: TreeGenerator[List[Link]]): Tree = {
     val rules = ZoneRulesBuilder.calculateTransitionParams(rows)
 
     val zoneProviderSym = getModule("ZoneRulesProvider")
     val register = (zoneProviderSym DOT "registerProvider")(NULL)
+
+    val uniqueOffsets: List[Tree] = ((rules.flatMap { case(_, l) =>
+      List(l.baseStandardOffset, l.baseWallOffset)
+    }).toList ::: (
+      rules.flatMap { case(_, l) =>
+        l.standardOffsetTransitionList.flatMap(x => List(x.offsetBefore, x.offsetAfter)) :::
+        l.transitionList.flatMap(x => List(x.offsetBefore, x.offsetAfter))
+      }
+    ).toList).distinct.map(_.toTree)
+
+    val uniqueRules: List[Tree] =
+      rules.flatMap { case(_, l) =>
+        l.standardOffsetTransitionList ::: l.transitionList
+      }.toList.distinct.map(_.toTree)
+
+    val uniqueRules2 =
+      rules.flatMap { case(_, l) =>
+        l.standardOffsetTransitionList ::: l.transitionList
+      }.groupBy(_.transition.getYear)
+
+    val rulesPerYear: List[Tree] = uniqueRules2.map { case (y, r) =>
+      (OBJECTDEF("zot_" + y) := BLOCK(r.toList.distinct.map(_.toTree))): Tree
+    }.toList
 
     val aliases = List(
       TYPEVAR("LD") := TYPE_TUPLE(IntClass, IntClass),
@@ -260,12 +279,15 @@ object TZDBCodeGenerator {
         IMPORT(s"$importsPackage.zone._"),
         IMPORT("scala.collection.JavaConverters._"),
         IMPORT("scala.language.postfixOps"),
-        OBJECTDEF("tzdb") := BLOCK(aliases ::: List(OBJECTDEF("rules") := rules.toTree, rows.flatMap(_.select[Zone]).toTree, rows.flatMap(_.select[Link]).toTree)))
+        OBJECTDEF("zo") := BLOCK(aliases ::: uniqueOffsets),
+        OBJECTDEF("zot") := BLOCK(aliases ::: rulesPerYear),
+        //OBJECTDEF("zot") := BLOCK(aliases ::: uniqueRules),
+        OBJECTDEF("tzdb") := BLOCK(uniqueOffsets ::: aliases ::: List(OBJECTDEF("rules") := rules.toTree, rows.flatMap(_.select[Zone]).toTree, rows.flatMap(_.select[Link]).toTree)))
     ) inPackage tzdbPackage withComment autoGeneratedCommend
   }
 
   def exportAll(dir: java.io.File, to: java.io.File, packageName: String, importsPackage: String)
-    (implicit genParams: TreeGenerator[Map[Zone, ZoneRulesParams]], genZones: TreeGenerator[List[Zone]], genLinks: TreeGenerator[List[Link]]): IO[Unit] = {
+    (implicit genParams: TreeGenerator[Map[Zone, ZoneRulesParams]], genZO: TreeGenerator[ZoneOffset], genZOT: TreeGenerator[ZoneOffsetTransitionParams], genZones: TreeGenerator[List[Zone]], genLinks: TreeGenerator[List[Link]]): IO[Unit] = {
     import better.files._
     for {
       rows      <- TZDBParser.parseAll(File(dir.toURI))
