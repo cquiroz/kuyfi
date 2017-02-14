@@ -4,7 +4,7 @@ import java.time._
 import java.time.chrono.IsoChronology
 import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 import java.time.temporal.TemporalAdjusters
-import java.time.zone.{ZoneOffsetTransition, ZoneOffsetTransitionRule}
+import java.time.zone.{ZoneOffsetTransition, ZoneRules, ZoneOffsetTransitionRule}
 
 import shapeless._
 import shapeless.ops.coproduct.Inject
@@ -251,11 +251,21 @@ object TZDB {
       ZoneOffsetTransition.of(transition, offsetBefore, offsetAfter)
   }
 
-  case class ZoneRulesParams(baseStandardOffset: ZoneOffset,
+  sealed trait ZoneRulesParams {
+    def toZoneRules: ZoneRules
+  }
+  case class FixedZoneRulesParams(offset: GmtOffset) extends ZoneRulesParams {
+    def toZoneRules = ZoneRules.of(offset.toZoneOffset)
+  }
+
+  case class StandardRulesParams(baseStandardOffset: ZoneOffset,
                              baseWallOffset: ZoneOffset,
                              standardOffsetTransitionList: List[ZoneOffsetTransitionParams],
                              transitionList: List[ZoneOffsetTransitionParams],
-                             lastRules: List[ZoneOffsetTransitionRule])
+                             lastRules: List[ZoneOffsetTransitionRule]) extends ZoneRulesParams {
+    import scala.collection.JavaConverters._
+    def toZoneRules = ZoneRules.of(baseStandardOffset, baseWallOffset, standardOffsetTransitionList.map(_.toOffsetTransition).asJava, transitionList.map(_.toOffsetTransition).asJava, lastRules.asJava)
+ }
 
   /**
     * Coproduct for the content of lines on the parsed files

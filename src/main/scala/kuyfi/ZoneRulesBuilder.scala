@@ -97,7 +97,11 @@ object ZoneRulesBuilder {
             val newLoopWindowStart = LocalDateTime.ofEpochSecond(tzw.createDateTimeEpochSecond(finalLs), 0, newLoopWindowOffset)
             TransitionsAccumulator(newLoopWindowStart, newLoopWindowOffset, newLso, finalLs, standardTransitions ::: newStdTransitions, transitionList ::: moreTransitions, transitionRules ::: finalRules)
           }
-          ZoneRulesParams(firstWindow.standardOffset.toZoneOffset, firstWallOffset, accumulator.standardTransitions, accumulator.transitionsList, accumulator.transitionRules)
+          if (zone.transitions.length == 1) {
+            FixedZoneRulesParams(zone.transitions.head.offset)
+          } else {
+            StandardRulesParams(firstWindow.standardOffset.toZoneOffset, firstWallOffset, accumulator.standardTransitions, accumulator.transitionsList, accumulator.transitionRules)
+          }
         }
         zone -> zoneRules
       } collect {
@@ -170,7 +174,7 @@ object ZoneRulesBuilder {
     */
   def calculateTransitions(rows: List[Row]): Map[Zone, ZoneRules] = {
     import scala.collection.JavaConverters._
-    calculateTransitionParams(rows).map { case (z, p) => (z, ZoneRules.of(p.baseStandardOffset, p.baseWallOffset, p.standardOffsetTransitionList.map(_.toOffsetTransition).asJava, p.transitionList.map(_.toOffsetTransition).asJava, p.lastRules.asJava))}
+    calculateTransitionParams(rows).map { case (z, p) => (z, p.toZoneRules) }
   }
 
   /**
