@@ -73,6 +73,17 @@ object TZDBCodeGenerator {
         LAZYVAL("allZones", "Map[String, ZoneRules]") := MAKE_MAP(z.map(_.toTree))
       )
 
+    implicit val stdListInstance: TreeGenerator[List[(Zone, StandardRulesParams)]] =
+      TreeGenerator.instance{ case l =>
+        LAZYVAL("stdZones", TYPE_MAP(StringClass, TYPE_REF("ZR"))) := MAKE_MAP(l.map { case (z, r) => TUPLE(List(LIT(z.name), REF("rules." + z.scalaSafeName)): _*)})
+      }
+
+    implicit val fixedListInstance: TreeGenerator[List[(Zone, FixedZoneRulesParams)]] =
+      TreeGenerator.instance( l =>
+        LAZYVAL("fixedZones", TYPE_MAP(StringClass, TYPE_REF("ZF"))) := MAKE_MAP(l.map { case (z, r) => TUPLE(List(LIT(z.name), REF("rules." + z.scalaSafeName)): _*)})
+      )
+
+
     implicit val linkInstances: TreeGenerator[List[Link]] =
       TreeGenerator.instance( l =>
         LAZYVAL("zoneLinks", "Map[String, String]") := MAKE_MAP(l.map(_.toTree): _*)
@@ -122,13 +133,32 @@ object TZDBCodeGenerator {
         })
       }
 
+    implicit val zoneStdTupleRules: TreeGenerator[(Zone, FixedZoneRulesParams)] =
+      TreeGenerator.instance {
+        case (z, r) =>
+          implicitly[TreeGenerator[(Zone, ZoneRulesParams)]]
+          LAZYVAL(z.scalaSafeName, TYPE_REF("ZF")) := {
+            r.toTree
+          }
+      }
+
+    implicit val zoneFixedTupleRules: TreeGenerator[(Zone, StandardRulesParams)] =
+      TreeGenerator.instance {
+        case (z, r) =>
+          implicitly[TreeGenerator[(Zone, ZoneRulesParams)]]
+          LAZYVAL(z.scalaSafeName, TYPE_REF("ZoneRules")) := {
+            r.toTree
+          }
+      }
+
     implicit val zoneTupleRules: TreeGenerator[(Zone, ZoneRulesParams)] =
       TreeGenerator.instance {
         case (z, r) =>
-          LAZYVAL(z.scalaSafeName, TYPE_REF("ZR")) := {
+          LAZYVAL(z.scalaSafeName, TYPE_REF("ZoneRules")) := {
             r.toTree
           }
         }
+
     implicit val zoneRules: TreeGenerator[ZoneRulesParams] =
       TreeGenerator.instance {
         case f: FixedZoneRulesParams => f.toTree
@@ -226,15 +256,6 @@ object TZDBCodeGenerator {
         TUPLE(l.getMonth.toTree, LIT(l.getDayOfMonthIndicator), dayOfWeek, l.getLocalTime.toTree, LIT(l.isMidnightEndOfDay), l.getTimeDefinition.toTree, REF("zo." + zoneOffsetSafeName(l.getStandardOffset.getTotalSeconds)), REF("zo." + zoneOffsetSafeName(l.getOffsetBefore.getTotalSeconds)), REF("zo." + zoneOffsetSafeName(l.getOffsetAfter.getTotalSeconds)))
       }
 
-    implicit val zoneAndRules: TreeGenerator[Map[Zone, ZoneRulesParams]] =
-      TreeGenerator.instance { zones => BLOCK(zones.map {
-        case (z, r) =>
-          LAZYVAL(z.scalaSafeName, TYPE_REF("ZR")) := {
-            r.toTree
-          }
-        })
-      }
-
     implicit val zoneStdTupleRules: TreeGenerator[(Zone, FixedZoneRulesParams)] =
       TreeGenerator.instance {
         case (z, r) =>
@@ -243,6 +264,7 @@ object TZDBCodeGenerator {
             r.toTree
           }
       }
+
     implicit val zoneFixedTupleRules: TreeGenerator[(Zone, StandardRulesParams)] =
       TreeGenerator.instance {
         case (z, r) =>
@@ -251,6 +273,7 @@ object TZDBCodeGenerator {
             r.toTree
           }
       }
+
     implicit val zoneTupleRules: TreeGenerator[(Zone, ZoneRulesParams)] =
       TreeGenerator.instance {
         case (z, r: StandardRulesParams) =>
@@ -268,6 +291,7 @@ object TZDBCodeGenerator {
         case f: FixedZoneRulesParams => f.toTree
         case s: StandardRulesParams => s.toTree
       }
+
     implicit val fixedZoneRules: TreeGenerator[FixedZoneRulesParams] =
       TreeGenerator.instance{ l =>
         REF("zo." + zoneOffsetSafeName(l.offset.toZoneOffset.getTotalSeconds))
@@ -289,7 +313,7 @@ object TZDBCodeGenerator {
   }
 
   def exportTzdb(tzdbPackage: String, importsPackage: String, rows: List[Row])
-    (implicit genParams: TreeGenerator[(Zone, ZoneRulesParams)], getO: TreeGenerator[ZoneOffset], getOP: TreeGenerator[ZoneOffsetTransitionParams], genZ: TreeGenerator[List[(Zone, StandardRulesParams)]], genY: TreeGenerator[List[(Zone, FixedZoneRulesParams)]], genZ1: TreeGenerator[(Zone, StandardRulesParams)], genY1: TreeGenerator[(Zone, FixedZoneRulesParams)], genLinks: TreeGenerator[List[Link]]): Tree = {
+    (implicit getO: TreeGenerator[ZoneOffset], getOP: TreeGenerator[ZoneOffsetTransitionParams], genZ: TreeGenerator[List[(Zone, StandardRulesParams)]], genY: TreeGenerator[List[(Zone, FixedZoneRulesParams)]], genZ1: TreeGenerator[(Zone, StandardRulesParams)], genY1: TreeGenerator[(Zone, FixedZoneRulesParams)], genLinks: TreeGenerator[List[Link]]): Tree = {
     val rules = ZoneRulesBuilder.calculateTransitionParams(rows)
     // Fixed zone rules
     val fixed: List[(Zone, FixedZoneRulesParams)] = rules.collect {

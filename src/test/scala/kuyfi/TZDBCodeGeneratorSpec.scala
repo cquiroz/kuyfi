@@ -78,7 +78,7 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
     it should "generate from offset" in {
       treeToString(TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))) shouldBe s"ZoneOffset.ofTotalSeconds(${1*3600+2*60+3})"
     }
-    /*it should "import a top level package" in {
+    it should "import a top level package" in {
       treeToString(exportTzdb("org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil)) should include ("import org.threeten.bp._")
     }
     it should "generate from zone rules param" in {
@@ -97,5 +97,5 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
 
       println(treeToString(exportTzdb("org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil)))
       treeToString(exportTzdb("org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil)) should include ("import org.threeten.bp._")
-    }*/
+    }
 }
