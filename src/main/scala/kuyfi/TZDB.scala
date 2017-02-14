@@ -254,10 +254,14 @@ object TZDB {
   sealed trait ZoneRulesParams {
     def toZoneRules: ZoneRules
   }
-  case class FixedZoneRulesParams(offset: GmtOffset) extends ZoneRulesParams {
-    def toZoneRules = ZoneRules.of(offset.toZoneOffset)
+  case class FixedZoneRulesParams(baseStandardOffset: ZoneOffset,
+                             baseWallOffset: ZoneOffset,
+                             standardOffsetTransitionList: List[ZoneOffsetTransitionParams],
+                             transitionList: List[ZoneOffsetTransitionParams],
+                             lastRules: List[ZoneOffsetTransitionRule]) extends ZoneRulesParams {
+    import scala.collection.JavaConverters._
+    def toZoneRules = ZoneRules.of(baseStandardOffset, baseWallOffset, standardOffsetTransitionList.map(_.toOffsetTransition).asJava, transitionList.map(_.toOffsetTransition).asJava, lastRules.asJava)
   }
-
   case class StandardRulesParams(baseStandardOffset: ZoneOffset,
                              baseWallOffset: ZoneOffset,
                              standardOffsetTransitionList: List[ZoneOffsetTransitionParams],
@@ -265,7 +269,7 @@ object TZDB {
                              lastRules: List[ZoneOffsetTransitionRule]) extends ZoneRulesParams {
     import scala.collection.JavaConverters._
     def toZoneRules = ZoneRules.of(baseStandardOffset, baseWallOffset, standardOffsetTransitionList.map(_.toOffsetTransition).asJava, transitionList.map(_.toOffsetTransition).asJava, lastRules.asJava)
- }
+  }
 
   /**
     * Coproduct for the content of lines on the parsed files

@@ -305,13 +305,7 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
     it should "calculate the transitions for any rule" in {
       val rulesAndLinks = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionsWithLinks).unsafePerformIO()
       val rulesAndLink = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionParams).unsafePerformIO()
-      val m = rulesAndLink.toList.flatMap {
-        case (_, l: StandardRulesParams)  => l.standardOffsetTransitionList :: l.transitionList
-        case (_, l: FixedZoneRulesParams) => Nil
-      }
       import scala.collection.JavaConverters._
-      println(m.length)
-      println(m.distinct.length)
       ZoneRulesProvider.getAvailableZoneIds.asScala.foreach {z =>
         val calculatedRules = rulesAndLinks.find(_._1 == z).map(_._2)
         if (calculatedRules.isDefined) {

@@ -98,7 +98,7 @@ object ZoneRulesBuilder {
             TransitionsAccumulator(newLoopWindowStart, newLoopWindowOffset, newLso, finalLs, standardTransitions ::: newStdTransitions, transitionList ::: moreTransitions, transitionRules ::: finalRules)
           }
           if (zone.transitions.length == 1) {
-            FixedZoneRulesParams(zone.transitions.head.offset)
+            FixedZoneRulesParams(firstWindow.standardOffset.toZoneOffset, firstWallOffset, accumulator.standardTransitions, accumulator.transitionsList, accumulator.transitionRules)
           } else {
             StandardRulesParams(firstWindow.standardOffset.toZoneOffset, firstWallOffset, accumulator.standardTransitions, accumulator.transitionsList, accumulator.transitionRules)
           }
