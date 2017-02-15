@@ -21,7 +21,6 @@ object TZDBCodeGenerator {
   val zoneRulesSym: Symbol = getModule("ZoneRules")
   val localDateTimeSym: Symbol = getModule("LocalDateTime")
   val localTimeSym: Symbol = getModule("LocalTime")
-  //val LDT: Symbol
 
   // Typeclass of code generator
   trait TreeGenerator[A] {
@@ -233,7 +232,7 @@ object TZDBCodeGenerator {
 
     implicit val localDateTimeInstance: TreeGenerator[LocalDateTime] =
       TreeGenerator.instance( l =>
-        TUPLE(l.toLocalDate.toTree, l.toLocalTime.toTree)
+        JSLIST(List(LIT(l.toLocalDate.getYear), LIT(l.toLocalDate.getDayOfYear), LIT(l.toLocalTime.toSecondOfDay)))
       )
 
     implicit val localTimeInstance: TreeGenerator[LocalTime] =
@@ -362,7 +361,7 @@ object TZDBCodeGenerator {
     val aliases = List(
       TYPEVAR("LD")  := TYPE_JSLIST(IntClass),
       TYPEVAR("LT")  := TYPE_REF(IntClass),
-      TYPEVAR("LDT") := TYPE_TUPLE(TYPE_REF("LD"), TYPE_REF("LT")),
+      TYPEVAR("LDT") := TYPE_JSLIST(IntClass),
       TYPEVAR("ZOT") := TYPE_TUPLE(TYPE_REF("LDT"): Type, IntClass, IntClass),
       TYPEVAR("ZOR") := TYPE_TUPLE(IntClass, IntClass, TYPE_OPTION(IntClass), TYPE_REF("LT"): Type, BooleanClass, IntClass, IntClass, IntClass, IntClass),
       TYPEVAR("ZR")  := TYPE_TUPLE(IntClass, IntClass, TYPE_JSLIST(TYPE_REF("ZOT")), TYPE_JSLIST(TYPE_REF("ZOT")), TYPE_JSLIST(TYPE_REF("ZOR"))),
