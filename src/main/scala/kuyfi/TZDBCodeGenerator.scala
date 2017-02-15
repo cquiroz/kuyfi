@@ -247,7 +247,12 @@ object TZDBCodeGenerator {
 
     implicit val ZoneOffsetTransitionParamsInstance: TreeGenerator[ZoneOffsetTransitionParams] =
       TreeGenerator.instance( l =>
-        VAL(zoneRuleSafeName(l), TYPE_REF("ZOT")) := TUPLE(l.transition.toTree, REF("zo." + zoneOffsetSafeName(l.offsetBefore.getTotalSeconds)), REF("zo." + zoneOffsetSafeName(l.offsetAfter.getTotalSeconds)))
+        VAL(zoneRuleSafeName(l), TYPE_REF("ZOT")) := JSLIST(List(
+          LIT(l.transition.toLocalDate.getYear),
+          LIT(l.transition.toLocalDate.getDayOfYear),
+          LIT(l.transition.toLocalTime.toSecondOfDay),
+          REF("zo." + zoneOffsetSafeName(l.offsetBefore.getTotalSeconds)),
+          REF("zo." + zoneOffsetSafeName(l.offsetAfter.getTotalSeconds))))
       )
 
     implicit val ZoneOffsetTransitionRuleInstance: TreeGenerator[ZoneOffsetTransitionRule] =
@@ -362,7 +367,7 @@ object TZDBCodeGenerator {
       TYPEVAR("LD")  := TYPE_JSLIST(IntClass),
       TYPEVAR("LT")  := TYPE_REF(IntClass),
       TYPEVAR("LDT") := TYPE_JSLIST(IntClass),
-      TYPEVAR("ZOT") := TYPE_TUPLE(TYPE_REF("LDT"): Type, IntClass, IntClass),
+      TYPEVAR("ZOT") := TYPE_JSLIST(IntClass),
       TYPEVAR("ZOR") := TYPE_TUPLE(IntClass, IntClass, TYPE_OPTION(IntClass), TYPE_REF("LT"): Type, BooleanClass, IntClass, IntClass, IntClass, IntClass),
       TYPEVAR("ZR")  := TYPE_TUPLE(IntClass, IntClass, TYPE_JSLIST(TYPE_REF("ZOT")), TYPE_JSLIST(TYPE_REF("ZOT")), TYPE_JSLIST(TYPE_REF("ZOR"))),
       TYPEVAR("ZF")  := TYPE_REF(IntClass))
