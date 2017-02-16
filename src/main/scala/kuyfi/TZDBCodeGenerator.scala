@@ -257,8 +257,19 @@ object TZDBCodeGenerator {
 
     implicit val ZoneOffsetTransitionRuleInstance: TreeGenerator[ZoneOffsetTransitionRule] =
       TreeGenerator.instance { l =>
-        val dayOfWeek = Option(l.getDayOfWeek).fold(NONE)(x => SOME(x.toTree))
-        TUPLE(l.getMonth.toTree, LIT(l.getDayOfMonthIndicator), dayOfWeek, l.getLocalTime.toTree, LIT(l.isMidnightEndOfDay), l.getTimeDefinition.toTree, REF("zo." + zoneOffsetSafeName(l.getStandardOffset.getTotalSeconds)), REF("zo." + zoneOffsetSafeName(l.getOffsetBefore.getTotalSeconds)), REF("zo." + zoneOffsetSafeName(l.getOffsetAfter.getTotalSeconds)))
+        //val dayOfWeek = Option(l.getDayOfWeek).fold(NONE)(x => SOME(x.toTree))
+        val dayOfWeek = Option(l.getDayOfWeek).fold(LIT(-1))(x => LIT(x.getValue))
+        //TUPLE(l.getMonth.toTree, LIT(l.getDayOfMonthIndicator), dayOfWeek, l.getLocalTime.toTree, LIT(l.isMidnightEndOfDay), l.getTimeDefinition.toTree, REF("zo." + zoneOffsetSafeName(l.getStandardOffset.getTotalSeconds)), REF("zo." + zoneOffsetSafeName(l.getOffsetBefore.getTotalSeconds)), REF("zo." + zoneOffsetSafeName(l.getOffsetAfter.getTotalSeconds)))
+        JSLIST(List(
+          LIT(l.getMonth.getValue),
+          LIT(l.getDayOfMonthIndicator),
+          dayOfWeek,
+          l.getLocalTime.toTree,
+          LIT(if (l.isMidnightEndOfDay) 1 else 0),
+          l.getTimeDefinition.toTree,
+          LIT(l.getStandardOffset.getTotalSeconds),
+          LIT(l.getOffsetBefore.getTotalSeconds),
+          LIT(l.getOffsetAfter.getTotalSeconds)))
       }
 
     implicit val zoneStdTupleRules: TreeGenerator[(Zone, FixedZoneRulesParams)] =
@@ -368,7 +379,9 @@ object TZDBCodeGenerator {
       TYPEVAR("LT")  := TYPE_REF(IntClass),
       TYPEVAR("LDT") := TYPE_JSLIST(IntClass),
       TYPEVAR("ZOT") := TYPE_JSLIST(IntClass),
-      TYPEVAR("ZOR") := TYPE_TUPLE(IntClass, IntClass, TYPE_OPTION(IntClass), TYPE_REF("LT"): Type, BooleanClass, IntClass, IntClass, IntClass, IntClass),
+      //TYPEVAR("ZOR") := TYPE_TUPLE(IntClass, IntClass, TYPE_OPTION(IntClass), TYPE_REF("LT"): Type, BooleanClass, IntClass, IntClass, IntClass, IntClass),
+      // We are representin this as int though index 2 is Opt[Int] and 4 is a Boolean. Ugly but reduces substantially the code size
+      TYPEVAR("ZOR") := TYPE_JSLIST(IntClass),
       TYPEVAR("ZR")  := TYPE_TUPLE(IntClass, IntClass, TYPE_JSLIST(TYPE_REF("ZOT")), TYPE_JSLIST(TYPE_REF("ZOT")), TYPE_JSLIST(TYPE_REF("ZOR"))),
       TYPEVAR("ZF")  := TYPE_REF(IntClass))
 
