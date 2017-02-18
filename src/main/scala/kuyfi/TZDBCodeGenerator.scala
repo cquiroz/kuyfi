@@ -162,6 +162,7 @@ object TZDBCodeGenerator {
         case f: FixedZoneRulesParams => f.toTree
         case s: StandardRulesParams => s.toTree
       }
+
     implicit val fixedZoneRules: TreeGenerator[FixedZoneRulesParams] =
       TreeGenerator.instance{ l =>
         val at = l.baseStandardOffset.getTotalSeconds
@@ -186,7 +187,10 @@ object TZDBCodeGenerator {
     def zoneOffsetSafeName(zo: Int): String = s"zo_${if (zo <0) s"_${-zo}" else zo.toString}"
     def zoneRuleSafeName(zo: ZoneOffsetTransitionParams): String = s"zot_${if (zo.hashCode < 0) s"_${-zo.hashCode}" else zo.hashCode}"
 
-    def JSLIST(xs: Iterable[Tree]): Tree    = ID("js.Array") APPLY xs
+    val JsListClass          =  definitions.getClass("scala.scalajs.js.Array")
+    def TYPE_JSLIST(typ: Type): Type    = JsListClass TYPE_OF typ
+
+    def JSLIST(typ: Type, xs: Iterable[Tree]): Tree    = TYPE_JSLIST(typ) APPLY xs
 
     implicit val zoneInstance: TreeGenerator[Zone] =
       TreeGenerator.instance(z =>
@@ -196,14 +200,9 @@ object TZDBCodeGenerator {
     implicit val linkInstance: TreeGenerator[Link] =
       TreeGenerator.instance(l => TUPLE(l.to.toTree, l.from.toTree))
 
-    implicit val zoneListInstance: TreeGenerator[List[Zone]] =
-      TreeGenerator.instance( z =>
-        LAZYVAL("allZones", TYPE_MAP(StringClass, TYPE_REF("ZR"))) := MAKE_MAP(z.map(_.toTree))
-      )
-
     implicit val stdListInstance: TreeGenerator[List[(Zone, StandardRulesParams)]] =
       TreeGenerator.instance{ l =>
-        LAZYVAL("stdZones", TYPE_MAP(StringClass, TYPE_REF("ZR"))) := MAKE_MAP(l.map { case (z, _) => TUPLE(List(LIT(z.name), REF("rules." + z.scalaSafeName)): _*)})
+        LAZYVAL("stdZones", TYPE_MAP(StringClass, TYPE_REF("scala.scalajs.js.Dynamic"))) := MAKE_MAP(l.map { case (z, _) => TUPLE(List(LIT(z.name), REF("rules." + z.scalaSafeName)): _*)})
       }
 
     implicit val fixedListInstance: TreeGenerator[List[(Zone, FixedZoneRulesParams)]] =
@@ -232,7 +231,7 @@ object TZDBCodeGenerator {
 
     implicit val localDateTimeInstance: TreeGenerator[LocalDateTime] =
       TreeGenerator.instance( l =>
-        JSLIST(List(LIT(l.toLocalDate.getYear), LIT(l.toLocalDate.getDayOfYear), LIT(l.toLocalTime.toSecondOfDay)))
+        JSLIST(IntClass, List(LIT(l.toLocalDate.getYear), LIT(l.toLocalDate.getDayOfYear), LIT(l.toLocalTime.toSecondOfDay)))
       )
 
     implicit val localTimeInstance: TreeGenerator[LocalTime] =
@@ -242,17 +241,17 @@ object TZDBCodeGenerator {
 
     implicit val localDateInstance: TreeGenerator[LocalDate] =
       TreeGenerator.instance( l =>
-        JSLIST(List(LIT(l.getYear), LIT(l.getDayOfYear)))
+        JSLIST(IntClass, List(LIT(l.getYear), LIT(l.getDayOfYear)))
       )
 
     implicit val ZoneOffsetTransitionParamsInstance: TreeGenerator[ZoneOffsetTransitionParams] =
       TreeGenerator.instance( l =>
-        VAL(zoneRuleSafeName(l), TYPE_REF("ZOT")) := JSLIST(List(
+        VAL(zoneRuleSafeName(l), TYPE_REF("ZOT")) := JSLIST(IntClass, List(
           LIT(l.transition.toLocalDate.getYear),
           LIT(l.transition.toLocalDate.getDayOfYear),
           LIT(l.transition.toLocalTime.toSecondOfDay),
-          REF("zo." + zoneOffsetSafeName(l.offsetBefore.getTotalSeconds)),
-          REF("zo." + zoneOffsetSafeName(l.offsetAfter.getTotalSeconds))))
+          LIT(l.offsetBefore.getTotalSeconds),
+          LIT(l.offsetAfter.getTotalSeconds)))
       )
 
     implicit val ZoneOffsetTransitionRuleInstance: TreeGenerator[ZoneOffsetTransitionRule] =
@@ -260,7 +259,7 @@ object TZDBCodeGenerator {
         //val dayOfWeek = Option(l.getDayOfWeek).fold(NONE)(x => SOME(x.toTree))
         val dayOfWeek = Option(l.getDayOfWeek).fold(LIT(-1))(x => LIT(x.getValue))
         //TUPLE(l.getMonth.toTree, LIT(l.getDayOfMonthIndicator), dayOfWeek, l.getLocalTime.toTree, LIT(l.isMidnightEndOfDay), l.getTimeDefinition.toTree, REF("zo." + zoneOffsetSafeName(l.getStandardOffset.getTotalSeconds)), REF("zo." + zoneOffsetSafeName(l.getOffsetBefore.getTotalSeconds)), REF("zo." + zoneOffsetSafeName(l.getOffsetAfter.getTotalSeconds)))
-        JSLIST(List(
+        JSLIST(IntClass, List(
           LIT(l.getMonth.getValue),
           LIT(l.getDayOfMonthIndicator),
           dayOfWeek,
@@ -285,7 +284,7 @@ object TZDBCodeGenerator {
       TreeGenerator.instance {
         case (z, r) =>
           implicitly[TreeGenerator[(Zone, ZoneRulesParams)]]
-          LAZYVAL(z.scalaSafeName, TYPE_REF("ZR")) := {
+          LAZYVAL(z.scalaSafeName, TYPE_REF("scala.scalajs.js.Dynamic")) := {
             r.toTree
           }
       }
@@ -293,7 +292,7 @@ object TZDBCodeGenerator {
     implicit val zoneTupleRules: TreeGenerator[(Zone, ZoneRulesParams)] =
       TreeGenerator.instance {
         case (z, r: StandardRulesParams) =>
-          LAZYVAL(z.scalaSafeName, TYPE_REF("ZR")) := {
+          LAZYVAL(z.scalaSafeName, TYPE_REF("")) := {
             r.toTree
           }
         case (z, r: FixedZoneRulesParams) =>
@@ -310,18 +309,19 @@ object TZDBCodeGenerator {
 
     implicit val fixedZoneRules: TreeGenerator[FixedZoneRulesParams] =
       TreeGenerator.instance{ l =>
-        REF(s"zo.${zoneOffsetSafeName(l.baseStandardOffset.getTotalSeconds)}")
+        LIT(l.baseStandardOffset.getTotalSeconds)
       }
 
     implicit val standardZoneRules: TreeGenerator[StandardRulesParams] =
       TreeGenerator.instance( l =>
-        TUPLE(
-          REF(s"zo.${zoneOffsetSafeName(l.baseStandardOffset.getTotalSeconds)}"),
-          REF(s"zo.${zoneOffsetSafeName(l.baseWallOffset.getTotalSeconds)}"),
-          JSLIST(l.standardOffsetTransitionList.map(r => REF("zot.zot_" + r.transition.getYear + "." + zoneRuleSafeName(r)))),
-          JSLIST(l.transitionList.map(r => REF("zot.zot_" + r.transition.getYear + "." + zoneRuleSafeName(r)))),
-          JSLIST(l.lastRules.map(_.toTree)))
-      )
+        // This will build a literal value for the array
+        REF("js.Dynamic.literal") APPLY(
+          TUPLE(LIT("s"), LIT(l.baseStandardOffset.getTotalSeconds)),
+          TUPLE(LIT("w"), LIT(l.baseWallOffset.getTotalSeconds)),
+          TUPLE(LIT("t"), JSLIST(TYPE_JSLIST(IntClass), l.standardOffsetTransitionList.map(r => REF("zot.zot_" + r.transition.getYear + "." + zoneRuleSafeName(r))))),
+          TUPLE(LIT("l"), JSLIST(TYPE_JSLIST(IntClass), l.transitionList.map(r => REF("zot.zot_" + r.transition.getYear + "." + zoneRuleSafeName(r))))),
+          TUPLE(LIT("r"), JSLIST(TYPE_JSLIST(IntClass), l.lastRules.map(_.toTree)))
+      ))
   }
 
   // Go over the links and remove links whose source is unknown
@@ -374,6 +374,22 @@ object TZDBCodeGenerator {
     val JsListClass          =  definitions.getClass("scala.scalajs.js.Array")
     def TYPE_JSLIST(typ: Type): Type    = JsListClass TYPE_OF typ
 
+    val jsNative = REF("js.native")
+
+    val jsRuleTrait: List[Tree] = List(TRAITDEF("ZR") withParents("js.Object") withAnnots(ANNOT("js.native")) := BLOCK(
+      VAL("s", IntClass) := jsNative,
+      VAL("w", IntClass) := jsNative,
+      VAL("t", TYPE_JSLIST(TYPE_JSLIST(IntClass))) := jsNative,
+      VAL("l", TYPE_JSLIST(TYPE_JSLIST(IntClass))) := jsNative,
+      VAL("r", TYPE_JSLIST(TYPE_JSLIST(IntClass))) := jsNative
+    ))
+
+    val jsRuleObject: List[Tree] = List(OBJECTDEF("ZR") := BLOCK(
+      (DEF("apply", TYPE_REF("ZR"))
+        withParams(PARAM("s", IntClass), PARAM("w", IntClass), PARAM("stl", TYPE_JSLIST(TYPE_JSLIST(IntClass))), PARAM("sl", TYPE_JSLIST(TYPE_JSLIST(IntClass))), PARAM("r", TYPE_JSLIST(TYPE_JSLIST(IntClass))))
+      ) := REF("js.Dynamic.literal") APPLY(TUPLE(LIT("s"), REF("s")), TUPLE(LIT("w"), REF("w")), TUPLE(LIT("stl"), REF("stl")), TUPLE(LIT("sl"), REF("sl")), TUPLE(LIT("r"), REF("r"))) DOT("asInstanceOf") APPLYTYPE(TYPE_REF("ZR"))
+    ))
+
     val aliases = List(
       TYPEVAR("LD")  := TYPE_JSLIST(IntClass),
       TYPEVAR("LT")  := TYPE_REF(IntClass),
@@ -382,7 +398,8 @@ object TZDBCodeGenerator {
       //TYPEVAR("ZOR") := TYPE_TUPLE(IntClass, IntClass, TYPE_OPTION(IntClass), TYPE_REF("LT"): Type, BooleanClass, IntClass, IntClass, IntClass, IntClass),
       // We are representin this as int though index 2 is Opt[Int] and 4 is a Boolean. Ugly but reduces substantially the code size
       TYPEVAR("ZOR") := TYPE_JSLIST(IntClass),
-      TYPEVAR("ZR")  := TYPE_TUPLE(IntClass, IntClass, TYPE_JSLIST(TYPE_REF("ZOT")), TYPE_JSLIST(TYPE_REF("ZOT")), TYPE_JSLIST(TYPE_REF("ZOR"))),
+      //TYPEVAR("ZR")  := TYPE_TUPLE(IntClass, IntClass, TYPE_JSLIST(TYPE_REF("ZOT")), TYPE_JSLIST(TYPE_REF("ZOT")), TYPE_JSLIST(TYPE_REF("ZOR"))),
+      TYPEVAR("ZR")  := TYPE_REF("scala.scalajs.js.Dynamic"),
       TYPEVAR("ZF")  := TYPE_REF(IntClass))
 
     BLOCK (
@@ -393,7 +410,7 @@ object TZDBCodeGenerator {
         IMPORT("scala.language.postfixOps"),
         IMPORT("scala.scalajs.js"),
         OBJECTDEF("tpe")  := BLOCK(aliases),
-        OBJECTDEF("zo")   := BLOCK(IMPORT("tpe._") :: uniqueOffsets),
+        //OBJECTDEF("zo")   := BLOCK(IMPORT("tpe._") :: uniqueOffsets),
         OBJECTDEF("zot")  := BLOCK(IMPORT("tpe._") :: rulesPerYear),
         OBJECTDEF("tzdb") := BLOCK(IMPORT("tpe._") :: List(OBJECTDEF("rules") := BLOCK(fixed.map(_.toTree) ::: standard.map(_.toTree).toList), fixed.toTree, standard.toTree, rows.flatMap(_.select[Link]).toTree)))
     ) inPackage tzdbPackage withComment autoGeneratedCommend
