@@ -240,19 +240,22 @@ object TZDBCodeGenerator {
       )
 
     implicit val localDateInstance: TreeGenerator[LocalDate] =
-      TreeGenerator.instance( l =>
-        JSLIST(IntClass, List(LIT(l.getYear), LIT(l.getDayOfYear)))
-      )
+      TreeGenerator.instance { l =>
+        val ys = String.format("%04d", Seq(l.getYear))
+        val ds = String.format("%03d", Seq(l.getDayOfYear))
+        JSLIST(IntClass, List(LIT((ys + ds).toInt)))
+      }
 
     implicit val ZoneOffsetTransitionParamsInstance: TreeGenerator[ZoneOffsetTransitionParams] =
-      TreeGenerator.instance( l =>
+      TreeGenerator.instance { l =>
+        val ys = f"${l.transition.toLocalDate.getYear}%04d"
+        val ds = f"${l.transition.toLocalDate.getDayOfYear}%03d"
         VAL(zoneRuleSafeName(l), TYPE_REF("ZOT")) := JSLIST(IntClass, List(
-          LIT(l.transition.toLocalDate.getYear),
-          LIT(l.transition.toLocalDate.getDayOfYear),
+          LIT((ys + ds).toInt),
           LIT(l.transition.toLocalTime.toSecondOfDay),
           LIT(l.offsetBefore.getTotalSeconds),
           LIT(l.offsetAfter.getTotalSeconds)))
-      )
+      }
 
     implicit val ZoneOffsetTransitionRuleInstance: TreeGenerator[ZoneOffsetTransitionRule] =
       TreeGenerator.instance { l =>
