@@ -202,12 +202,12 @@ object TZDBCodeGenerator {
 
     implicit val stdListInstance: TreeGenerator[List[(Zone, StandardRulesParams)]] =
       TreeGenerator.instance{ l =>
-        LAZYVAL("stdZones", TYPE_MAP(StringClass, TYPE_REF("scala.scalajs.js.Dynamic"))) := MAKE_MAP(l.map { case (z, _) => TUPLE(List(LIT(z.name), REF(z.scalaSafeName)): _*)})
+        LAZYVAL("stdZones", TYPE_REF("scala.scalajs.js.Dynamic")) := REF("js.Dynamic.literal") APPLY(l.map { case (z, _) => TUPLE(List(LIT(z.name), REF(z.scalaSafeName)): _*)})
       }
 
     implicit val fixedListInstance: TreeGenerator[List[(Zone, FixedZoneRulesParams)]] =
       TreeGenerator.instance( l =>
-        LAZYVAL("fixedZones", TYPE_MAP(StringClass, TYPE_REF("ZF"))) := MAKE_MAP(l.map { case (z, f) => TUPLE(List(LIT(z.name), LIT(f.baseStandardOffset.getTotalSeconds))) })
+        LAZYVAL("fixedZones", TYPE_REF("scala.scalajs.js.Dynamic")) := REF("js.Dynamic.literal") APPLY(l.map { case (z, f) => TUPLE(List(LIT(z.name), LIT(f.baseStandardOffset.getTotalSeconds))) })
       )
 
     implicit val linkInstances: TreeGenerator[List[Link]] =
