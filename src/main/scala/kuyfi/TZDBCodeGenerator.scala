@@ -241,8 +241,8 @@ object TZDBCodeGenerator {
 
     implicit val localDateInstance: TreeGenerator[LocalDate] =
       TreeGenerator.instance { l =>
-        val ys = String.format("%04d", Seq(l.getYear))
-        val ds = String.format("%03d", Seq(l.getDayOfYear))
+        val ys = f"${l.getYear}%04d"
+        val ds = f"${l.getDayOfYear}%03d"
         JSLIST(IntClass, List(LIT((ys + ds).toInt)))
       }
 
