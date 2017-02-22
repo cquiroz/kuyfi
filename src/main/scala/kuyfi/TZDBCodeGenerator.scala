@@ -202,12 +202,12 @@ object TZDBCodeGenerator {
 
     implicit val stdListInstance: TreeGenerator[List[(Zone, StandardRulesParams)]] =
       TreeGenerator.instance{ l =>
-        LAZYVAL("stdZones", TYPE_REF("scala.scalajs.js.Dynamic")) := REF("js.Dynamic.literal") APPLY(l.map { case (z, u) => TUPLE(List(LIT(z.name), REF(z.scalaGroup + "." + z.scalaSafeName)): _*)})
+        LAZYVAL("stdZones", TYPE_REF("scala.scalajs.js.Dynamic")) := REF("js.Dynamic.literal") APPLY l.map { case (z, u) => TUPLE(List(LIT(z.name), REF(z.scalaGroup + "." + z.scalaSafeName)): _*) }
       }
 
     implicit val fixedListInstance: TreeGenerator[List[(Zone, FixedZoneRulesParams)]] =
       TreeGenerator.instance( l =>
-        LAZYVAL("fixedZones", TYPE_REF("scala.scalajs.js.Dynamic")) := REF("js.Dynamic.literal") APPLY(l.map { case (z, f) => TUPLE(List(LIT(z.name), LIT(f.baseStandardOffset.getTotalSeconds))) })
+        LAZYVAL("fixedZones", TYPE_REF("scala.scalajs.js.Dynamic")) := REF("js.Dynamic.literal") APPLY l.map { case (z, f) => TUPLE(List(LIT(z.name), LIT(f.baseStandardOffset.getTotalSeconds))) }
       )
 
     implicit val linkInstances: TreeGenerator[List[Link]] =
@@ -337,7 +337,7 @@ object TZDBCodeGenerator {
   }
 
   def exportTzdb(tzdbPackage: String, importsPackage: String, rows: List[Row])
-    (implicit getO: TreeGenerator[ZoneOffset], getOP: TreeGenerator[ZoneOffsetTransitionParams], genZ: TreeGenerator[List[(Zone, StandardRulesParams)]], genY: TreeGenerator[List[(Zone, FixedZoneRulesParams)]], genZ1: TreeGenerator[(Zone, StandardRulesParams)], genY1: TreeGenerator[(Zone, FixedZoneRulesParams)], genLinks: TreeGenerator[List[Link]]): Tree = {
+    (implicit genRuleMap: TreeGenerator[(Zone, StandardRulesParams)], genFixedList: TreeGenerator[List[(Zone, FixedZoneRulesParams)]], genStdList: TreeGenerator[List[(Zone, StandardRulesParams)]], genLinks: TreeGenerator[List[Link]]): Tree = {
     val rules = ZoneRulesBuilder.calculateTransitionParams(rows)
     // Fixed zone rules
     val fixed: List[(Zone, FixedZoneRulesParams)] = rules.collect {
@@ -351,54 +351,12 @@ object TZDBCodeGenerator {
     val zoneProviderSym = getModule("ZoneRulesProvider")
     val register = (zoneProviderSym DOT "registerProvider")(NULL)
 
-    val baseOffsets = standard.flatMap { case (_, l) =>
-      List(l.baseStandardOffset, l.baseWallOffset)
-    }
-
-    val ruleOffsets = standard.flatMap { case(_, l) =>
-      l.standardOffsetTransitionList.flatMap(x => List(x.offsetBefore, x.offsetAfter)) :::
-      l.transitionList.flatMap(x => List(x.offsetBefore, x.offsetAfter))
-    }
-
-    // Group all the offsets for deduplication
-    val uniqueOffsets: List[Tree] = (baseOffsets ::: ruleOffsets).distinct.map(_.toTree)
-
     // Split standard rules
     val groupedRules: List[Tree] = standard.groupBy(_._1.scalaGroup).map {
-      case (groupName, rules) =>
-        OBJECTDEF(groupName) := BLOCK(rules.map(_.toTree))
+      case (groupName, blockRules) =>
+        OBJECTDEF(groupName) := BLOCK(blockRules.map(_.toTree))
     }.toList
 
-    val JsListClass          =  definitions.getClass("scala.scalajs.js.Array")
-    def TYPE_JSLIST(typ: Type): Type    = JsListClass TYPE_OF typ
-
-    val jsNative = REF("js.native")
-
-    val jsRuleTrait: List[Tree] = List(TRAITDEF("ZR") withParents("js.Object") withAnnots(ANNOT("js.native")) := BLOCK(
-      VAL("s", IntClass) := jsNative,
-      VAL("w", IntClass) := jsNative,
-      VAL("t", TYPE_JSLIST(TYPE_JSLIST(IntClass))) := jsNative,
-      VAL("l", TYPE_JSLIST(TYPE_JSLIST(IntClass))) := jsNative,
-      VAL("r", TYPE_JSLIST(TYPE_JSLIST(IntClass))) := jsNative
-    ))
-
-    val jsRuleObject: List[Tree] = List(OBJECTDEF("ZR") := BLOCK(
-      (DEF("apply", TYPE_REF("ZR"))
-        withParams(PARAM("s", IntClass), PARAM("w", IntClass), PARAM("stl", TYPE_JSLIST(TYPE_JSLIST(IntClass))), PARAM("sl", TYPE_JSLIST(TYPE_JSLIST(IntClass))), PARAM("r", TYPE_JSLIST(TYPE_JSLIST(IntClass))))
-      ) := REF("js.Dynamic.literal") APPLY(TUPLE(LIT("s"), REF("s")), TUPLE(LIT("w"), REF("w")), TUPLE(LIT("stl"), REF("stl")), TUPLE(LIT("sl"), REF("sl")), TUPLE(LIT("r"), REF("r"))) DOT("asInstanceOf") APPLYTYPE(TYPE_REF("ZR"))
-    ))
-
-    val aliases = List(
-      TYPEVAR("LD")  := TYPE_JSLIST(IntClass),
-      TYPEVAR("LT")  := TYPE_REF(IntClass),
-      TYPEVAR("LDT") := TYPE_JSLIST(IntClass),
-      TYPEVAR("ZOT") := TYPE_JSLIST(IntClass),
-      //TYPEVAR("ZOR") := TYPE_TUPLE(IntClass, IntClass, TYPE_OPTION(IntClass), TYPE_REF("LT"): Type, BooleanClass, IntClass, IntClass, IntClass, IntClass),
-      // We are representin this as int though index 2 is Opt[Int] and 4 is a Boolean. Ugly but reduces substantially the code size
-      TYPEVAR("ZOR") := TYPE_JSLIST(IntClass),
-      //TYPEVAR("ZR")  := TYPE_TUPLE(IntClass, IntClass, TYPE_JSLIST(TYPE_REF("ZOT")), TYPE_JSLIST(TYPE_REF("ZOT")), TYPE_JSLIST(TYPE_REF("ZOR"))),
-      TYPEVAR("ZR")  := TYPE_REF("scala.scalajs.js.Dynamic"),
-      TYPEVAR("ZF")  := TYPE_REF(IntClass))
 
     BLOCK (
       List(
@@ -407,13 +365,12 @@ object TZDBCodeGenerator {
         IMPORT("scala.collection.JavaConverters._"),
         IMPORT("scala.language.postfixOps"),
         IMPORT("scala.scalajs.js"),
-        OBJECTDEF("tpe")  := BLOCK(aliases),
-        OBJECTDEF("tzdb") := BLOCK(IMPORT("tpe._") :: groupedRules ::: List(fixed.toTree, standard.toTree, rows.flatMap(_.select[Link]).toTree)))
+        OBJECTDEF("tzdb") := BLOCK(groupedRules ::: List(fixed.toTree, standard.toTree, rows.flatMap(_.select[Link]).toTree)))
     ) inPackage tzdbPackage withComment autoGeneratedCommend
   }
 
   def exportAll(dir: java.io.File, to: java.io.File, packageName: String, importsPackage: String)
-    (implicit genParams: TreeGenerator[(Zone, ZoneRulesParams)], getO: TreeGenerator[ZoneOffset], getOP: TreeGenerator[ZoneOffsetTransitionParams], genZ: TreeGenerator[List[(Zone, StandardRulesParams)]], genY: TreeGenerator[List[(Zone, FixedZoneRulesParams)]], genZ1: TreeGenerator[(Zone, StandardRulesParams)], genY1: TreeGenerator[(Zone, FixedZoneRulesParams)], genLinks: TreeGenerator[List[Link]]): IO[Unit] = {
+    (implicit genRuleMap: TreeGenerator[(Zone, StandardRulesParams)], genFixedList: TreeGenerator[List[(Zone, FixedZoneRulesParams)]], genStdList: TreeGenerator[List[(Zone, StandardRulesParams)]], genLinks: TreeGenerator[List[Link]]): IO[Unit] = {
     import better.files._
     for {
       rows      <- TZDBParser.parseAll(File(dir.toURI))
