@@ -42,10 +42,10 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
 
   "TZDB Code generator" should
     "generate a name from a Zone" in {
-      treeToString(TreeGenerator[Zone].generateTree(zone1)) shouldBe "(\"Europe/Belfast\", rules.Europe_Belfast)"
+      treeToString(TreeGenerator[Zone].generateTree(zone1)) shouldBe "(\"Europe/Belfast\", Europe_Belfast)"
     }
     it should "generate a name from a Fixed offset Zone" in {
-      treeToString(TreeGenerator[Zone].generateTree(zoneFixed)) shouldBe "(\"Etc/GMT+1\", rules.Etc_GMT_plus_1)"
+      treeToString(TreeGenerator[Zone].generateTree(zoneFixed)) shouldBe "(\"Etc/GMT+1\", Etc_GMT_plus_1)"
     }
     it should "generate a tuple from a Link" in {
       treeToString(TreeGenerator[Link].generateTree(link2)) shouldBe "(\"America/Aruba\", \"America/Curacao\")"
@@ -59,7 +59,7 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
       cleanLinks(rows2) should have size 2
     }
     it should "generate an object from a List of Zones" in {
-      treeToString(TreeGenerator[List[Zone]].generateTree(List(zone1, zone2))) shouldBe "lazy val allZones: Map[String, ZoneRules] = Map((\"Europe/Belfast\", rules.Europe_Belfast), (\"Africa/Tripoli\", rules.Africa_Tripoli))"
+      treeToString(TreeGenerator[List[Zone]].generateTree(List(zone1, zone2))) shouldBe "lazy val allZones: Map[String, ZoneRules] = Map((\"Europe/Belfast\", Europe_Belfast), (\"Africa/Tripoli\", Africa_Tripoli))"
     }
     it should "generate from zone offset transition rule" in {
       val rule = ZoneOffsetTransitionRule.of(Month.JANUARY, 3, DayOfWeek.MONDAY, LocalTime.of(12, 0), false, TimeDefinition.UTC, ZoneOffset.ofHours(0), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2))
