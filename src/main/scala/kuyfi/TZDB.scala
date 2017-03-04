@@ -93,7 +93,7 @@ object TZDB {
   case class ZoneTransition(offset: GmtOffset, ruleId: ZoneRule, format: String, until: Option[Until])
   case class Zone(name: String, transitions: List[ZoneTransition])  extends Product with Serializable {
     def scalaSafeName: String = name.replace("-", "_minus_").replace("+", "_plus_").replaceAll("/|-|\\+", "_")
-    def scalaGroup: String = name.substring(0, 2).toLowerCase + name.substring(name.length - 2, name.length - 1).toLowerCase
+    def scalaGroup(z: Int): String = name.substring(0, z).toLowerCase + name.substring(name.length - z, name.length - 1).toLowerCase
   }
 
   /**
@@ -113,8 +113,8 @@ object TZDB {
       val lastDay = month.length(Year.isLeap(y))
       (dayOfMonthIndicator, dayOfWeek) match {
         case (None, Some(dw)) => LocalDate.of(y, month, lastDay).`with`(TemporalAdjusters.lastInMonth(dw))
-        case (None, None) => LocalDate.of(y, month, lastDay)
-        case (Some(_), _) => LocalDate.of(y, month, dayOnYear(y, month))
+        case (None, None)     => LocalDate.of(y, month, lastDay)
+        case (Some(_), _)     => LocalDate.of(y, month, dayOnYear(y, month))
       }
     }
   }
@@ -194,12 +194,12 @@ object TZDB {
 
     def toLocalDate: LocalDate = {
       val date = on match {
-        case LastWeekday(d)   =>
+        case LastWeekday(d)              =>
           val monthLen: Int = month.length(IsoChronology.INSTANCE.isLeapYear(startYear))
           LocalDate.of(startYear, month, monthLen).`with`(TemporalAdjusters.previousOrSame(d))
-        case DayOfTheMonth(d) =>
+        case DayOfTheMonth(d)            =>
           LocalDate.of(startYear, month, d)
-        case AfterWeekday(dayOfWeek, d) =>
+        case AfterWeekday(dayOfWeek, d)  =>
           LocalDate.of(startYear, month, d).`with`(TemporalAdjusters.nextOrSame(dayOfWeek))
         case BeforeWeekday(dayOfWeek, d) =>
           LocalDate.of(startYear, month, d).`with`(TemporalAdjusters.nextOrSame(dayOfWeek))
