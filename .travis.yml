@@ -12,5 +12,6 @@ install:
   - gem install sass
   - gem install jekyll -v 3.2.1
 script:
+  - java -version
   - sbt ++$TRAVIS_SCALA_VERSION test:compile test
   - sbt ++$TRAVIS_SCALA_VERSION publishLocal

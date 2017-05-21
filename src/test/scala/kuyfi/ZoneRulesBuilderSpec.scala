@@ -12,7 +12,7 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
   import better.files._
 
   // NOTE These tests are fragile as they depend on the timezone db of the JVM
-  // These tests are for 2014j matching the JVM on travis
+  // These tests are compatible with jdk 1.8 b131
 
   val r = file"src/test/resources/"
   private val rules = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitions).unsafePerformIO()
