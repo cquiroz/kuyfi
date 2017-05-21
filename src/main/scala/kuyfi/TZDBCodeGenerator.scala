@@ -375,7 +375,6 @@ object TZDBCodeGenerator {
     import better.files._
     for {
       rows      <- TZDBParser.parseAll(File(dir.toURI))
-      //cleanrows <- IO(cleanLinks(rows))
       tree      <- IO(exportTzdb(packageName, importsPackage, rows))
       _         <- IO(File(to.toURI).write(treeToString(tree)))
     } yield ()
