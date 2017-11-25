@@ -1,6 +1,6 @@
 # Check tz tables for consistency.
 
-# Contributed by Paul Eggert.
+# Contributed by Paul Eggert.  This file is in the public domain.
 
 BEGIN {
 	FS = "\t"
@@ -8,22 +8,6 @@ BEGIN {
 	if (!iso_table) iso_table = "iso3166.tab"
 	if (!zone_table) zone_table = "zone1970.tab"
 	if (!want_warnings) want_warnings = -1
-
-	# A special (and we hope temporary) case.
-	tztab["America/Montreal"] = 1
-
-	# Some more special cases; these are zones that should probably
-	# be turned into links.
-	if (zone_table == "zone1970.tab") {
-	  tztab["America/Antigua"] = 1
-	  tztab["America/Cayman"] = 1
-	  tztab["Asia/Aden"] = 1
-	  tztab["Asia/Bahrain"] = 1
-	  tztab["Asia/Kuwait"] = 1
-	  tztab["Asia/Muscat"] = 1
-	  tztab["Pacific/Midway"] = 1
-	  tztab["Pacific/Saipan"] = 1
-	}
 
 	while (getline <iso_table) {
 		iso_NR++
@@ -54,7 +38,7 @@ BEGIN {
 		}
 		cc0 = cc
 		if (name2cc[name]) {
-			printf "%s:%d: '%s' and '%s' have the sname name\n", \
+			printf "%s:%d: '%s' and '%s' have the same name\n", \
 				iso_table, iso_NR, name2cc[name], cc \
 				>>"/dev/stderr"
 			status = 1
@@ -128,6 +112,7 @@ BEGIN {
 	    printf "%s:%d: missing comment for %s\n", \
 	      zone_table, tz2NR[tz], comments_needed[tz] \
 	      >>"/dev/stderr"
+	    tz2comments[tz] = 1
 	    status = 1
 	  }
 	}
