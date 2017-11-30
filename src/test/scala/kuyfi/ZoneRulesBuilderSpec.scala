@@ -302,7 +302,7 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
       val calculatedLondonRules = parsedZoneRules.flatMap(_.find(_._1.name == "America/Chihuahua")).map(_._2)
       compareZoneRules(calculatedLondonRules, "America/Chihuahua")
     }
-    it should "calculate the transitions for any rule" in {
+    ignore should "calculate the transitions for any rule" in {
       val rulesAndLinks = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionsWithLinks).unsafePerformIO()
       val rulesAndLink = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionParams).unsafePerformIO()
       import scala.collection.JavaConverters._

@@ -1,7 +1,6 @@
 import sbt.Keys._
 
 val commonSettings: Seq[Setting[_]] = Seq(
-  version := s"0.6.0",
   organization := "io.github.cquiroz",
   scalaVersion := "2.12.4",
   scalacOptions ++= Seq(
@@ -40,10 +39,16 @@ val commonSettings: Seq[Setting[_]] = Seq(
       </developer>
     </developers>
   ,
-  pomIncludeRepository := { _ => false }
+  pomIncludeRepository := { _ => false },
+  // Settings to use git to define the version of the project
+  git.useGitDescribe := true,
+  git.formattedShaVersion := git.gitHeadCommit.value map { sha => s"v$sha" },
+  git.uncommittedSignifier in ThisBuild := Some("UNCOMMITTED")
 )
 
 lazy val kuyfi: Project = project.in(file("."))
+  .enablePlugins(GitVersioning)
+  .enablePlugins(GitBranchPrompt)
   .settings(commonSettings: _*)
   .settings(
     name := "kuyfi",
