@@ -33,4 +33,8 @@ sbt test
 ```
 
 Note that the tests compare the output with the timezone support on the JVM hence they may not match to any JVM version
-At the moment the test use the JDK 1.8 b144 to match the version present in travis
+At the moment the test use the JDK 1.8 b31 to match the version present in travis
+
+#### Bug
+
+Note that there are some border cases errors with the latest versions of the jdk, specifically with 1.8 b144

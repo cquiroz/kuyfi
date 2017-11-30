@@ -1,7 +1,7 @@
 import sbt.Keys._
 
 val commonSettings: Seq[Setting[_]] = Seq(
-  version := s"0.6.0-SNAPSHOT",
+  version := s"0.6.0",
   organization := "io.github.cquiroz",
   scalaVersion := "2.12.4",
   scalacOptions ++= Seq(
