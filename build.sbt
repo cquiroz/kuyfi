@@ -27,10 +27,6 @@ val commonSettings: Seq[Setting[_]] = Seq(
         <distribution>repo</distribution>
       </license>
     </licenses>
-    <scm>
-      <url>git@github.com:cquiroz/kuyfi.git</url>
-      <connection>scm:git:git@github.com:cquiroz/kuyfi.git</connection>
-    </scm>
     <developers>
       <developer>
         <id>cquiroz</id>
@@ -43,7 +39,8 @@ val commonSettings: Seq[Setting[_]] = Seq(
   // Settings to use git to define the version of the project
   git.useGitDescribe := true,
   git.formattedShaVersion := git.gitHeadCommit.value map { sha => s"v$sha" },
-  git.uncommittedSignifier in ThisBuild := Some("UNCOMMITTED")
+  git.uncommittedSignifier in ThisBuild := Some("UNCOMMITTED"),
+  useGpg := true
 )
 
 lazy val kuyfi: Project = project.in(file("."))
