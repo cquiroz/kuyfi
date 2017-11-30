@@ -1,7 +1,6 @@
 language: scala
 scala:
-  - 2.10.4
-  - 2.11.8
+  - 2.12.4
 jdk:
   - oraclejdk8
 before_install:
@@ -12,5 +11,6 @@ install:
   - gem install sass
   - gem install jekyll -v 3.2.1
 script:
+  - echo java -version
   - sbt ++$TRAVIS_SCALA_VERSION test:compile test
   - sbt ++$TRAVIS_SCALA_VERSION publishLocal

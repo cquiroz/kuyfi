@@ -1,10 +1,8 @@
 import sbt.Keys._
 
 val commonSettings: Seq[Setting[_]] = Seq(
-  version := s"0.6.0-SNAPSHOT",
   organization := "io.github.cquiroz",
-  scalaVersion := "2.10.6",
-  crossScalaVersions := Seq("2.10.6", "2.11.8"),
+  scalaVersion := "2.12.4",
   scalacOptions ++= Seq(
     "-deprecation",
     "-feature",
@@ -41,22 +39,28 @@ val commonSettings: Seq[Setting[_]] = Seq(
       </developer>
     </developers>
   ,
-  pomIncludeRepository := { _ => false }
+  pomIncludeRepository := { _ => false },
+  // Settings to use git to define the version of the project
+  git.useGitDescribe := true,
+  git.formattedShaVersion := git.gitHeadCommit.value map { sha => s"v$sha" },
+  git.uncommittedSignifier in ThisBuild := Some("UNCOMMITTED")
 )
 
 lazy val kuyfi: Project = project.in(file("."))
+  .enablePlugins(GitVersioning)
+  .enablePlugins(GitBranchPrompt)
   .settings(commonSettings: _*)
   .settings(
     name := "kuyfi",
     libraryDependencies ++= Seq(
-      "org.tpolecat"         %% "atto-core"            % "0.5.1",
-      "org.tpolecat"         %% "atto-compat-scalaz72" % "0.5.1",
-      "org.scalaz"           %% "scalaz-core"          % "7.2.7",
-      "org.scalaz"           %% "scalaz-effect"        % "7.2.7",
+      "org.tpolecat"         %% "atto-core"            % "0.5.3",
+      "org.tpolecat"         %% "atto-compat-scalaz72" % "0.5.3",
+      "org.scalaz"           %% "scalaz-core"          % "7.2.16",
+      "org.scalaz"           %% "scalaz-effect"        % "7.2.16",
       "com.chuusai"          %% "shapeless"            % "2.3.2",
-      "com.github.pathikrit" %% "better-files"         % "2.14.0",
-      "com.eed3si9n"         %% "treehugger"           % "0.4.1",
-      "org.scalatest"        %% "scalatest"            % "3.0.0" % "test"
+      "com.github.pathikrit" %% "better-files"         % "2.17.1",
+      "com.eed3si9n"         %% "treehugger"           % "0.4.3",
+      "org.scalatest"        %% "scalatest"            % "3.0.4" % "test"
     )
   )
 
