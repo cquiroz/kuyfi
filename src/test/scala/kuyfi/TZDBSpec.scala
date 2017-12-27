@@ -5,8 +5,9 @@ import java.time.{DayOfWeek, LocalTime, Month, LocalDateTime}
 import kuyfi.TZDB._
 import org.scalatest.{FlatSpec, Matchers}
 
-import scalaz._
-import Scalaz._
+import cats._
+import cats.instances._
+import cats.implicits._
 
 class TZDBSpec extends FlatSpec with Matchers {
   "Year ordering" should

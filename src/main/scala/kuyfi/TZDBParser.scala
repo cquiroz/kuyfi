@@ -5,24 +5,30 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 import atto.ParseResult.{Done, Fail}
+import TZDB._
+import cats._
+import cats.syntax.eq._
+import cats.syntax.monoid._
+import cats.instances.int._
+import cats.instances.char._
+import cats.effect._
+import mouse.boolean._
+import atto._, Atto.{char => chr, _}
+import better.files._
 
 /**
   * Defines atto parsers to read tzdb files
   */
 object TZDBParser {
-  import TZDB._
-  import scalaz._
-  import scalaz.effect._
-  import Scalaz._
-  import atto._, Atto.{char => chr, _}
-  import better.files._
-
   // Useful Monoid
   implicit def parserListMonoid[A]: Monoid[ParseResult[List[A]]] =
-    Monoid.instance[ParseResult[List[A]]]((a, b) => (a, b) match {
-      case (Done(u, x), Done(v, y)) => Done(u + v, x ::: y)
-      case _                        => Fail("", Nil, "Can only handle full response ")
-    }, Done("", List.empty[A]))
+    new Monoid[ParseResult[List[A]]]{
+      def empty = Done("", List.empty[A])
+      def combine(a: ParseResult[List[A]] , b: ParseResult[List[A]]): ParseResult[List[A]] = (a, b) match {
+        case (Done(u, x), Done(v, y)) => Done(u + v, x ::: y)
+        case _                        => Fail("", Nil, "Can only handle full response ")
+      }
+    }
 
   implicit class Parser2Coproduct[A](val a: Parser[A]) extends AnyVal {
     def liftC[C <: shapeless.Coproduct](implicit inj: shapeless.ops.coproduct.Inject[C, A]): Parser[C] = a.map(_.liftC[C])
@@ -147,7 +153,8 @@ object TZDBParser {
     hourMinParserLT |
     int.map(fixHourRange).map(h => (h._1, LocalTime.of(h._2, 0)))
 
-  private def fixHourRange(h: Int): (Boolean, Int) = (h === 24, (h === 24) ? 0 | h)
+  private def fixHourRange(h: Int): (Boolean, Int) =
+    (h === 24, (h === 24).fold(0, h))
 
   val gmtOffsetParser: Parser[GmtOffset] =
     hourMinSecParserOf |
@@ -163,7 +170,7 @@ object TZDBParser {
   val saveParser: Parser[Save] =
     timeParser.map(x => Save(x._2))
 
-  val toEndLine: Parser[String] = takeWhile(_ =/= '\n') <~ opt(nl)
+  val toEndLine: Parser[String] = takeWhile(_ =!= '\n') <~ opt(nl)
 
   val letterParser: Parser[Letter] =
     for {
@@ -273,7 +280,7 @@ object TZDBParser {
       case File.Type.SymbolicLink(_)  => Nil
       case File.Type.Directory(files) =>
         val parsed = files.filter(f => tzdbFiles.contains(f.name)).map(f => parseFile(f.contentAsString))
-        parsed.toList.suml match {
+        Monoid.combineAll(parsed.toList) match {
           case Done(_, v) => v
           case _          => Nil
         }
@@ -282,5 +289,3 @@ object TZDBParser {
     }
   }
 }
-
-

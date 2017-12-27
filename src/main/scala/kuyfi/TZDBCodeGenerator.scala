@@ -2,7 +2,7 @@ package kuyfi
 
 import shapeless._
 
-import scalaz.effect._
+import cats.effect._
 import TZDB._
 import treehugger.forest._
 import definitions._

@@ -5,13 +5,11 @@ import java.time.{DayOfWeek, LocalTime, Month}
 import org.scalatest.{FlatSpec, Matchers}
 import atto._
 import Atto._
-import compat.scalaz._
 import TZDB._
 import TZDBParser._
 import atto.ParseResult.{Done, Fail}
-
-import scalaz._
-import Scalaz.{char => _, _}
+import cats._
+import cats.instances._
 
 class TZDBParserSpec extends FlatSpec with Matchers {
   "TZDBParser from field" should
@@ -495,7 +493,7 @@ class TZDBParserSpec extends FlatSpec with Matchers {
       import better.files._
 
       val r = file"src/test/resources/"
-      val rows = TZDBParser.parseAll(r).unsafePerformIO()
+      val rows = TZDBParser.parseAll(r).unsafeRunSync()
       // Check a few well-known items
       rows.flatMap(_.select[Link]) should contain (Link("America/Port_of_Spain", "America/Anguilla"))
       rows.flatMap(_.select[Rule]) should contain (Rule("Thule", GivenYear(1993), GivenYear(2006), Month.OCTOBER, LastWeekday(DayOfWeek.SUNDAY), AtWallTime(LocalTime.of(2, 0)), Save(LocalTime.of(0, 0)), Letter("S")))

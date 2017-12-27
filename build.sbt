@@ -50,10 +50,10 @@ lazy val kuyfi: Project = project.in(file("."))
   .settings(
     name := "kuyfi",
     libraryDependencies ++= Seq(
-      "org.tpolecat"         %% "atto-core"            % "0.5.3",
-      "org.tpolecat"         %% "atto-compat-scalaz72" % "0.5.3",
-      "org.scalaz"           %% "scalaz-core"          % "7.2.16",
-      "org.scalaz"           %% "scalaz-effect"        % "7.2.16",
+      "org.tpolecat"         %% "atto-core"            % "0.6.1",
+      "org.typelevel"        %% "cats-core"            % "1.0.0",
+      "org.typelevel"        %% "cats-effect"          % "0.6",
+      "org.typelevel"        %% "mouse"                % "0.15",
       "com.chuusai"          %% "shapeless"            % "2.3.2",
       "com.github.pathikrit" %% "better-files"         % "2.17.1",
       "com.eed3si9n"         %% "treehugger"           % "0.4.3",

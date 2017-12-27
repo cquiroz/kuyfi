@@ -9,9 +9,8 @@ import java.time.zone.{ZoneOffsetTransition, ZoneRules, ZoneOffsetTransitionRule
 import shapeless._
 import shapeless.ops.coproduct.Inject
 
-import scalaz.Order
-import scalaz.Ordering
-import scalaz.syntax.std.boolean._
+import cats.Order
+import mouse.all._
 
 /**
   * Model of the TimeZone Database
@@ -26,7 +25,7 @@ object TZDB {
     def endOfDay: Boolean
     def noEndOfDay: At
     def timeDefinition: TimeDefinition
-    def adjustDateForEndOfDay(d: LocalDate): LocalDate = endOfDay ? d.plusDays(1) | d
+    def adjustDateForEndOfDay(d: LocalDate): LocalDate = endOfDay.fold(d.plusDays(1), d)
   }
   case class AtWallTime(time: LocalTime, endOfDay: Boolean) extends At {
     override def noEndOfDay = copy(endOfDay = false)
@@ -53,7 +52,7 @@ object TZDB {
   }
 
   object At {
-    implicit val order: Order[At] = Order.order { (a, b) => Ordering.fromInt(a.time.compareTo(b.time)) }
+    implicit val order: Order[At] = Order.from { (a, b) => a.time.compareTo(b.time) }
   }
 
   /**
@@ -150,18 +149,18 @@ object TZDB {
   case object Only extends RuleYear
 
   object RuleYear {
-    implicit val order: Order[RuleYear] = Order.order { (a, b) => (a, b) match {
-        case (GivenYear(x), GivenYear(y)) => Ordering.fromInt(x.compareTo(y))
-        case (Maximum, Maximum)           => Ordering.EQ
-        case (Minimum, Minimum)           => Ordering.EQ
-        case (Only, Only)                 => Ordering.EQ
-        case (Only, _)                    => Ordering.LT
-        case (_, Only)                    => Ordering.GT
-        case (_, Maximum)                 => Ordering.LT
-        case (Maximum, _)                 => Ordering.GT
-        case (Minimum, _)                 => Ordering.LT
-        case (_, Minimum)                 => Ordering.GT
-        case _                            => Ordering.EQ
+    implicit val order: Order[RuleYear] = Order.from { (a, b) => (a, b) match {
+        case (GivenYear(x), GivenYear(y)) => x.compareTo(y)
+        case (Maximum, Maximum)           => 0
+        case (Minimum, Minimum)           => 0
+        case (Only, Only)                 => 0
+        case (Only, _)                    => -1
+        case (_, Only)                    => 1
+        case (_, Maximum)                 => -1
+        case (Maximum, _)                 => 1
+        case (Minimum, _)                 => -1
+        case (_, Minimum)                 => 1
+        case _                            => 0
       }
     }
   }
