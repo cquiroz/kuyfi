@@ -7,10 +7,7 @@ import java.util.Locale
 import atto.ParseResult.{Done, Fail}
 import TZDB._
 import cats._
-import cats.syntax.eq._
-import cats.syntax.monoid._
-import cats.instances.int._
-import cats.instances.char._
+import cats.implicits._
 import cats.effect._
 import mouse.boolean._
 import atto._, Atto.{char => chr, _}
@@ -280,7 +277,7 @@ object TZDBParser {
       case File.Type.SymbolicLink(_)  => Nil
       case File.Type.Directory(files) =>
         val parsed = files.filter(f => tzdbFiles.contains(f.name)).map(f => parseFile(f.contentAsString))
-        Monoid.combineAll(parsed.toList) match {
+        parsed.toList.combineAll match {
           case Done(_, v) => v
           case _          => Nil
         }

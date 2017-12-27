@@ -85,7 +85,7 @@ object TZDB {
     override val fixedOffset: Option[Int] = Some(0)
   }
   case class FixedOffset(offset: GmtOffset) extends ZoneRule {
-    override val fixedOffset: Option[Int] = Some(Duration.ofHours(offset.h).plusMinutes(offset.m).plusSeconds(offset.s).getSeconds.toInt)
+    override val fixedOffset: Option[Int] = Some(Duration.ofHours(offset.h.toLong).plusMinutes(offset.m.toLong).plusSeconds(offset.s.toLong).getSeconds.toInt)
   }
   case class RuleId(id: String) extends ZoneRule
 
@@ -109,7 +109,7 @@ object TZDB {
     def dayOfWeek: Option[DayOfWeek] = None
     def onDay(d: Int): On = this
     def dateTimeInContext(y: Int, month: Month): LocalDate = {
-      val lastDay = month.length(Year.isLeap(y))
+      val lastDay = month.length(Year.isLeap(y.toLong))
       (dayOfMonthIndicator, dayOfWeek) match {
         case (None, Some(dw)) => LocalDate.of(y, month, lastDay).`with`(TemporalAdjusters.lastInMonth(dw))
         case (None, None)     => LocalDate.of(y, month, lastDay)
@@ -125,7 +125,7 @@ object TZDB {
   case class LastWeekday(d: DayOfWeek) extends On {
     override def dayOfWeek: Option[DayOfWeek] = Some(d)
     override def dayOnYear(y: Int, m: Month): Int = {
-      val lastDay = m.length(Year.isLeap(y))
+      val lastDay = m.length(Year.isLeap(y.toLong))
       LocalDate.of(y, m, lastDay).`with`(TemporalAdjusters.previousOrSame(d)).getDayOfMonth
     }
   }
@@ -194,7 +194,7 @@ object TZDB {
     def toLocalDate: LocalDate = {
       val date = on match {
         case LastWeekday(d)              =>
-          val monthLen: Int = month.length(IsoChronology.INSTANCE.isLeapYear(startYear))
+          val monthLen: Int = month.length(IsoChronology.INSTANCE.isLeapYear(startYear.toLong))
           LocalDate.of(startYear, month, monthLen).`with`(TemporalAdjusters.previousOrSame(d))
         case DayOfTheMonth(d)            =>
           LocalDate.of(startYear, month, d)

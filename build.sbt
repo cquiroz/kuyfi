@@ -58,7 +58,11 @@ lazy val kuyfi: Project = project.in(file("."))
       "com.github.pathikrit" %% "better-files"         % "2.17.1",
       "com.eed3si9n"         %% "treehugger"           % "0.4.3",
       "org.scalatest"        %% "scalatest"            % "3.0.4" % "test"
-    )
+    ),
+    scalacOptions ~= (_.filterNot(Set(
+      // By necessity facades will have unused params
+      "-Ywarn-unused:params"
+    )))
   )
 
   lazy val docs = project.in(file("docs")).dependsOn(kuyfi)

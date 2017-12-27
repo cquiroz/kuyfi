@@ -7,3 +7,5 @@ addSbtPlugin("com.47deg"  % "sbt-microsites" % "0.7.9")
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.9.3")
 
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.5.7")
+
+addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.3")

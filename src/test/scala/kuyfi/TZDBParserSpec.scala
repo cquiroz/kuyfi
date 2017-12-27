@@ -8,8 +8,6 @@ import Atto._
 import TZDB._
 import TZDBParser._
 import atto.ParseResult.{Done, Fail}
-import cats._
-import cats.instances._
 
 class TZDBParserSpec extends FlatSpec with Matchers {
   "TZDBParser from field" should

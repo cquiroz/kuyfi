@@ -4,9 +4,6 @@ import org.scalatest.{Assertion, FlatSpec, Matchers}
 import java.time.zone.{ZoneRules, ZoneRulesProvider}
 
 import kuyfi.TZDB.Zone
-import kuyfi.TZDB.{StandardRulesParams, FixedZoneRulesParams}
-
-import scala.collection.JavaConverters._
 
 class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
   import better.files._
@@ -304,7 +301,6 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
     }
     ignore should "calculate the transitions for any rule" in {
       val rulesAndLinks = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionsWithLinks).unsafeRunSync()
-      val rulesAndLink = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionParams).unsafeRunSync()
       import scala.collection.JavaConverters._
       ZoneRulesProvider.getAvailableZoneIds.asScala.foreach {z =>
         val calculatedRules = rulesAndLinks.find(_._1 == z).map(_._2)
