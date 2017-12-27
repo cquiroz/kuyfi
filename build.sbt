@@ -60,7 +60,7 @@ lazy val kuyfi: Project = project.in(file("."))
       "org.scalatest"        %% "scalatest"            % "3.0.4" % "test"
     ),
     scalacOptions ~= (_.filterNot(Set(
-      // By necessity facades will have unused params
+      // Some overloaded methods don't use all params
       "-Ywarn-unused:params"
     )))
   )
