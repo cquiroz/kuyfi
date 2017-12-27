@@ -27,10 +27,6 @@ val commonSettings: Seq[Setting[_]] = Seq(
         <distribution>repo</distribution>
       </license>
     </licenses>
-    <scm>
-      <url>git@github.com:cquiroz/kuyfi.git</url>
-      <connection>scm:git:git@github.com:cquiroz/kuyfi.git</connection>
-    </scm>
     <developers>
       <developer>
         <id>cquiroz</id>
@@ -43,7 +39,8 @@ val commonSettings: Seq[Setting[_]] = Seq(
   // Settings to use git to define the version of the project
   git.useGitDescribe := true,
   git.formattedShaVersion := git.gitHeadCommit.value map { sha => s"v$sha" },
-  git.uncommittedSignifier in ThisBuild := Some("UNCOMMITTED")
+  git.uncommittedSignifier in ThisBuild := Some("UNCOMMITTED"),
+  useGpg := true
 )
 
 lazy val kuyfi: Project = project.in(file("."))
@@ -53,15 +50,19 @@ lazy val kuyfi: Project = project.in(file("."))
   .settings(
     name := "kuyfi",
     libraryDependencies ++= Seq(
-      "org.tpolecat"         %% "atto-core"            % "0.5.3",
-      "org.tpolecat"         %% "atto-compat-scalaz72" % "0.5.3",
-      "org.scalaz"           %% "scalaz-core"          % "7.2.16",
-      "org.scalaz"           %% "scalaz-effect"        % "7.2.16",
+      "org.tpolecat"         %% "atto-core"            % "0.6.1",
+      "org.typelevel"        %% "cats-core"            % "1.0.0",
+      "org.typelevel"        %% "cats-effect"          % "0.6",
+      "org.typelevel"        %% "mouse"                % "0.15",
       "com.chuusai"          %% "shapeless"            % "2.3.2",
       "com.github.pathikrit" %% "better-files"         % "2.17.1",
       "com.eed3si9n"         %% "treehugger"           % "0.4.3",
       "org.scalatest"        %% "scalatest"            % "3.0.4" % "test"
-    )
+    ),
+    scalacOptions ~= (_.filterNot(Set(
+      // Some overloaded methods don't use all params
+      "-Ywarn-unused:params"
+    )))
   )
 
   lazy val docs = project.in(file("docs")).dependsOn(kuyfi)

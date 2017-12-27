@@ -9,9 +9,8 @@ import java.time.zone.{ZoneOffsetTransition, ZoneRules, ZoneOffsetTransitionRule
 import shapeless._
 import shapeless.ops.coproduct.Inject
 
-import scalaz.Order
-import scalaz.Ordering
-import scalaz.syntax.std.boolean._
+import cats.Order
+import mouse.all._
 
 /**
   * Model of the TimeZone Database
@@ -26,7 +25,7 @@ object TZDB {
     def endOfDay: Boolean
     def noEndOfDay: At
     def timeDefinition: TimeDefinition
-    def adjustDateForEndOfDay(d: LocalDate): LocalDate = endOfDay ? d.plusDays(1) | d
+    def adjustDateForEndOfDay(d: LocalDate): LocalDate = endOfDay.fold(d.plusDays(1), d)
   }
   case class AtWallTime(time: LocalTime, endOfDay: Boolean) extends At {
     override def noEndOfDay = copy(endOfDay = false)
@@ -53,7 +52,7 @@ object TZDB {
   }
 
   object At {
-    implicit val order: Order[At] = Order.order { (a, b) => Ordering.fromInt(a.time.compareTo(b.time)) }
+    implicit val order: Order[At] = Order.from { (a, b) => a.time.compareTo(b.time) }
   }
 
   /**
@@ -86,7 +85,7 @@ object TZDB {
     override val fixedOffset: Option[Int] = Some(0)
   }
   case class FixedOffset(offset: GmtOffset) extends ZoneRule {
-    override val fixedOffset: Option[Int] = Some(Duration.ofHours(offset.h).plusMinutes(offset.m).plusSeconds(offset.s).getSeconds.toInt)
+    override val fixedOffset: Option[Int] = Some(Duration.ofHours(offset.h.toLong).plusMinutes(offset.m.toLong).plusSeconds(offset.s.toLong).getSeconds.toInt)
   }
   case class RuleId(id: String) extends ZoneRule
 
@@ -110,7 +109,7 @@ object TZDB {
     def dayOfWeek: Option[DayOfWeek] = None
     def onDay(d: Int): On = this
     def dateTimeInContext(y: Int, month: Month): LocalDate = {
-      val lastDay = month.length(Year.isLeap(y))
+      val lastDay = month.length(Year.isLeap(y.toLong))
       (dayOfMonthIndicator, dayOfWeek) match {
         case (None, Some(dw)) => LocalDate.of(y, month, lastDay).`with`(TemporalAdjusters.lastInMonth(dw))
         case (None, None)     => LocalDate.of(y, month, lastDay)
@@ -126,7 +125,7 @@ object TZDB {
   case class LastWeekday(d: DayOfWeek) extends On {
     override def dayOfWeek: Option[DayOfWeek] = Some(d)
     override def dayOnYear(y: Int, m: Month): Int = {
-      val lastDay = m.length(Year.isLeap(y))
+      val lastDay = m.length(Year.isLeap(y.toLong))
       LocalDate.of(y, m, lastDay).`with`(TemporalAdjusters.previousOrSame(d)).getDayOfMonth
     }
   }
@@ -150,18 +149,18 @@ object TZDB {
   case object Only extends RuleYear
 
   object RuleYear {
-    implicit val order: Order[RuleYear] = Order.order { (a, b) => (a, b) match {
-        case (GivenYear(x), GivenYear(y)) => Ordering.fromInt(x.compareTo(y))
-        case (Maximum, Maximum)           => Ordering.EQ
-        case (Minimum, Minimum)           => Ordering.EQ
-        case (Only, Only)                 => Ordering.EQ
-        case (Only, _)                    => Ordering.LT
-        case (_, Only)                    => Ordering.GT
-        case (_, Maximum)                 => Ordering.LT
-        case (Maximum, _)                 => Ordering.GT
-        case (Minimum, _)                 => Ordering.LT
-        case (_, Minimum)                 => Ordering.GT
-        case _                            => Ordering.EQ
+    implicit val order: Order[RuleYear] = Order.from { (a, b) => (a, b) match {
+        case (GivenYear(x), GivenYear(y)) => x.compareTo(y)
+        case (Maximum, Maximum)           => 0
+        case (Minimum, Minimum)           => 0
+        case (Only, Only)                 => 0
+        case (Only, _)                    => -1
+        case (_, Only)                    => 1
+        case (_, Maximum)                 => -1
+        case (Maximum, _)                 => 1
+        case (Minimum, _)                 => -1
+        case (_, Minimum)                 => 1
+        case _                            => 0
       }
     }
   }
@@ -195,7 +194,7 @@ object TZDB {
     def toLocalDate: LocalDate = {
       val date = on match {
         case LastWeekday(d)              =>
-          val monthLen: Int = month.length(IsoChronology.INSTANCE.isLeapYear(startYear))
+          val monthLen: Int = month.length(IsoChronology.INSTANCE.isLeapYear(startYear.toLong))
           LocalDate.of(startYear, month, monthLen).`with`(TemporalAdjusters.previousOrSame(d))
         case DayOfTheMonth(d)            =>
           LocalDate.of(startYear, month, d)

@@ -23,8 +23,8 @@ object TimeZoneWindow {
 
   def ruleOrderings(f: Rule => RuleYear): scala.Ordering[Rule] = new scala.Ordering[Rule]() {
 
-    private val ruleOrdering = RuleYear.order.toScalaOrdering
-    private val atOrdering = At.order.toScalaOrdering
+    private val ruleOrdering = RuleYear.order.toOrdering
+    private val atOrdering = At.order.toOrdering
     override def compare(x: Rule, y: Rule): Int = {
       val rulesCmp = ruleOrdering.compare(f(x), f(y))
       if (rulesCmp == 0) {

@@ -4,9 +4,6 @@ import org.scalatest.{Assertion, FlatSpec, Matchers}
 import java.time.zone.{ZoneRules, ZoneRulesProvider}
 
 import kuyfi.TZDB.Zone
-import kuyfi.TZDB.{StandardRulesParams, FixedZoneRulesParams}
-
-import scala.collection.JavaConverters._
 
 class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
   import better.files._
@@ -15,7 +12,7 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
   // These tests are for 2017b matching the JVM on travis JDK 1.8 b 144
 
   val r = file"src/test/resources/"
-  private val rules = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitions).unsafePerformIO()
+  private val rules = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitions).unsafeRunSync()
 
   def compareZoneRules(calculated: Option[ZoneRules], target: String): Assertion = {
     val platformRules = ZoneRulesProvider.getRules(target, false)
@@ -303,8 +300,7 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
       compareZoneRules(calculatedLondonRules, "America/Chihuahua")
     }
     ignore should "calculate the transitions for any rule" in {
-      val rulesAndLinks = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionsWithLinks).unsafePerformIO()
-      val rulesAndLink = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionParams).unsafePerformIO()
+      val rulesAndLinks = TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionsWithLinks).unsafeRunSync()
       import scala.collection.JavaConverters._
       ZoneRulesProvider.getAvailableZoneIds.asScala.foreach {z =>
         val calculatedRules = rulesAndLinks.find(_._1 == z).map(_._2)

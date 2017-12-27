@@ -2,7 +2,7 @@ package kuyfi
 
 import shapeless._
 
-import scalaz.effect._
+import cats.effect._
 import TZDB._
 import treehugger.forest._
 import definitions._
@@ -203,7 +203,7 @@ object TZDBCodeGenerator {
 
     implicit val stdListInstance: TreeGenerator[List[(Zone, StandardRulesParams)]] =
       TreeGenerator.instance{ l =>
-        LAZYVAL("stdZones", TYPE_REF("scala.scalajs.js.Dynamic")) := REF("js.Dynamic.literal") APPLY l.map { case (z, u) => TUPLE(List(LIT(z.name), REF(z.scalaGroup(groupingSize) + "." + z.scalaSafeName)): _*) }
+        LAZYVAL("stdZones", TYPE_REF("scala.scalajs.js.Dynamic")) := REF("js.Dynamic.literal") APPLY l.map { case (z, _) => TUPLE(List(LIT(z.name), REF(z.scalaGroup(groupingSize) + "." + z.scalaSafeName)): _*) }
       }
 
     implicit val fixedListInstance: TreeGenerator[List[(Zone, FixedZoneRulesParams)]] =
@@ -348,9 +348,6 @@ object TZDBCodeGenerator {
     val standard: List[(Zone, StandardRulesParams)] = rules.collect {
       case (z, r: StandardRulesParams) => (z, r)
     }.toList
-
-    val zoneProviderSym = getModule("ZoneRulesProvider")
-    val register = (zoneProviderSym DOT "registerProvider")(NULL)
 
     // Split standard rules
     val groupedRules: List[Tree] = standard.groupBy(_._1.scalaGroup(groupingSize)).map {
