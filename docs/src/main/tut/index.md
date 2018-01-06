@@ -6,9 +6,9 @@ section: "home"
 
 ## Scala Java-Time
 
-[![Build Status](https://travis-ci.org/cquiroz/kuyfi?branch=master)](https://travis-ci.org/cquiroz/kuyfi)
+[![Build Status](https://travis-ci.org/cquiroz/kuyfi.svg?branch=master)](https://travis-ci.org/cquiroz/kuyfi)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.cquiroz/kuyfi_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.cquiroz/kuyfi_2.12)
-[![Scala.js](http://scala-js.org/assets/badges/scalajs-0.6.8.svg)](http://scala-js.org)
+[![Scala.js](http://scala-js.org/assets/badges/scalajs-0.6.17.svg)](http://scala-js.org)
 
 This project provides a parser for the tzdb data files and can generate source code that can be imported by some other projects
 
@@ -19,7 +19,7 @@ Both Scala 2.10 and Scala 2.11
 
 To get started with SBT, add one (or both) of these dependencies:
 
-- `libraryDependencies += "io.github.cquiroz" %% "kuyfi" % "0.6.0"
+- libraryDependencies += "io.github.cquiroz" %% "kuyfi" % "0.7.0"
 
 #### Building
 This project builds using sbt.
