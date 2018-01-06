@@ -368,13 +368,13 @@ object TZDBCodeGenerator {
   }
 
   def exportAll(dir: java.io.File, to: java.io.File, packageName: String, importsPackage: String)
-    (implicit genRuleMap: TreeGenerator[(Zone, StandardRulesParams)], genFixedList: TreeGenerator[List[(Zone, FixedZoneRulesParams)]], genStdList: TreeGenerator[List[(Zone, StandardRulesParams)]], genLinks: TreeGenerator[List[Link]]): IO[Unit] = {
+    (implicit genRuleMap: TreeGenerator[(Zone, StandardRulesParams)], genFixedList: TreeGenerator[List[(Zone, FixedZoneRulesParams)]], genStdList: TreeGenerator[List[(Zone, StandardRulesParams)]], genLinks: TreeGenerator[List[Link]]): IO[better.files.File] = {
     import better.files._
     for {
       rows      <- TZDBParser.parseAll(File(dir.toURI))
       tree      <- IO(exportTzdb(packageName, importsPackage, rows))
       _         <- IO(File(to.toURI).write(treeToString(tree)))
-    } yield ()
+    } yield File(to.toURI)
   }
 
   // Add to generated code. It isn't worth generating this with treehugger
