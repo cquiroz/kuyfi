@@ -274,15 +274,15 @@ object TZDBParser {
     */
   def parseAll(dir: File): IO[List[Row]] = IO {
     dir match {
-      case File.Type.SymbolicLink(_)  => Nil
-      case File.Type.Directory(files) =>
+      case x if x.isSymbolicLink => Nil
+      case x if x.isDirectory    =>
+        val files = x.list
         val parsed = files.filter(f => tzdbFiles.contains(f.name)).map(f => parseFile(f.contentAsString))
         parsed.toList.combineAll match {
           case Done(_, v) => v
           case _          => Nil
         }
-      case File.Type.RegularFile(_)   => Nil
-      case _                          => Nil
+      case _                     => Nil
     }
   }
 }
