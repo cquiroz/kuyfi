@@ -277,7 +277,7 @@ object TZDBParser {
       case x if x.isSymbolicLink => None
       case x if x.isDirectory    =>
         val files = x.list
-        files.filter(_.name === "version").map {_.contentAsString}.toList.headOption
+        files.filter(_.name === "version").map {_.contentAsString}.map(TzdbVersion.apply).toList.headOption
       case _                     => None
     }
   }

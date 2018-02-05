@@ -79,7 +79,7 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
       treeToString(TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))) shouldBe s"ZoneOffset.ofTotalSeconds(${1*3600+2*60+3})"
     }
     it should "import a top level package" in {
-      treeToString(exportTzdb("2018a", "org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil, _ => true)) should include ("import scala.scalajs.js")
+      treeToString(exportTzdb(TzdbVersion("2018a"), "org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil, _ => true)) should include ("import scala.scalajs.js")
     }
     it should "generate from zone rules param" in {
       val standardTransitions = List(ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15), ZoneOffset.ofHours(1), ZoneOffset.ofHours(2)))
@@ -95,6 +95,6 @@ class TZDBCodeGeneratorSpec extends FlatSpec with Matchers {
       |  ZoneRules.of(bso, bwo, standardTransitions asJava, transitionList asJava, lastRules asJava)
       |}""".stripMargin
 
-      treeToString(exportTzdb("2018a", "org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil, _ => true)) should include ("import scala.scalajs.js")
+      treeToString(exportTzdb(TzdbVersion("2018a"), "org.threeten.bp", "org.threeten.bp", link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil, _ => true)) should include ("import scala.scalajs.js")
     }
 }
