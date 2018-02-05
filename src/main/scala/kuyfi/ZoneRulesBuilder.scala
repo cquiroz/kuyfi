@@ -14,15 +14,15 @@ object ZoneRulesBuilder {
 
   type RulesById = Map[String, List[Rule]]
 
-  case class WindowsCollector(rules: RulesById, zoneWindows: Map[Zone, List[TimeZoneWindow]]) {
-    case class TransitionsAccumulator(lws: LocalDateTime,
-                                      lwo: ZoneOffset,
-                                      lso: ZoneOffset,
-                                      ls: Int,
-                                      standardTransitions: List[ZoneOffsetTransitionParams],
-                                      transitionsList: List[ZoneOffsetTransitionParams],
-                                      transitionRules: List[ZoneOffsetTransitionRule])
+  final case class TransitionsAccumulator(lws: LocalDateTime,
+                                    lwo: ZoneOffset,
+                                    lso: ZoneOffset,
+                                    ls: Int,
+                                    standardTransitions: List[ZoneOffsetTransitionParams],
+                                    transitionsList: List[ZoneOffsetTransitionParams],
+                                    transitionRules: List[ZoneOffsetTransitionRule])
 
+  final case class WindowsCollector(rules: RulesById, zoneWindows: Map[Zone, List[TimeZoneWindow]]) {
     def toRules: Map[Zone, ZoneRulesParams] = {
       zoneWindows.map { case (zone, windows) =>
         val zoneRules: Option[ZoneRulesParams] = windows.headOption.map { firstWindow =>

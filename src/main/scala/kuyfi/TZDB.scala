@@ -27,7 +27,7 @@ object TZDB {
     def timeDefinition: TimeDefinition
     def adjustDateForEndOfDay(d: LocalDate): LocalDate = endOfDay.fold(d.plusDays(1), d)
   }
-  case class AtWallTime(time: LocalTime, endOfDay: Boolean) extends At {
+  final case class AtWallTime(time: LocalTime, endOfDay: Boolean) extends At {
     override def noEndOfDay = copy(endOfDay = false)
     val timeDefinition = TimeDefinition.WALL
   }
@@ -35,7 +35,7 @@ object TZDB {
     def apply(time: LocalTime): At = AtWallTime(time, time.getHour == 24 && time.getMinute == 0 && time.getSecond == 0)
   }
 
-  case class AtStandardTime(time: LocalTime, endOfDay: Boolean) extends At {
+  final case class AtStandardTime(time: LocalTime, endOfDay: Boolean) extends At {
     override def noEndOfDay = copy(endOfDay = false)
     val timeDefinition = TimeDefinition.STANDARD
   }
@@ -43,7 +43,7 @@ object TZDB {
     def apply(time: LocalTime): At = this(time, time.getHour == 24 && time.getMinute == 0 && time.getSecond == 0)
   }
 
-  case class AtUniversalTime(time: LocalTime, endOfDay: Boolean) extends At{
+  final case class AtUniversalTime(time: LocalTime, endOfDay: Boolean) extends At{
     override def noEndOfDay = copy(endOfDay = false)
     val timeDefinition = TimeDefinition.UTC
   }
@@ -58,7 +58,7 @@ object TZDB {
   /**
     * Model for Zone entries on TZDB
     */
-  case class GmtOffset(h: Int, m: Int, s: Int) {
+  final case class GmtOffset(h: Int, m: Int, s: Int) {
     def toZoneOffset: ZoneOffset = ZoneOffset.ofHoursMinutesSeconds(h, m, s)
   }
 
@@ -66,7 +66,7 @@ object TZDB {
     val zero: GmtOffset = GmtOffset(0, 0, 0)
   }
 
-  case class Until(y: Int, m: Option[Month], on: Option[On], at: Option[At]) {
+  final case class Until(y: Int, m: Option[Month], on: Option[On], at: Option[At]) {
 
     def toDateTime: LocalDateTime = {
       val month = m.getOrElse(Month.JANUARY)
@@ -84,13 +84,13 @@ object TZDB {
   case object NullRule extends ZoneRule {
     override val fixedOffset: Option[Int] = Some(0)
   }
-  case class FixedOffset(offset: GmtOffset) extends ZoneRule {
+  final case class FixedOffset(offset: GmtOffset) extends ZoneRule {
     override val fixedOffset: Option[Int] = Some(Duration.ofHours(offset.h.toLong).plusMinutes(offset.m.toLong).plusSeconds(offset.s.toLong).getSeconds.toInt)
   }
-  case class RuleId(id: String) extends ZoneRule
+  final case class RuleId(id: String) extends ZoneRule
 
-  case class ZoneTransition(offset: GmtOffset, ruleId: ZoneRule, format: String, until: Option[Until])
-  case class Zone(name: String, transitions: List[ZoneTransition])  extends Product with Serializable {
+  final case class ZoneTransition(offset: GmtOffset, ruleId: ZoneRule, format: String, until: Option[Until])
+  final case class Zone(name: String, transitions: List[ZoneTransition])  extends Product with Serializable {
     def scalaSafeName: String = name.replace("-", "_minus_").replace("+", "_plus_").replaceAll("/|-|\\+", "_")
     def scalaGroup(z: Int): String = name.substring(0, z).toLowerCase + name.substring(name.length - z, name.length - 1).toLowerCase
   }
@@ -98,8 +98,8 @@ object TZDB {
   /**
     * Model for Rule Entries
     */
-  case class Letter(letter: String)
-  case class Save(time: LocalTime) {
+  final case class Letter(letter: String)
+  final case class Save(time: LocalTime) {
     val seconds: Int = time.getHour * 3600 + time.getMinute * 60 + time.getSecond
   }
 
@@ -117,25 +117,25 @@ object TZDB {
       }
     }
   }
-  case class DayOfTheMonth(i: Int) extends On {
+  final case class DayOfTheMonth(i: Int) extends On {
     override val dayOfMonthIndicator = Some(i)
     override def onDay(d: Int) = DayOfTheMonth(d)
     override def dayOnYear(y: Int, m: Month): Int = i
   }
-  case class LastWeekday(d: DayOfWeek) extends On {
+  final case class LastWeekday(d: DayOfWeek) extends On {
     override def dayOfWeek: Option[DayOfWeek] = Some(d)
     override def dayOnYear(y: Int, m: Month): Int = {
       val lastDay = m.length(Year.isLeap(y.toLong))
       LocalDate.of(y, m, lastDay).`with`(TemporalAdjusters.previousOrSame(d)).getDayOfMonth
     }
   }
-  case class AfterWeekday(d: DayOfWeek, day: Int) extends On {
+  final case class AfterWeekday(d: DayOfWeek, day: Int) extends On {
     override val dayOfMonthIndicator = Some(day)
     override def onDay(i: Int) = AfterWeekday(d.plus(1), i)
     override def dayOfWeek: Option[DayOfWeek] = Some(d)
     override def dayOnYear(y: Int, m: Month): Int = LocalDate.of(y, m, day).`with`(TemporalAdjusters.nextOrSame(d)).getDayOfMonth
   }
-  case class BeforeWeekday(d: DayOfWeek, day: Int) extends On {
+  final case class BeforeWeekday(d: DayOfWeek, day: Int) extends On {
     override val dayOfMonthIndicator = Some(day)
     override def onDay(i: Int) = BeforeWeekday(d.plus(1), i)
     override def dayOfWeek: Option[DayOfWeek] = Some(d)
@@ -143,7 +143,7 @@ object TZDB {
   }
 
   sealed trait RuleYear extends Product with Serializable
-  case class GivenYear(year: Int) extends RuleYear
+  final case class GivenYear(year: Int) extends RuleYear
   case object Minimum extends RuleYear
   case object Maximum extends RuleYear
   case object Only extends RuleYear
@@ -165,12 +165,12 @@ object TZDB {
     }
   }
 
-  case class ZoneOffsetParams(transition: LocalDateTime, offsetBefore: ZoneOffset, offsetAfter: ZoneOffset) {
+  final case class ZoneOffsetParams(transition: LocalDateTime, offsetBefore: ZoneOffset, offsetAfter: ZoneOffset) {
     def toEpochSecond: Long = transition.toEpochSecond(offsetBefore)
     def toZoneOffsetTransition: ZoneOffsetTransitionParams = ZoneOffsetTransitionParams(transition, offsetBefore, offsetAfter)
   }
 
-  case class Rule(name: String, from: RuleYear, to: RuleYear, month: Month, on: On, at: At, save: Save, letter: Letter) extends Product with Serializable {
+  final case class Rule(name: String, from: RuleYear, to: RuleYear, month: Month, on: On, at: At, save: Save, letter: Letter) extends Product with Serializable {
     private def toInt(y: RuleYear, defaultY: Int): Int =
       y match {
         case GivenYear(x) => x
@@ -236,15 +236,15 @@ object TZDB {
   /**
     * Model for Link entries
     */
-  case class Link(from: String, to: String) extends Product with Serializable
+  final case class Link(from: String, to: String) extends Product with Serializable
 
   /**
     * Comments and blank lines
     */
-  case class Comment(comment: String) extends Product with Serializable
-  case class BlankLine(line: String) extends Product with Serializable
+  final case class Comment(comment: String) extends Product with Serializable
+  final case class BlankLine(line: String) extends Product with Serializable
 
-  case class ZoneOffsetTransitionParams(transition: LocalDateTime,
+  final case class ZoneOffsetTransitionParams(transition: LocalDateTime,
                                         offsetBefore: ZoneOffset,
                                         offsetAfter: ZoneOffset) {
     def toOffsetTransition: ZoneOffsetTransition =
@@ -254,7 +254,7 @@ object TZDB {
   sealed trait ZoneRulesParams {
     def toZoneRules: ZoneRules
   }
-  case class FixedZoneRulesParams(baseStandardOffset: ZoneOffset,
+  final case class FixedZoneRulesParams(baseStandardOffset: ZoneOffset,
                              baseWallOffset: ZoneOffset,
                              standardOffsetTransitionList: List[ZoneOffsetTransitionParams],
                              transitionList: List[ZoneOffsetTransitionParams],
@@ -262,7 +262,7 @@ object TZDB {
     import scala.collection.JavaConverters._
     def toZoneRules = ZoneRules.of(baseStandardOffset, baseWallOffset, standardOffsetTransitionList.map(_.toOffsetTransition).asJava, transitionList.map(_.toOffsetTransition).asJava, lastRules.asJava)
   }
-  case class StandardRulesParams(baseStandardOffset: ZoneOffset,
+  final case class StandardRulesParams(baseStandardOffset: ZoneOffset,
                              baseWallOffset: ZoneOffset,
                              standardOffsetTransitionList: List[ZoneOffsetTransitionParams],
                              transitionList: List[ZoneOffsetTransitionParams],
@@ -271,7 +271,7 @@ object TZDB {
     def toZoneRules = ZoneRules.of(baseStandardOffset, baseWallOffset, standardOffsetTransitionList.map(_.toOffsetTransition).asJava, transitionList.map(_.toOffsetTransition).asJava, lastRules.asJava)
   }
 
-  case class TzdbVersion(ver: String)
+  final case class TzdbVersion(ver: String)
   val DefaultTzdbVersion: TzdbVersion = TzdbVersion("Unknown")
 
   /**

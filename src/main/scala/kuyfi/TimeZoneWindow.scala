@@ -51,7 +51,7 @@ object TimeZoneWindow {
 
   val ruleOrderingLast: scala.Ordering[Rule] = ruleOrderings(_.to)
 
-  case class WindowRules(lastRuleList: List[Rule], maxLastRuleStartYear: Int, ruleList: List[Rule]) {
+  final case class WindowRules(lastRuleList: List[Rule], maxLastRuleStartYear: Int, ruleList: List[Rule]) {
     def sorted: WindowRules =
       // Note the rules are sorted different with respect to the year
       copy(lastRuleList = lastRuleList.sorted(ruleOrderingLast), ruleList = ruleList.sorted(ruleOrdering))
@@ -61,8 +61,8 @@ object TimeZoneWindow {
     val zero: WindowRules = WindowRules(Nil, Year.MIN_VALUE, Nil)
   }
 
-  case class FixedTimeZoneWindow(standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: TimeDefinition, fixedSavingAmountSeconds: Option[Int]) extends TimeZoneWindow
-  case class RulesTimeZoneWindow private (standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: TimeDefinition, fixedSavingAmountSeconds: Option[Int], windowRules: WindowRules) extends TimeZoneWindow {
+  final case class FixedTimeZoneWindow(standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: TimeDefinition, fixedSavingAmountSeconds: Option[Int]) extends TimeZoneWindow
+  final case class RulesTimeZoneWindow private (standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: TimeDefinition, fixedSavingAmountSeconds: Option[Int], windowRules: WindowRules) extends TimeZoneWindow {
 
     override def tidy(windowStartYear: Int): TimeZoneWindow = {
       val newWindowRules = if (windowEnd == LocalDateTime.MAX) {
