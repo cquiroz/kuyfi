@@ -271,6 +271,9 @@ object TZDB {
     def toZoneRules = ZoneRules.of(baseStandardOffset, baseWallOffset, standardOffsetTransitionList.map(_.toOffsetTransition).asJava, transitionList.map(_.toOffsetTransition).asJava, lastRules.asJava)
   }
 
+  type TzdbVersion = String
+  val DefaultTzdbVersion: TzdbVersion = "Unknown"
+
   /**
     * Coproduct for the content of lines on the parsed files
     */

@@ -337,7 +337,7 @@ object TZDBCodeGenerator {
     }
   }
 
-  def exportTzdb(tzdbPackage: String, importsPackage: String, rows: List[Row], zoneFilter: String => Boolean)(implicit genRuleMap: TreeGenerator[(Zone, StandardRulesParams)], genFixedList: TreeGenerator[List[(Zone, FixedZoneRulesParams)]], genStdList: TreeGenerator[List[(Zone, StandardRulesParams)]], genLinks: TreeGenerator[List[Link]]): Tree = {
+  def exportTzdb(version: TzdbVersion, tzdbPackage: String, importsPackage: String, rows: List[Row], zoneFilter: String => Boolean)(implicit genRuleMap: TreeGenerator[(Zone, StandardRulesParams)], genFixedList: TreeGenerator[List[(Zone, FixedZoneRulesParams)]], genStdList: TreeGenerator[List[(Zone, StandardRulesParams)]], genLinks: TreeGenerator[List[Link]]): Tree = {
     val rules = ZoneRulesBuilder.calculateTransitionParams(rows)
     val links: List[Link] = rows.flatMap(_.select[Link]).filter(x => zoneFilter(x.to))
     val linkNames: List[String] = links.filter(l => zoneFilter(l.to)).map(_.from)
@@ -374,9 +374,10 @@ object TZDBCodeGenerator {
     (implicit genRuleMap: TreeGenerator[(Zone, StandardRulesParams)], genFixedList: TreeGenerator[List[(Zone, FixedZoneRulesParams)]], genStdList: TreeGenerator[List[(Zone, StandardRulesParams)]], genLinks: TreeGenerator[List[Link]]): IO[better.files.File] = {
     import better.files._
     for {
-      rows      <- TZDBParser.parseAll(File(dir.toURI))
-      tree      <- IO(exportTzdb(packageName, importsPackage, rows, zoneFilter))
-      _         <- IO(File(to.toURI).write(treeToString(tree)))
+      ver         <- TZDBParser.parseVersion(File(dir.toURI))
+      rows        <- TZDBParser.parseAll(File(dir.toURI))
+      tree        <- IO(exportTzdb(ver.getOrElse(DefaultTzdbVersion), packageName, importsPackage, rows, zoneFilter))
+      _           <- IO(File(to.toURI).write(treeToString(tree)))
     } yield File(to.toURI)
   }
 

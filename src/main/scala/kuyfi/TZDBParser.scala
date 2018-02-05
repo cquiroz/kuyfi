@@ -270,6 +270,19 @@ object TZDBParser {
   )
 
   /**
+    * Parse the version
+    */
+  def parseVersion(dir: File): IO[Option[TzdbVersion]] = IO {
+    dir match {
+      case x if x.isSymbolicLink => None
+      case x if x.isDirectory    =>
+        val files = x.list
+        files.filter(_.name === "version").map {_.contentAsString}.toList.headOption
+      case _                     => None
+    }
+  }
+
+  /**
     * Entry point. Takes a dir with the TZDB files and parses them into Rows
     */
   def parseAll(dir: File): IO[List[Row]] = IO {
@@ -278,10 +291,11 @@ object TZDBParser {
       case x if x.isDirectory    =>
         val files = x.list
         val parsed = files.filter(f => tzdbFiles.contains(f.name)).map(f => parseFile(f.contentAsString))
-        parsed.toList.combineAll match {
+        val rows = parsed.toList.combineAll match {
           case Done(_, v) => v
           case _          => Nil
         }
+        rows
       case _                     => Nil
     }
   }
