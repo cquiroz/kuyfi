@@ -2,7 +2,7 @@ import sbt.Keys._
 
 val commonSettings: Seq[Setting[_]] = Seq(
   organization := "io.github.cquiroz",
-  scalaVersion := "2.12.4",
+  scalaVersion := "2.12.6",
   scalacOptions ++= Seq(
     "-deprecation",
     "-feature",
@@ -50,14 +50,14 @@ lazy val kuyfi: Project = project.in(file("."))
   .settings(
     name := "kuyfi",
     libraryDependencies ++= Seq(
-      "org.tpolecat"         %% "atto-core"            % "0.6.1",
-      "org.typelevel"        %% "cats-core"            % "1.0.1",
-      "org.typelevel"        %% "cats-effect"          % "0.8",
-      "org.typelevel"        %% "mouse"                % "0.15",
-      "com.chuusai"          %% "shapeless"            % "2.3.2",
-      "com.github.pathikrit" %% "better-files"         % "3.4.0",
+      "org.tpolecat"         %% "atto-core"            % "0.6.2",
+      "org.typelevel"        %% "cats-core"            % "1.1.0",
+      "org.typelevel"        %% "cats-effect"          % "0.10.1",
+      "org.typelevel"        %% "mouse"                % "0.17",
+      "com.chuusai"          %% "shapeless"            % "2.3.3",
+      "com.github.pathikrit" %% "better-files"         % "3.5.0",
       "com.eed3si9n"         %% "treehugger"           % "0.4.3",
-      "org.scalatest"        %% "scalatest"            % "3.0.4" % "test"
+      "org.scalatest"        %% "scalatest"            % "3.0.5" % "test"
     ),
     scalacOptions ~= (_.filterNot(Set(
       // Some overloaded methods don't use all params
