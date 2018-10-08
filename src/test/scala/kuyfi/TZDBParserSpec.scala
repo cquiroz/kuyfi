@@ -164,29 +164,31 @@ class TZDBParserSpec extends FlatSpec with Matchers {
     "parse Rules" in {
       val rules = List(
         "Rule	Algeria	1916	only	-	Jun	14	23:00s	1:00	S" ->
-          Rule("Algeria", GivenYear(1916), Only, Month.JUNE, DayOfTheMonth(14), AtStandardTime(LocalTime.of(23, 0)), Save(LocalTime.of(1, 0)), Letter("S")),
+          Rule("Algeria", GivenYear(1916), Only, Month.JUNE, DayOfTheMonth(14), AtStandardTime(LocalTime.of(23, 0)), Save(true, LocalTime.of(1, 0)), Letter("S")),
         "Rule	Egypt	1995	2010	-	Apr	lastFri	 0:00s	1:00	S" ->
-          Rule("Egypt", GivenYear(1995), GivenYear(2010), Month.APRIL, LastWeekday(DayOfWeek.FRIDAY), AtStandardTime(LocalTime.of(0, 0)), Save(LocalTime.of(1, 0)), Letter("S")),
+          Rule("Egypt", GivenYear(1995), GivenYear(2010), Month.APRIL, LastWeekday(DayOfWeek.FRIDAY), AtStandardTime(LocalTime.of(0, 0)), Save(true, LocalTime.of(1, 0)), Letter("S")),
         "Rule	Egypt	2007	only	-	Sep	Thu>=1	24:00	0	-" ->
-          Rule("Egypt", GivenYear(2007), Only, Month.SEPTEMBER, AfterWeekday(DayOfWeek.THURSDAY, 1), AtWallTime(LocalTime.of(0, 0), true), Save(LocalTime.of(0, 0)), Letter("-")),
+          Rule("Egypt", GivenYear(2007), Only, Month.SEPTEMBER, AfterWeekday(DayOfWeek.THURSDAY, 1), AtWallTime(LocalTime.of(0, 0), true), Save(true, LocalTime.of(0, 0)), Letter("-")),
         "Rule	Ghana	1920	1942	-	Sep	 1	0:00	0:20	GHST" ->
-          Rule("Ghana", GivenYear(1920), GivenYear(1942), Month.SEPTEMBER, DayOfTheMonth(1), AtWallTime(LocalTime.of(0, 0)), Save(LocalTime.of(0, 20)), Letter("GHST")),
+          Rule("Ghana", GivenYear(1920), GivenYear(1942), Month.SEPTEMBER, DayOfTheMonth(1), AtWallTime(LocalTime.of(0, 0)), Save(true, LocalTime.of(0, 20)), Letter("GHST")),
         "Rule RussiaAsia	1981	1984	-	Apr	1	 0:00	1:00	S" ->
-          Rule("RussiaAsia", GivenYear(1981), GivenYear(1984), Month.APRIL, DayOfTheMonth(1), AtWallTime(LocalTime.of(0, 0)), Save(LocalTime.of(1, 0)), Letter("S")),
+          Rule("RussiaAsia", GivenYear(1981), GivenYear(1984), Month.APRIL, DayOfTheMonth(1), AtWallTime(LocalTime.of(0, 0)), Save(true, LocalTime.of(1, 0)), Letter("S")),
         "Rule	Lebanon	1993	max	-	Mar	lastSun	0:00	1:00	S" ->
-          Rule("Lebanon", GivenYear(1993), Maximum, Month.MARCH, LastWeekday(DayOfWeek.SUNDAY), AtWallTime(LocalTime.of(0, 0)), Save(LocalTime.of(1, 0)), Letter("S")),
+          Rule("Lebanon", GivenYear(1993), Maximum, Month.MARCH, LastWeekday(DayOfWeek.SUNDAY), AtWallTime(LocalTime.of(0, 0)), Save(true, LocalTime.of(1, 0)), Letter("S")),
         "Rule	Syria	1991	only	-	Apr	 1	0:00	1:00	S" ->
-          Rule("Syria", GivenYear(1991), Only, Month.APRIL, DayOfTheMonth(1), AtWallTime(LocalTime.of(0, 0)), Save(LocalTime.of(1, 0)), Letter("S")),
+          Rule("Syria", GivenYear(1991), Only, Month.APRIL, DayOfTheMonth(1), AtWallTime(LocalTime.of(0, 0)), Save(true, LocalTime.of(1, 0)), Letter("S")),
         "Rule	Regina	1945	only	-	Aug	14	23:00u	1:00	P # Peace" ->
-          Rule("Regina", GivenYear(1945), Only, Month.AUGUST, DayOfTheMonth(14), AtUniversalTime(LocalTime.of(23, 0)), Save(LocalTime.of(1, 0)), Letter("P")),
+          Rule("Regina", GivenYear(1945), Only, Month.AUGUST, DayOfTheMonth(14), AtUniversalTime(LocalTime.of(23, 0)), Save(true, LocalTime.of(1, 0)), Letter("P")),
         "Rule Indianapolis 1941	only	-	Jun	22	2:00	1:00	D" ->
-          Rule("Indianapolis", GivenYear(1941), Only, Month.JUNE, DayOfTheMonth(22), AtWallTime(LocalTime.of(2, 0)), Save(LocalTime.of(1, 0)), Letter("D")),
+          Rule("Indianapolis", GivenYear(1941), Only, Month.JUNE, DayOfTheMonth(22), AtWallTime(LocalTime.of(2, 0)), Save(true, LocalTime.of(1, 0)), Letter("D")),
         "Rule	Syria	2007	only	-	Nov	 Fri>=1	0:00	0	-" ->
-          Rule("Syria", GivenYear(2007), Only, Month.NOVEMBER, AfterWeekday(DayOfWeek.FRIDAY, 1), AtWallTime(LocalTime.of(0, 0)), Save(LocalTime.of(0, 0)), Letter("-")),
+          Rule("Syria", GivenYear(2007), Only, Month.NOVEMBER, AfterWeekday(DayOfWeek.FRIDAY, 1), AtWallTime(LocalTime.of(0, 0)), Save(true, LocalTime.of(0, 0)), Letter("-")),
         "Rule	Morocco	2011	only	-	Jul	31	 0	0	-" ->
-          Rule("Morocco", GivenYear(2011), Only, Month.JULY, DayOfTheMonth(31), AtWallTime(LocalTime.of(0, 0)), Save(LocalTime.of(0, 0)), Letter("-")),
+          Rule("Morocco", GivenYear(2011), Only, Month.JULY, DayOfTheMonth(31), AtWallTime(LocalTime.of(0, 0)), Save(true, LocalTime.of(0, 0)), Letter("-")),
         "Rule	SystemV	1974	only	-	Jan	6	2:00	1:00	D" ->
-          Rule("SystemV", GivenYear(1974), Only, Month.JANUARY, DayOfTheMonth(6), AtWallTime(LocalTime.of(2, 0)), Save(LocalTime.of(1, 0)), Letter("D"))
+          Rule("SystemV", GivenYear(1974), Only, Month.JANUARY, DayOfTheMonth(6), AtWallTime(LocalTime.of(2, 0)), Save(true, LocalTime.of(1, 0)), Letter("D")),
+        "Rule	Eire	1996	max	-	Oct	lastSun	 1:00u	-1:00	GMT" ->
+          Rule("Eire", GivenYear(1996), Maximum, Month.OCTOBER, LastWeekday(DayOfWeek.SUNDAY), AtUniversalTime(LocalTime.of(1, 0)), Save(false, LocalTime.of(1, 0)), Letter("GMT"))
       )
       rules.foreach { rule =>
         (ruleParser parseOnly rule._1) shouldBe Done("", rule._2)
@@ -324,19 +326,27 @@ class TZDBParserSpec extends FlatSpec with Matchers {
             ZoneTransition(GmtOffset( 1,   0,   0), NullRule,          "CET",   Some(Until(1986, None, None, None))),
             ZoneTransition(GmtOffset( 0,   0,   0), RuleId("Morocco"), "WE%sT", None)
           )),
-        """Zone America/Swift_Current -7:11:20 -	LMT	1905 Sep
-          |			-7:00	Canada	M%sT	1946 Apr lastSun  2:00
-          |			-7:00	Regina	M%sT	1950
-          |			-7:00	Swift	M%sT	1972 Apr lastSun  2:00
-          |			-6:00	-	CST
+        """Zone	Europe/Prague	0:57:44 -	LMT	1850
+          |			0:57:44	-	PMT	1891 Oct    # Prague Mean Time
+          |			1:00	C-Eur	CE%sT	1945 May  9
+          |			1:00	Czech	CE%sT	1946 Dec  1  3:00
+          |# Vanguard section, for zic and other parsers that support negative DST.
+          |			1:00	-1:00	GMT	1947 Feb 23  2:00
           |""".stripMargin ->
-          Zone("America/Swift_Current", List(
-            ZoneTransition(GmtOffset(-7, -11, -20), NullRule,         "LMT",  Some(Until(1905, Some(Month.SEPTEMBER), None, None))),
-            ZoneTransition(GmtOffset(-7,   0,   0), RuleId("Canada"), "M%sT", Some(Until(1946, Some(Month.APRIL), Some(LastWeekday(DayOfWeek.SUNDAY)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset(-7,   0,   0), RuleId("Regina"), "M%sT", Some(Until(1950, None, None, None))),
-            ZoneTransition(GmtOffset(-7,   0,   0), RuleId("Swift"),  "M%sT", Some(Until(1972, Some(Month.APRIL), Some(LastWeekday(DayOfWeek.SUNDAY)), Some(AtWallTime(LocalTime.of(2, 0)))))),
-            ZoneTransition(GmtOffset(-6,   0,   0), NullRule,         "CST",  None)
-          ))
+          Zone("Europe/Prague", List(
+            ZoneTransition(GmtOffset(0, 57, 44), NullRule,         "LMT",  Some(Until(1850, None, None, None))),
+            ZoneTransition(GmtOffset(0, 57, 44), NullRule, "PMT", Some(Until(1891, Some(Month.OCTOBER), None, None))),
+            ZoneTransition(GmtOffset(1,   0,   0), RuleId("C-Eur"), "CE%sT", Some(Until(1945, Some(Month.MAY), Some(DayOfTheMonth(9)), None))),
+            ZoneTransition(GmtOffset(1,   0,   0), RuleId("Czech"), "CE%sT", Some(Until(1946, Some(Month.DECEMBER), Some(DayOfTheMonth(1)), Some(AtWallTime(LocalTime.of(3, 0)))))),
+            ZoneTransition(GmtOffset(1,   0,   0), FixedOffset(GmtOffset(-1, 0, 0)), "GMT", Some(Until(1947, Some(Month.FEBRUARY), Some(DayOfTheMonth(23)), Some(AtWallTime(LocalTime.of(2, 0))))))
+          )),
+      """Zone America/Guadeloupe	-4:06:08 -	LMT	1911 Jun  8 # Pointe-à-Pitre
+        |			-4:00	 -	AST
+        |""".stripMargin ->
+        Zone("America/Guadeloupe", List(
+          ZoneTransition(GmtOffset(-4, -6, -8), NullRule, "LMT", Some(Until(1911, Some(Month.JUNE), Some(DayOfTheMonth(8)), None))),
+          ZoneTransition(GmtOffset(-4,  0,  0), NullRule, "AST", None)
+        )),
       )
       zones.foreach { zone =>
         (zoneParserNl parseOnly zone._1) shouldBe Done("", zone._2)
@@ -494,7 +504,7 @@ class TZDBParserSpec extends FlatSpec with Matchers {
       val rows = TZDBParser.parseAll(r).unsafeRunSync()
       // Check a few well-known items
       rows.flatMap(_.select[Link]) should contain (Link("America/Port_of_Spain", "America/Anguilla"))
-      rows.flatMap(_.select[Rule]) should contain (Rule("Thule", GivenYear(1993), GivenYear(2006), Month.OCTOBER, LastWeekday(DayOfWeek.SUNDAY), AtWallTime(LocalTime.of(2, 0)), Save(LocalTime.of(0, 0)), Letter("S")))
+      rows.flatMap(_.select[Rule]) should contain (Rule("Thule", GivenYear(1993), GivenYear(2006), Month.OCTOBER, LastWeekday(DayOfWeek.SUNDAY), AtWallTime(LocalTime.of(2, 0)), Save(true, LocalTime.of(0, 0)), Letter("S")))
       rows.flatMap(_.select[Zone]) should contain (Zone("Africa/Cairo", List(ZoneTransition(GmtOffset(2, 5, 9), NullRule, "LMT", Some(Until(1900, Some(Month.OCTOBER), None, None))), ZoneTransition(GmtOffset(2, 0, 0), RuleId("Egypt"), "EE%sT", None))))
       rows should not be empty
     }

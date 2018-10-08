@@ -99,8 +99,11 @@ object TZDB {
     * Model for Rule Entries
     */
   final case class Letter(letter: String)
-  final case class Save(time: LocalTime) {
-    val seconds: Int = time.getHour * 3600 + time.getMinute * 60 + time.getSecond
+  final case class Save(positive: Boolean, time: LocalTime) {
+    val seconds: Int = {
+      val factor = if (positive) 1 else -1
+      factor * (time.getHour * 3600 + time.getMinute * 60 + time.getSecond)
+    }
   }
 
   sealed trait On extends Product with Serializable {

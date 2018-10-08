@@ -165,7 +165,7 @@ object TZDBParser {
     (opt(whitespace) ~> timeParser).map { case (e, t) => AtWallTime(t, e): At }
 
   val saveParser: Parser[Save] =
-    timeParser.map(x => Save(x._2))
+    (opt(chr('-')) ~ timeParser).map{ case (s, (_, l)) => Save(s.isEmpty, l)}
 
   val toEndLine: Parser[String] = takeWhile(_ =!= '\n') <~ opt(nl)
 
@@ -210,7 +210,7 @@ object TZDBParser {
     chr('#') ~> toEndLine.map(Comment.apply)
 
   val zoneRuleParser: Parser[ZoneRule] =
-    chr('-').map(_ => NullRule) | gmtOffsetParser.map(d => FixedOffset(d): ZoneRule) | identifier.map(RuleId.apply)
+    gmtOffsetParser.map(d => FixedOffset(d): ZoneRule) | (chr('-') <~ opt(whitespace)).map(_ => NullRule: ZoneRule) | identifier.map(RuleId.apply)
 
   val zoneTransitionParser: Parser[ZoneTransition] =
     for {
