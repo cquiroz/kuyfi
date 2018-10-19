@@ -35,7 +35,7 @@ class TZDBSpec extends FlatSpec with Matchers {
 
   "Until" should
     "calculate date time" in {
-      val until = Until(1998,Some(Month.APRIL),Some(AfterWeekday(DayOfWeek.SUNDAY,1)),Some(AtWallTime(LocalTime.of(3, 0), endOfDay = false)))
+      val until = Until(1998,Some(Month.APRIL),Some(AfterWeekday(DayOfWeek.SUNDAY,1)),Some(AtWallTime(LocalTime.of(3, 0), endOfDay = false, 0)))
       until.toDateTime shouldBe LocalDateTime.of(1998, Month.APRIL, 5, 3, 0)
       until.toDateTime shouldBe LocalDateTime.of(1998, Month.APRIL, 5, 3, 0)
     }
