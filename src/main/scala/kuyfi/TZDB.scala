@@ -25,30 +25,31 @@ object TZDB {
     def endOfDay: Boolean
     def noEndOfDay: At
     def timeDefinition: TimeDefinition
+    def rollOver: Int
     def adjustDateForEndOfDay(d: LocalDate): LocalDate = endOfDay.fold(d.plusDays(1), d)
   }
-  final case class AtWallTime(time: LocalTime, endOfDay: Boolean) extends At {
+  final case class AtWallTime(time: LocalTime, endOfDay: Boolean, rollOver: Int) extends At {
     override def noEndOfDay = copy(endOfDay = false)
     val timeDefinition = TimeDefinition.WALL
   }
   object AtWallTime {
-    def apply(time: LocalTime): At = AtWallTime(time, time.getHour == 24 && time.getMinute == 0 && time.getSecond == 0)
+    def apply(time: LocalTime): At = AtWallTime(time, time.getHour == 24 && time.getMinute == 0 && time.getSecond == 0, rollOver = 0)
   }
 
-  final case class AtStandardTime(time: LocalTime, endOfDay: Boolean) extends At {
+  final case class AtStandardTime(time: LocalTime, endOfDay: Boolean, rollOver: Int) extends At {
     override def noEndOfDay = copy(endOfDay = false)
     val timeDefinition = TimeDefinition.STANDARD
   }
   object AtStandardTime {
-    def apply(time: LocalTime): At = this(time, time.getHour == 24 && time.getMinute == 0 && time.getSecond == 0)
+    def apply(time: LocalTime): At = this(time, time.getHour == 24 && time.getMinute == 0 && time.getSecond == 0, rollOver = 0)
   }
 
-  final case class AtUniversalTime(time: LocalTime, endOfDay: Boolean) extends At{
+  final case class AtUniversalTime(time: LocalTime, endOfDay: Boolean, rollOver: Int) extends At{
     override def noEndOfDay = copy(endOfDay = false)
     val timeDefinition = TimeDefinition.UTC
   }
   object AtUniversalTime {
-    def apply(time: LocalTime): At = this(time, time.getHour == 24 && time.getMinute == 0 && time.getSecond == 0)
+    def apply(time: LocalTime): At = this(time, time.getHour == 24 && time.getMinute == 0 && time.getSecond == 0, rollOver = 0)
   }
 
   object At {
@@ -119,6 +120,13 @@ object TZDB {
         case (Some(_), _)     => LocalDate.of(y, month, dayOnYear(y, month))
       }
     }
+    def adjustRoll(hrs: Int): On =
+      this match {
+        case d: DayOfTheMonth => DayOfTheMonth(d.i + (1 + (hrs / 24)))
+        case d: LastWeekday => LastWeekday(d.d.plus(((1 + (hrs / 24))).toLong))
+        case d: AfterWeekday => d.copy(day = d.day + (1 + (hrs / 24)))
+        case d: BeforeWeekday => d.copy(day = d.day + (1 + (hrs / 24)))
+      }
   }
   final case class DayOfTheMonth(i: Int) extends On {
     override val dayOfMonthIndicator = Some(i)
@@ -184,6 +192,13 @@ object TZDB {
 
     val startYear: Int = toInt(from, 0)
     val endYear: Int   = toInt(to, startYear)
+
+    def adjustRoll: Rule =
+      if (at.rollOver > 0) {
+        copy(on = on.adjustRoll(at.rollOver))
+      } else {
+        this
+      }
 
     def adjustForwards: Rule = on match {
       case BeforeWeekday(weekDay, dayOfMonth) =>

@@ -163,12 +163,14 @@ class TZDBParserSpec extends FlatSpec with Matchers {
   "TZDBParser" should
     "parse Rules" in {
       val rules = List(
+        "Rule Japan 1948 1951 - Sep Sat>=8 25:00 0 S" ->
+          Rule("Japan", GivenYear(1948), GivenYear(1951), Month.SEPTEMBER, AfterWeekday(DayOfWeek.SATURDAY, 9), AtWallTime(LocalTime.of(1, 0), true, 1), Save(true, LocalTime.of(0, 0)), Letter("S")),
         "Rule	Algeria	1916	only	-	Jun	14	23:00s	1:00	S" ->
           Rule("Algeria", GivenYear(1916), Only, Month.JUNE, DayOfTheMonth(14), AtStandardTime(LocalTime.of(23, 0)), Save(true, LocalTime.of(1, 0)), Letter("S")),
         "Rule	Egypt	1995	2010	-	Apr	lastFri	 0:00s	1:00	S" ->
           Rule("Egypt", GivenYear(1995), GivenYear(2010), Month.APRIL, LastWeekday(DayOfWeek.FRIDAY), AtStandardTime(LocalTime.of(0, 0)), Save(true, LocalTime.of(1, 0)), Letter("S")),
         "Rule	Egypt	2007	only	-	Sep	Thu>=1	24:00	0	-" ->
-          Rule("Egypt", GivenYear(2007), Only, Month.SEPTEMBER, AfterWeekday(DayOfWeek.THURSDAY, 1), AtWallTime(LocalTime.of(0, 0), true), Save(true, LocalTime.of(0, 0)), Letter("-")),
+          Rule("Egypt", GivenYear(2007), Only, Month.SEPTEMBER, AfterWeekday(DayOfWeek.THURSDAY, 1), AtWallTime(LocalTime.of(0, 0), true, 0), Save(true, LocalTime.of(0, 0)), Letter("-")),
         "Rule	Ghana	1920	1942	-	Sep	 1	0:00	0:20	GHST" ->
           Rule("Ghana", GivenYear(1920), GivenYear(1942), Month.SEPTEMBER, DayOfTheMonth(1), AtWallTime(LocalTime.of(0, 0)), Save(true, LocalTime.of(0, 20)), Letter("GHST")),
         "Rule RussiaAsia	1981	1984	-	Apr	1	 0:00	1:00	S" ->
