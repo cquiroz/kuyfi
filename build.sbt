@@ -2,7 +2,7 @@ import sbt.Keys._
 
 val commonSettings: Seq[Setting[_]] = Seq(
   organization := "io.github.cquiroz",
-  scalaVersion := "2.12.7",
+  scalaVersion := "2.12.8",
   scalacOptions := Seq(
     "-deprecation", // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8", // Specify character encoding used by source files.
@@ -93,10 +93,10 @@ lazy val kuyfi: Project = project.in(file("."))
     name := "kuyfi",
     Test / run / fork := true,
     libraryDependencies ++= Seq(
-      "org.tpolecat"         %% "atto-core"            % "0.6.3",
-      "org.typelevel"        %% "cats-core"            % "1.4.0",
-      "org.typelevel"        %% "cats-effect"          % "1.0.0",
-      "org.typelevel"        %% "mouse"                % "0.18",
+      "org.tpolecat"         %% "atto-core"            % "0.6.4",
+      "org.typelevel"        %% "cats-core"            % "1.5.0",
+      "org.typelevel"        %% "cats-effect"          % "1.1.0",
+      "org.typelevel"        %% "mouse"                % "0.19",
       "com.chuusai"          %% "shapeless"            % "2.3.3",
       "com.github.pathikrit" %% "better-files"         % "3.6.0",
       "com.eed3si9n"         %% "treehugger"           % "0.4.3",
