@@ -96,9 +96,9 @@ lazy val kuyfi: Project = project.in(file("."))
       "org.tpolecat"         %% "atto-core"            % "0.6.4",
       "org.typelevel"        %% "cats-core"            % "1.5.0",
       "org.typelevel"        %% "cats-effect"          % "1.1.0",
-      "org.typelevel"        %% "mouse"                % "0.19",
+      "org.typelevel"        %% "mouse"                % "0.20",
       "com.chuusai"          %% "shapeless"            % "2.3.3",
-      "com.github.pathikrit" %% "better-files"         % "3.6.0",
+      "com.github.pathikrit" %% "better-files"         % "3.7.0",
       "com.eed3si9n"         %% "treehugger"           % "0.4.3",
       "org.scalatest"        %% "scalatest"            % "3.0.5" % "test"
     ),

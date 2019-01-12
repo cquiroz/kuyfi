@@ -57,7 +57,7 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
      val calculatedRules = rules.find(_._1 == "Australia/Adelaide").map(_._2)
      compareZoneRules(calculatedRules, "Australia/Adelaide")
    }
-   ignore should "calculate the transitions for Africa/Casablanca" in {
+   it should "calculate the transitions for Africa/Casablanca" in {
      val calculatedRules = rules.find(_._1 == "Africa/Casablanca").map(_._2)
      compareZoneRules(calculatedRules, "Africa/Casablanca")
    }
@@ -258,7 +258,7 @@ class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
      val calculatedParisRules = parsedZoneRules.flatMap(_.find(_._1.name == "Europe/Paris")).map(_._2)
      compareZoneRules(calculatedParisRules, "Europe/Paris")
    }
-   ignore should "construct the transition zones for Casablanca" in {
+    it should "construct the transition zones for Casablanca" in {
      val text = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/africa_casablanca"), "UTF-8").mkString
 
      val parsedZoneRules: Option[Map[Zone, ZoneRules]] = TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
