@@ -223,7 +223,7 @@ object TZDBParser {
 
   val continuationZoneTransitionParser: Parser[ZoneTransition] =
     for {
-      _        <- manyN(3, whitespace)
+      _        <- manyN(3, whitespace) <~ opt(whitespace)
       gmtOff   <- gmtOffsetParser <~ whitespace
       zoneRule <- opt(whitespace) ~> zoneRuleParser <~ many(whitespace)
       format   <- identifier <~ many(whitespace)

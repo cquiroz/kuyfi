@@ -419,6 +419,48 @@ class TZDBParserSpec extends FlatSpec with Matchers {
         (many(zoneParserNl) parseOnly zone._1) shouldBe Done("", zone._2)
       }
     }
+    it should "parse contiguous Zones with inconsistent left padding" in {
+      val zones = List(
+        """Zone Pacific/Majuro	 11:24:48 -	LMT	1901
+          |			 11:00	-	+11	1914 Oct
+          |			  9:00	-	+09	1919 Feb  1
+          |			 11:00	-	+11	1937
+          |			 10:00	-	+10	1941 Apr  1
+          |			  9:00	-	+09	1944 Jan 30
+          |			 11:00	-	+11	1969 Oct
+          |			 12:00	-	+12
+          |Zone Pacific/Kwajalein	 11:09:20 -	LMT	1901
+          |			 11:00	-	+11	1937
+          |			 10:00	-	+10	1941 Apr  1
+          |			  9:00	-	+09	1944 Feb  6
+          |			 11:00	-	+11	1969 Oct
+          |			-12:00	-	-12	1993 Aug 20 24:00
+          |			 12:00	-	+12
+          |""".stripMargin ->
+          List(Zone("Pacific/Majuro", List(
+            ZoneTransition(GmtOffset(11,   24,  48), NullRule,     "LMT",   Some(Until(1901, None,                  None,                   None))),
+            ZoneTransition(GmtOffset(11,    0,   0), NullRule,     "+11",   Some(Until(1914, Some(Month.OCTOBER),   None,                   None))),
+            ZoneTransition(GmtOffset(9 ,    0,   0), NullRule,     "+09",   Some(Until(1919, Some(Month.FEBRUARY),  Some(DayOfTheMonth(1)), None))),
+            ZoneTransition(GmtOffset(11,    0,   0), NullRule,     "+11",   Some(Until(1937, None,                  None,                   None))),
+            ZoneTransition(GmtOffset(10,    0,   0), NullRule,     "+10",   Some(Until(1941, Some(Month.APRIL),     Some(DayOfTheMonth(1)), None))),
+            ZoneTransition(GmtOffset(9 ,    0,   0), NullRule,     "+09",   Some(Until(1944, Some(Month.JANUARY),   Some(DayOfTheMonth(30)),None))),
+            ZoneTransition(GmtOffset(11,    0,   0), NullRule,     "+11",   Some(Until(1969, Some(Month.OCTOBER),   None,                   None))),
+            ZoneTransition(GmtOffset(12,    0,   0), NullRule,     "+12",   None),
+          )),
+            Zone("Pacific/Kwajalein", List(
+            ZoneTransition(GmtOffset(11,9,20),       NullRule,     "LMT",   Some(Until(1901,  None,                 None,                   None))),
+            ZoneTransition(GmtOffset(11,0,0),        NullRule,     "+11",   Some(Until(1937,  None,                 None,                   None))),
+            ZoneTransition(GmtOffset(10,0,0),        NullRule,     "+10",   Some(Until(1941,  Some(Month.APRIL),    Some(DayOfTheMonth(1)), None))),
+            ZoneTransition(GmtOffset(9,0,0),         NullRule,     "+09",   Some(Until(1944,  Some(Month.FEBRUARY), Some(DayOfTheMonth(6)), None))),
+            ZoneTransition(GmtOffset(11,0,0),        NullRule,     "+11",   Some(Until(1969,  Some(Month.OCTOBER),  None,                   None))),
+            ZoneTransition(GmtOffset(-12,0,0),       NullRule,     "-12",   Some(Until(1993,  Some(Month.AUGUST),   Some(DayOfTheMonth(20)),Some(AtWallTime(LocalTime.of(0,0),true,0))))),
+            ZoneTransition(GmtOffset(12,0,0),        NullRule,     "+12",   None)
+            )))
+      )
+      zones.foreach { zone =>
+        (many(zoneParserNl) parseOnly zone._1) shouldBe Done("", zone._2)
+      }
+    }
     it should "parse Zones with comments" in {
       val zones = List(
         """Zone	Africa/Tripoli	0:52:44 -	LMT	1920
