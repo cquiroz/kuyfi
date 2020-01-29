@@ -1,0 +1,9 @@
+package kuyfi
+
+import java.util.{Map => JMap, List => JList}
+import scala.collection.JavaConverters._
+
+object JDKConv {
+  def toJava[A, B](m: Map[A, B]): JMap[A, B] = m.asJava
+  def toJava[A](m: List[A]): JList[A] = m.asJava
+}
