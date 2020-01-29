@@ -2,10 +2,30 @@ import sbt.Keys._
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
+// sbt-ci-release
+inThisBuild(
+  List(
+    homepage := Some(url("https://github.com/cquiroz/kuyfi")),
+    licenses := Seq("BSD 3-Clause License" -> url("https://opensource.org/licenses/BSD-3-Clause")),
+    developers := List(
+      Developer("cquiroz",
+                "Carlos Quiroz",
+                "carlos.m.quiroz@gmail.com",
+                url("https://github.com/cquiroz"))
+    ),
+    scmInfo := Some(
+      ScmInfo(url("https://github.com/cquiroz/kuyfi"),
+              "scm:git:git@github.com:cquiroz/kuyfi.git")
+    )
+  )
+)
+
+
 val commonSettings: Seq[Setting[_]] = Seq(
   organization := "io.github.cquiroz",
   scalaVersion := "2.13.1",
-  crossScalaVersions := Seq("2.12.10", "2.13.1")
+  crossScalaVersions := Seq("2.12.10", "2.13.1"),
+  description := "TZDB parser",
 )
 
 lazy val kuyfi: Project = project.in(file("."))
