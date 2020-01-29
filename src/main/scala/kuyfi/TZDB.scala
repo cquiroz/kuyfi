@@ -111,7 +111,7 @@ object TZDB {
     def dayOfMonthIndicator: Option[Int] = None
     def dayOnYear(y: Int, m: Month): Int
     def dayOfWeek: Option[DayOfWeek] = None
-    def onDay(d: Int): On = this
+    def onDay(d: Int): On
     def dateTimeInContext(y: Int, month: Month): LocalDate = {
       val lastDay = month.length(Year.isLeap(y.toLong))
       (dayOfMonthIndicator, dayOfWeek) match {
@@ -135,6 +135,7 @@ object TZDB {
   }
   final case class LastWeekday(d: DayOfWeek) extends On {
     override def dayOfWeek: Option[DayOfWeek] = Some(d)
+    override def onDay(d: Int): On = this
     override def dayOnYear(y: Int, m: Month): Int = {
       val lastDay = m.length(Year.isLeap(y.toLong))
       LocalDate.of(y, m, lastDay).`with`(TemporalAdjusters.previousOrSame(d)).getDayOfMonth
@@ -277,16 +278,15 @@ object TZDB {
                              standardOffsetTransitionList: List[ZoneOffsetTransitionParams],
                              transitionList: List[ZoneOffsetTransitionParams],
                              lastRules: List[ZoneOffsetTransitionRule]) extends ZoneRulesParams {
-    import scala.collection.JavaConverters._
-    def toZoneRules = ZoneRules.of(baseStandardOffset, baseWallOffset, standardOffsetTransitionList.map(_.toOffsetTransition).asJava, transitionList.map(_.toOffsetTransition).asJava, lastRules.asJava)
+    def toZoneRules = ZoneRules.of(baseStandardOffset, baseWallOffset, JDKConv.toJava(standardOffsetTransitionList.map(_.toOffsetTransition)), JDKConv.toJava(transitionList.map(_.toOffsetTransition)), JDKConv.toJava(lastRules))
   }
+
   final case class StandardRulesParams(baseStandardOffset: ZoneOffset,
                              baseWallOffset: ZoneOffset,
                              standardOffsetTransitionList: List[ZoneOffsetTransitionParams],
                              transitionList: List[ZoneOffsetTransitionParams],
                              lastRules: List[ZoneOffsetTransitionRule]) extends ZoneRulesParams {
-    import scala.collection.JavaConverters._
-    def toZoneRules = ZoneRules.of(baseStandardOffset, baseWallOffset, standardOffsetTransitionList.map(_.toOffsetTransition).asJava, transitionList.map(_.toOffsetTransition).asJava, lastRules.asJava)
+    def toZoneRules = ZoneRules.of(baseStandardOffset, baseWallOffset, JDKConv.toJava(standardOffsetTransitionList.map(_.toOffsetTransition)), JDKConv.toJava(transitionList.map(_.toOffsetTransition)), JDKConv.toJava(lastRules))
   }
 
   final case class TzdbVersion(ver: String)

@@ -1,11 +1,13 @@
 package kuyfi
 
-import org.scalatest.{Assertion, FlatSpec, Matchers}
+import org.scalatest.Assertion
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import java.time.zone.{ZoneRules, ZoneRulesProvider}
 
 import kuyfi.TZDB.Zone
 
-class ZoneRulesBuilderSpec extends FlatSpec with Matchers {
+class ZoneRulesBuilderSpec extends AnyFlatSpec with Matchers {
   import better.files._
 
   // NOTE These tests are fragile as they depend on the timezone db of the JVM

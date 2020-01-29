@@ -18,7 +18,7 @@ object TimeZoneWindow {
       val ldt = timeDefinition.createDateTime(windowEnd, standardOffset.toZoneOffset, wallOffset)
       ldt.toEpochSecond(wallOffset)
     }
-    def tidy(windowStartYear: Int): TimeZoneWindow = this
+    def tidy(windowStartYear: Int): TimeZoneWindow
   }
 
   def ruleOrderings(f: Rule => RuleYear): scala.Ordering[Rule] = new scala.Ordering[Rule]() {
@@ -61,7 +61,9 @@ object TimeZoneWindow {
     val zero: WindowRules = WindowRules(Nil, Year.MIN_VALUE, Nil)
   }
 
-  final case class FixedTimeZoneWindow(standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: TimeDefinition, fixedSavingAmountSeconds: Option[Int]) extends TimeZoneWindow
+  final case class FixedTimeZoneWindow(standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: TimeDefinition, fixedSavingAmountSeconds: Option[Int]) extends TimeZoneWindow {
+    override def tidy(windowStartYear: Int): TimeZoneWindow = this
+  }
   final case class RulesTimeZoneWindow private (standardOffset: GmtOffset, windowEnd: LocalDateTime, timeDefinition: TimeDefinition, fixedSavingAmountSeconds: Option[Int], windowRules: WindowRules) extends TimeZoneWindow {
 
     override def tidy(windowStartYear: Int): TimeZoneWindow = {

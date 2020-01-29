@@ -1,13 +1,12 @@
 package kuyfi
 
-import java.time.{DayOfWeek, LocalTime, Month, LocalDateTime}
-
-import kuyfi.TZDB._
-import org.scalatest.{FlatSpec, Matchers}
-
 import cats.implicits._
+import java.time.{DayOfWeek, LocalTime, Month, LocalDateTime}
+import kuyfi.TZDB._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
-class TZDBSpec extends FlatSpec with Matchers {
+class TZDBSpec extends AnyFlatSpec with Matchers {
   "Year ordering" should
     "orders given years" in {
       (GivenYear(2001): RuleYear) <= (GivenYear(2002): RuleYear) shouldBe true

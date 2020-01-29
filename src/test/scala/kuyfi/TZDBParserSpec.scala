@@ -2,14 +2,15 @@ package kuyfi
 
 import java.time.{DayOfWeek, LocalTime, Month}
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import atto._
 import Atto._
 import TZDB._
 import TZDBParser._
 import atto.ParseResult.{Done, Fail}
 
-class TZDBParserSpec extends FlatSpec with Matchers {
+class TZDBParserSpec extends AnyFlatSpec with Matchers {
   "TZDBParser from field" should
     "parse from maximum" in {
       (fromParser parseOnly "maximum") shouldBe Done("", Maximum)
