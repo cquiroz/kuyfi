@@ -1,16 +1,16 @@
 package kuyfi
 
-import java.time.{DayOfWeek, LocalTime, Month}
+import java.time.{ DayOfWeek, LocalTime, Month }
 import java.time.format.TextStyle
 import java.util.Locale
 
-import atto.ParseResult.{Done, Fail}
+import atto.ParseResult.{ Done, Fail }
 import TZDB._
 import cats._
 import cats.implicits._
 import cats.effect._
 import mouse.boolean._
-import atto._, Atto.{char => chr, _}
+import atto._, Atto.{ char => chr, _ }
 import better.files._
 
 /**
@@ -19,50 +19,55 @@ import better.files._
 object TZDBParser {
   // Useful Monoid
   implicit def parserListMonoid[A]: Monoid[ParseResult[List[A]]] =
-    new Monoid[ParseResult[List[A]]]{
+    new Monoid[ParseResult[List[A]]] {
       def empty = Done("", List.empty[A])
-      def combine(a: ParseResult[List[A]] , b: ParseResult[List[A]]): ParseResult[List[A]] = (a, b) match {
-        case (Done(u, x), Done(v, y)) => Done(u + v, x ::: y)
-        case _                        => Fail("", Nil, "Can only handle full response ")
-      }
+      def combine(a: ParseResult[List[A]], b: ParseResult[List[A]]): ParseResult[List[A]] =
+        (a, b) match {
+          case (Done(u, x), Done(v, y)) => Done(u + v, x ::: y)
+          case _                        => Fail("", Nil, "Can only handle full response ")
+        }
     }
 
   implicit class Parser2Coproduct[A](val a: Parser[A]) extends AnyVal {
-    def liftC[C <: shapeless.Coproduct](implicit inj: shapeless.ops.coproduct.Inject[C, A]): Parser[C] = a.map(_.liftC[C])
+    def liftC[C <: shapeless.Coproduct](
+      implicit inj: shapeless.ops.coproduct.Inject[C, A]
+    ): Parser[C] = a.map(_.liftC[C])
   }
 
-  private val space = chr(' ')
-  private val semicolon = chr(':')
-  private val tab = chr('\t')
-  private val nl = chr('\n')
+  private val space      = chr(' ')
+  private val semicolon  = chr(':')
+  private val tab        = chr('\t')
+  private val nl         = chr('\n')
   private val identifier = stringOf1(noneOf(" \t\n"))
 
-  private val whitespace: Parser[Char] = tab | space
+  private val whitespace: Parser[Char]          = tab | space
   private val linkSeparator: Parser[List[Char]] = many(whitespace)
 
-  private val months: List[(String, Month)] = Month.values().map(m => (m.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), m)).toList
-  private val days: List[(String, DayOfWeek)] = DayOfWeek.values().map(m => (m.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), m)).toList
+  private val months: List[(String, Month)] =
+    Month.values().map(m => (m.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), m)).toList
+  private val days: List[(String, DayOfWeek)] =
+    DayOfWeek.values().map(m => (m.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), m)).toList
 
   val from: Parser[String] =
     stringOf1(digit) |
-    string("minimum") |
-    string("maximum")
+      string("minimum") |
+      string("maximum")
 
   val fromParser: Parser[RuleYear] = {
     stringOf1(digit).map(y => GivenYear(y.toInt)) |
-    string("minimum").map(_ => Minimum: RuleYear) |
-    string("maximum").map(_ => Maximum: RuleYear) |
-    string("max").map(_ => Maximum: RuleYear) |
-    string("min").map(_ => Minimum: RuleYear)
+      string("minimum").map(_ => Minimum: RuleYear) |
+      string("maximum").map(_ => Maximum: RuleYear) |
+      string("max").map(_ => Maximum: RuleYear) |
+      string("min").map(_ => Minimum: RuleYear)
   }
 
   val toParser: Parser[RuleYear] = {
     stringOf1(digit).map(y => GivenYear(y.toInt)) |
-    string("minimum").map(_ => Minimum: RuleYear) |
-    string("maximum").map(_ => Maximum: RuleYear) |
-    string("max").map(_ => Maximum: RuleYear) |
-    string("min").map(_ => Minimum: RuleYear) |
-    string("only").map(_ => Only: RuleYear)
+      string("minimum").map(_ => Minimum: RuleYear) |
+      string("maximum").map(_ => Maximum: RuleYear) |
+      string("max").map(_ => Maximum: RuleYear) |
+      string("min").map(_ => Minimum: RuleYear) |
+      string("only").map(_ => Only: RuleYear)
   }
 
   def parseOneOf[A](items: List[(String, A)], msg: String): Parser[A] = {
@@ -97,9 +102,9 @@ object TZDBParser {
 
   val onParser: Parser[On] =
     (opt(space) ~> int.map(DayOfTheMonth.apply)) |
-    afterWeekdayParser |
-    beforeWeekdayParser |
-    lastWeekdayParser
+      afterWeekdayParser |
+      beforeWeekdayParser |
+      lastWeekdayParser
 
   val timePartParser: Parser[Char] =
     digit | semicolon
@@ -120,7 +125,7 @@ object TZDBParser {
 
   val hourMinParserOf: Parser[GmtOffset] = hourMinParser.map {
     case (n, h, m) if n => GmtOffset(-h, -m, 0)
-    case (_, h, m)      => GmtOffset( h,  m, 0)
+    case (_, h, m)      => GmtOffset(h, m, 0)
   }
 
   val hourMinSecParser: Parser[(Boolean, Int, Int, Int)] =
@@ -134,38 +139,38 @@ object TZDBParser {
     } yield (n.isDefined, h, m, s)
 
   val hourMinSecParserLT: Parser[(Int, Boolean, LocalTime)] = hourMinSecParser.map {
-      case (_, h, m, s) =>
-        val (endOfDay, hours) = fixHourRange(h)
-        (if (h > 24) h % 24 else 0, endOfDay, LocalTime.of(hours, m, s))
-    }
+    case (_, h, m, s) =>
+      val (endOfDay, hours) = fixHourRange(h)
+      (if (h > 24) h % 24 else 0, endOfDay, LocalTime.of(hours, m, s))
+  }
 
   val hourMinSecParserOf: Parser[GmtOffset] = hourMinSecParser.map {
-      case (neg, h, m, s) if neg => GmtOffset(-h, -m, -s)
-      case (_  , h, m, s)        => GmtOffset( h,  m,  s)
-    }
+    case (neg, h, m, s) if neg => GmtOffset(-h, -m, -s)
+    case (_, h, m, s)          => GmtOffset(h, m, s)
+  }
 
   val timeParser: Parser[(Int, Boolean, LocalTime)] =
     opt(many(whitespace)) ~>
-    hourMinSecParserLT |
-    hourMinParserLT |
-    int.map(fixHourRange).map(h => (0, h._1, LocalTime.of(h._2, 0)))
+      hourMinSecParserLT |
+      hourMinParserLT |
+      int.map(fixHourRange).map(h => (0, h._1, LocalTime.of(h._2, 0)))
 
   private def fixHourRange(h: Int): (Boolean, Int) =
     (h >= 24, (h >= 24).fold(h - 24, h))
 
   val gmtOffsetParser: Parser[GmtOffset] =
     hourMinSecParserOf |
-    hourMinParserOf |
-    int.map(h => GmtOffset(h, 0, 0))
+      hourMinParserOf |
+      int.map(h => GmtOffset(h, 0, 0))
 
   val atParser: Parser[At] =
-    (timeParser ~ chr('w')).map { case ((r, e, t), _) => AtWallTime(t, e, r): At } |
-    (timeParser ~ chr('s')).map { case ((r, e, t), _) => AtStandardTime(t, e, r): At } |
-    (timeParser ~ oneOf("zgu")).map { case ((r, e, t), _) => AtUniversalTime(t, e, r): At } |
-    (opt(whitespace) ~> timeParser).map { case (r, e, t) => AtWallTime(t, e, r): At }
+    (timeParser ~ chr('w')).map { case ((r, e, t), _)       => AtWallTime(t, e, r): At } |
+      (timeParser ~ chr('s')).map { case ((r, e, t), _)     => AtStandardTime(t, e, r): At } |
+      (timeParser ~ oneOf("zgu")).map { case ((r, e, t), _) => AtUniversalTime(t, e, r): At } |
+      (opt(whitespace) ~> timeParser).map { case (r, e, t)  => AtWallTime(t, e, r): At }
 
   val saveParser: Parser[Save] =
-    (opt(chr('-')) ~ timeParser).map{ case (s, (_, _, l)) => Save(s.isEmpty, l)}
+    (opt(chr('-')) ~ timeParser).map { case (s, (_, _, l)) => Save(s.isEmpty, l) }
 
   val toEndLine: Parser[String] = takeWhile(_ =!= '\n') <~ opt(nl)
 
@@ -210,7 +215,9 @@ object TZDBParser {
     chr('#') ~> toEndLine.map(Comment.apply)
 
   val zoneRuleParser: Parser[ZoneRule] =
-    gmtOffsetParser.map(d => FixedOffset(d): ZoneRule) | (chr('-') <~ opt(whitespace)).map(_ => NullRule: ZoneRule) | identifier.map(RuleId.apply)
+    gmtOffsetParser.map(d => FixedOffset(d): ZoneRule) | (chr('-') <~ opt(whitespace)).map(_ =>
+      NullRule: ZoneRule
+    ) | identifier.map(RuleId.apply)
 
   val zoneTransitionParser: Parser[ZoneTransition] =
     for {
@@ -236,9 +243,9 @@ object TZDBParser {
 
   val zoneParser: Parser[Zone] =
     for {
-      _      <- string("Zone") <~ whitespace
-      name   <- identifier <~ whitespace
-      trans  <- zoneTransitionListParser
+      _     <- string("Zone") <~ whitespace
+      name  <- identifier <~ whitespace
+      trans <- zoneTransitionListParser
     } yield Zone(name, trans)
 
   val zoneParserNl: Parser[Zone] =
@@ -249,11 +256,14 @@ object TZDBParser {
 
   val fileParser: Parser[List[Row]] =
     for {
-      c <- many(commentParser.liftC[Row] | ruleParser.liftC[Row] | zoneParserNl.liftC[Row] | linkParser.liftC[Row] | blankLine.liftC[Row])
+      c <- many(
+        commentParser.liftC[Row] | ruleParser.liftC[Row] | zoneParserNl.liftC[Row] | linkParser
+          .liftC[Row] | blankLine.liftC[Row]
+      )
     } yield c
 
   def parseFile(text: String): ParseResult[List[Row]] =
-    fileParser parseOnly text
+    fileParser.parseOnly(text)
 
   val tzdbFiles: List[String] = List(
     "africa",
@@ -275,10 +285,15 @@ object TZDBParser {
   def parseVersion(dir: File): IO[Option[TzdbVersion]] = IO {
     dir match {
       case x if x.isSymbolicLink => None
-      case x if x.isDirectory    =>
+      case x if x.isDirectory =>
         val files = x.list
-        files.filter(_.name === "version").map {_.contentAsString}.map(TzdbVersion.apply).toList.headOption
-      case _                     => None
+        files
+          .filter(_.name === "version")
+          .map { _.contentAsString }
+          .map(TzdbVersion.apply)
+          .toList
+          .headOption
+      case _ => None
     }
   }
 
@@ -288,15 +303,16 @@ object TZDBParser {
   def parseAll(dir: File): IO[List[Row]] = IO {
     dir match {
       case x if x.isSymbolicLink => Nil
-      case x if x.isDirectory    =>
+      case x if x.isDirectory =>
         val files = x.list
-        val parsed = files.filter(f => tzdbFiles.contains(f.name)).map(f => parseFile(f.contentAsString))
+        val parsed =
+          files.filter(f => tzdbFiles.contains(f.name)).map(f => parseFile(f.contentAsString))
         val rows = parsed.toList.combineAll match {
           case Done(_, v) => v
           case _          => Nil
         }
         rows
-      case _                     => Nil
+      case _ => Nil
     }
   }
 }
