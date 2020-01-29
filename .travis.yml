@@ -2,7 +2,7 @@ language: scala
 scala:
   - 2.12.7
 jdk:
-  - oraclejdk8
+  - openjdk8
 before_install:
   - export PATH=${PATH}:./vendor/bundle
 install:
