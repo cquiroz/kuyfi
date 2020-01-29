@@ -105,9 +105,10 @@ object ZoneRulesBuilder {
                         case ((savings, transitions), r) =>
                           val transition = r.toTransitionParams(newLso, savings)
 
-                          if ((transition.toEpochSecond >= lws.toEpochSecond(lwo)) && (transition.toEpochSecond < tzw.createDateTimeEpochSecond(
-                                savings
-                              )) && (transition.offsetBefore != transition.offsetAfter)) {
+                          if ((transition.toEpochSecond >= lws.toEpochSecond(lwo)) && (transition.toEpochSecond < tzw
+                                .createDateTimeEpochSecond(
+                                  savings
+                                )) && (transition.offsetBefore != transition.offsetAfter)) {
                             (r.save.seconds, transitions :+ transition.toZoneOffsetTransition)
                           } else {
                             (savings, transitions)
