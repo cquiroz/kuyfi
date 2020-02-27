@@ -353,9 +353,7 @@ object TZDBCodeGenerator {
       }
 
     implicit val fixedZoneRules: TreeGenerator[FixedZoneRulesParams] =
-      TreeGenerator.instance { l =>
-        LIT(l.baseStandardOffset.getTotalSeconds)
-      }
+      TreeGenerator.instance(l => LIT(l.baseStandardOffset.getTotalSeconds))
 
     implicit val standardZoneRules: TreeGenerator[StandardRulesParams] =
       TreeGenerator.instance(l =>

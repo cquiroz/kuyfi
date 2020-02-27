@@ -264,9 +264,7 @@ object ZoneRulesBuilder {
       case Nil => Map.empty
       case r =>
         val (in, out) = r.partition(l => rules.exists(x => x._1 == l.from))
-        val found = in.flatMap { link =>
-          rules.get(link.from).map(u => link.to -> u)
-        }
+        val found     = in.flatMap(link => rules.get(link.from).map(u => link.to -> u))
 
         val rel = out.flatMap { link =>
           val recursive = links.find(x => x.to == link.from)

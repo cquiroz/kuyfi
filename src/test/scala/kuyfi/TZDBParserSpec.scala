@@ -300,9 +300,7 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
           Letter("GMT")
         )
     )
-    rules.foreach { rule =>
-      (ruleParser.parseOnly(rule._1)) shouldBe Done("", rule._2)
-    }
+    rules.foreach(rule => (ruleParser.parseOnly(rule._1)) shouldBe Done("", rule._2))
   }
   it should "parse Link" in {
     val links = List(
@@ -319,9 +317,7 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
       "Link Africa/Abidjan Africa/Sao_Tome	# São Tomé and Príncipe" ->
         Link("Africa/Abidjan", "Africa/Sao_Tome")
     )
-    links.foreach { link =>
-      (linkParser.parseOnly(link._1)) shouldBe Done("", link._2)
-    }
+    links.foreach(link => (linkParser.parseOnly(link._1)) shouldBe Done("", link._2))
   }
   it should "parse single-line Zone" in {
     val zones = List(
@@ -389,9 +385,7 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
           )
         )
     )
-    zones.foreach { zone =>
-      (zoneParser.parseOnly(zone._1)) shouldBe Done("", zone._2)
-    }
+    zones.foreach(zone => (zoneParser.parseOnly(zone._1)) shouldBe Done("", zone._2))
   }
   it should "parse a multi-line Zone" in {
     val zones = List(
@@ -733,25 +727,21 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
           )
         )
     )
-    zones.foreach { zone =>
-      (zoneParserNl.parseOnly(zone._1)) shouldBe Done("", zone._2)
-    }
+    zones.foreach(zone => (zoneParserNl.parseOnly(zone._1)) shouldBe Done("", zone._2))
     // Tests some special cases
     // The first zone has an unknown rule
-    val firstRule = zones.headOption.flatMap { z =>
-      z._2.transitions.headOption.map(_.ruleId)
-    }
+    val firstRule = zones.headOption.flatMap(z => z._2.transitions.headOption.map(_.ruleId))
     firstRule shouldBe Some(NullRule)
 
     // The second zone has an id
-    val secondRule = zones.lift(1).flatMap { _._2.transitions.lift(1).map(_.ruleId) }
+    val secondRule = zones.lift(1).flatMap(_._2.transitions.lift(1).map(_.ruleId))
     secondRule shouldBe Some(RuleId("US"))
 
     // The third zone has a fixed offset
-    val thirdRule = zones.headOption.flatMap { _._2.transitions.lift(2).map(_.ruleId) }
+    val thirdRule = zones.headOption.flatMap(_._2.transitions.lift(2).map(_.ruleId))
     thirdRule shouldBe Some(FixedOffset(GmtOffset(1, 0, 0)))
     // The third zone has a fixed offset
-    val fifthRule = zones.lift(5).flatMap { _._2.transitions.lift(2).map(_.offset) }
+    val fifthRule = zones.lift(5).flatMap(_._2.transitions.lift(2).map(_.offset))
     fifthRule shouldBe Some(GmtOffset(-4, -30, 0))
   }
   it should "parse contiguous Zones" in {
@@ -888,9 +878,7 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
           )
         )
     )
-    zones.foreach { zone =>
-      (many(zoneParserNl).parseOnly(zone._1)) shouldBe Done("", zone._2)
-    }
+    zones.foreach(zone => (many(zoneParserNl).parseOnly(zone._1)) shouldBe Done("", zone._2))
   }
   it should "parse contiguous Zones with inconsistent left padding" in {
     val zones = List(
@@ -982,9 +970,7 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
           )
         )
     )
-    zones.foreach { zone =>
-      (many(zoneParserNl).parseOnly(zone._1)) shouldBe Done("", zone._2)
-    }
+    zones.foreach(zone => (many(zoneParserNl).parseOnly(zone._1)) shouldBe Done("", zone._2))
   }
   it should "parse Zones with comments" in {
     val zones = List(
@@ -1151,9 +1137,7 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
           )
         )
     )
-    zones.foreach { zone =>
-      (zoneParser.parseOnly(zone._1)) shouldBe Done("", zone._2)
-    }
+    zones.foreach(zone => (zoneParser.parseOnly(zone._1)) shouldBe Done("", zone._2))
   }
   it should "parse a complete file" in {
     val text = scala.io.Source

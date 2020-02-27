@@ -58,9 +58,7 @@ object TZDB {
   }
 
   object At {
-    implicit val order: Order[At] = Order.from { (a, b) =>
-      a.time.compareTo(b.time)
-    }
+    implicit val order: Order[At] = Order.from((a, b) => a.time.compareTo(b.time))
   }
 
   /**

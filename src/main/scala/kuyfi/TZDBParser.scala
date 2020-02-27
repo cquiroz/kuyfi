@@ -289,7 +289,7 @@ object TZDBParser {
         val files = x.list
         files
           .filter(_.name === "version")
-          .map { _.contentAsString }
+          .map(_.contentAsString)
           .map(TzdbVersion.apply)
           .toList
           .headOption
