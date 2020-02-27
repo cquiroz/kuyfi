@@ -1,4 +1,4 @@
-addSbtPlugin("com.47deg" % "sbt-microsites" % "0.9.7")
+addSbtPlugin("com.47deg" % "sbt-microsites" % "1.1.2")
 
 addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.11")
 
