@@ -34,13 +34,13 @@ lazy val kuyfi: Project = project
     Test / run / fork := true,
     libraryDependencies ++= Seq(
       "org.tpolecat" %% "atto-core" % "0.7.2",
-      "org.typelevel" %% "cats-core" % "2.1.0",
+      "org.typelevel" %% "cats-core" % "2.1.1",
       "org.typelevel" %% "cats-effect" % "2.1.1",
       "org.typelevel" %% "mouse" % "0.24",
       "com.chuusai" %% "shapeless" % "2.3.3",
       "com.github.pathikrit" %% "better-files" % "3.8.0",
       "com.eed3si9n" %% "treehugger" % "0.4.4",
-      "org.scalatest" %% "scalatest" % "3.1.0" % "test"
+      "org.scalatest" %% "scalatest" % "3.1.1" % "test"
     ),
     scalacOptions ~= (_.filterNot(
       Set(
