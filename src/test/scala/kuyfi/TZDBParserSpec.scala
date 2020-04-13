@@ -2,13 +2,14 @@ package kuyfi
 
 import java.time.{ DayOfWeek, LocalTime, Month }
 
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.flatspec.AnyFlatSpec
 import atto._
 import Atto._
+import atto.ParseResult.{ Done, Fail }
+import java.io.File
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import TZDB._
 import TZDBParser._
-import atto.ParseResult.{ Done, Fail }
 
 class TZDBParserSpec extends AnyFlatSpec with Matchers {
   "TZDBParser from field" should
@@ -1160,9 +1161,8 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
     }
   }
   it should "parse a whole dir" in {
-    import better.files._
 
-    val r    = file"src/test/resources/"
+    val r    = new File("src/test/resources/")
     val rows = TZDBParser.parseAll(r).unsafeRunSync()
     // Check a few well-known items
     rows.flatMap(_.select[Link]) should contain(Link("America/Port_of_Spain", "America/Anguilla"))

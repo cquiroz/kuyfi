@@ -1,16 +1,14 @@
 package kuyfi
 
+import cats.Order
 import java.time._
 import java.time.chrono.IsoChronology
-import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 import java.time.temporal.TemporalAdjusters
+import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 import java.time.zone.{ ZoneOffsetTransition, ZoneOffsetTransitionRule, ZoneRules }
-
+import mouse.all._
 import shapeless._
 import shapeless.ops.coproduct.Inject
-
-import cats.Order
-import mouse.all._
 
 /**
   * Model of the TimeZone Database

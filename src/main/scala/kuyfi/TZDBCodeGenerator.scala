@@ -1,15 +1,17 @@
 package kuyfi
 
-import shapeless._
-
 import cats.effect._
-import TZDB._
-import treehugger.forest._
-import definitions._
-import treehuggerDSL._
-import java.time.{ DayOfWeek, LocalDate, LocalDateTime, LocalTime, Month, ZoneOffset }
+import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.time.zone.ZoneOffsetTransitionRule
 import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
+import java.time.{ DayOfWeek, LocalDate, LocalDateTime, LocalTime, Month, ZoneOffset }
+import shapeless._
+import treehugger.forest._
+import treehugger.forest.definitions._
+import treehuggerDSL._
+import TZDB._
 
 object TZDBCodeGenerator {
   val groupingSize = 3
@@ -437,8 +439,8 @@ object TZDBCodeGenerator {
   }
 
   def exportAll(
-    dir:            java.io.File,
-    to:             java.io.File,
+    dir:            File,
+    to:             File,
     importsPackage: String,
     zoneFilter:     String => Boolean
   )(
@@ -447,14 +449,12 @@ object TZDBCodeGenerator {
     genFixedList:        TreeGenerator[List[(Zone, FixedZoneRulesParams)]],
     genStdList:          TreeGenerator[List[(Zone, StandardRulesParams)]],
     genLinks:            TreeGenerator[List[Link]]
-  ): IO[better.files.File] = {
-    import better.files._
+  ): IO[File] =
     for {
-      ver  <- TZDBParser.parseVersion(File(dir.toURI))
-      rows <- TZDBParser.parseAll(File(dir.toURI))
+      ver  <- TZDBParser.parseVersion(dir)
+      rows <- TZDBParser.parseAll(dir)
       tree <- IO(exportTzdb(ver.getOrElse(DefaultTzdbVersion), importsPackage, rows, zoneFilter))
-      _    <- IO(File(to.toURI).write(treeToString(tree)))
-    } yield File(to.toURI)
-  }
+      _    <- IO(Files.write(to.toPath, treeToString(tree).getBytes(StandardCharsets.UTF_8)))
+    } yield to
 
 }

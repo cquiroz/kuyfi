@@ -1,17 +1,19 @@
 package kuyfi
 
-import java.time.{ DayOfWeek, LocalTime, Month }
-import java.time.format.TextStyle
-import java.util.Locale
-
-import atto.ParseResult.{ Done, Fail }
-import TZDB._
-import cats._
-import cats.implicits._
-import cats.effect._
-import mouse.boolean._
 import atto._, Atto.{ char => chr, _ }
-import better.files._
+import atto.ParseResult.{ Done, Fail }
+import cats._
+import cats.effect._
+import cats.implicits._
+import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.time.format.TextStyle
+import java.time.{ DayOfWeek, LocalTime, Month }
+import java.util.Locale
+import mouse.boolean._
+import scala.jdk.CollectionConverters._
+import TZDB._
 
 /**
   * Defines atto parsers to read tzdb files
@@ -284,12 +286,16 @@ object TZDBParser {
     */
   def parseVersion(dir: File): IO[Option[TzdbVersion]] = IO {
     dir match {
-      case x if x.isSymbolicLink => None
       case x if x.isDirectory =>
         val files = x.list
         files
-          .filter(_.name === "version")
-          .map(_.contentAsString)
+          .filter(_ === "version")
+          .map(f =>
+            Files
+              .readAllLines(new File(dir, f).toPath, StandardCharsets.UTF_8)
+              .asScala
+              .mkString("\n")
+          )
           .map(TzdbVersion.apply)
           .toList
           .headOption
@@ -302,11 +308,18 @@ object TZDBParser {
     */
   def parseAll(dir: File): IO[List[Row]] = IO {
     dir match {
-      case x if x.isSymbolicLink => Nil
       case x if x.isDirectory =>
         val files = x.list
         val parsed =
-          files.filter(f => tzdbFiles.contains(f.name)).map(f => parseFile(f.contentAsString))
+          files
+            .filter(f => tzdbFiles.contains(f))
+            .map(f =>
+              Files
+                .readAllLines(new File(dir, f).toPath, StandardCharsets.UTF_8)
+                .asScala
+                .mkString("\n")
+            )
+            .map(parseFile)
         val rows = parsed.toList.combineAll match {
           case Done(_, v) => v
           case _          => Nil

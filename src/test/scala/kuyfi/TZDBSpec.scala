@@ -3,8 +3,8 @@ package kuyfi
 import cats.implicits._
 import java.time.{ DayOfWeek, LocalDateTime, LocalTime, Month }
 import kuyfi.TZDB._
-import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 class TZDBSpec extends AnyFlatSpec with Matchers {
   "Year ordering" should

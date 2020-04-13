@@ -38,9 +38,9 @@ lazy val kuyfi: Project = project
       "org.typelevel" %% "cats-effect" % "2.1.2",
       "org.typelevel" %% "mouse" % "0.24",
       "com.chuusai" %% "shapeless" % "2.3.3",
-      "com.github.pathikrit" %% "better-files" % "3.8.0",
       "com.eed3si9n" %% "treehugger" % "0.4.4",
-      "org.scalatest" %% "scalatest" % "3.1.1" % "test"
+      "org.scalatest" %% "scalatest" % "3.1.1" % "test",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.4"
     ),
     scalacOptions ~= (_.filterNot(
       Set(

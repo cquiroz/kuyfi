@@ -1,19 +1,18 @@
 package kuyfi
 
-import org.scalatest.Assertion
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.flatspec.AnyFlatSpec
+import java.io.File
 import java.time.zone.{ ZoneRules, ZoneRulesProvider }
-
 import kuyfi.TZDB.Zone
+import org.scalatest.Assertion
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 class ZoneRulesBuilderSpec extends AnyFlatSpec with Matchers {
-  import better.files._
 
   // NOTE These tests are fragile as they depend on the timezone db of the JVM
   // These tests are for 2019c matching the JVM on travis JDK 1.8 b 242
 
-  val r = file"src/test/resources/"
+  val r = new File("src/test/resources/")
   private lazy val rules =
     TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionsWithLinks).unsafeRunSync()
 
