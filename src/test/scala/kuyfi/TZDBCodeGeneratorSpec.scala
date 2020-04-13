@@ -1,12 +1,11 @@
 package kuyfi
 
-import java.time.{ DayOfWeek, LocalDateTime, LocalTime, Month, ZoneOffset }
 import java.time.zone.ZoneOffsetTransitionRule
 import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
-
+import java.time.{ DayOfWeek, LocalDateTime, LocalTime, Month, ZoneOffset }
 import kuyfi.TZDB._
-import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 class TZDBCodeGeneratorSpec extends AnyFlatSpec with Matchers {
   import TZDBCodeGenerator.PureTreeGenerator._

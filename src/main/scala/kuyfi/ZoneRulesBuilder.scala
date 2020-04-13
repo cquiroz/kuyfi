@@ -1,14 +1,12 @@
 package kuyfi
 
 import java.time._
-import java.time.zone.{ ZoneOffsetTransitionRule, ZoneRules }
 import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
-
-import kuyfi.TZDB._
+import java.time.zone.{ ZoneOffsetTransitionRule, ZoneRules }
 import kuyfi.TimeZoneWindow._
-import shapeless.Poly1
-
+import kuyfi.TZDB._
 import scala.annotation.tailrec
+import shapeless.Poly1
 
 object ZoneRulesBuilder {
 
