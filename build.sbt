@@ -40,7 +40,7 @@ lazy val kuyfi: Project = project
       "com.chuusai" %% "shapeless" % "2.3.3",
       "com.eed3si9n" %% "treehugger" % "0.4.4",
       "org.scalatest" %% "scalatest" % "3.1.1" % "test",
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.4"
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.5"
     ),
     scalacOptions ~= (_.filterNot(
       Set(
