@@ -111,10 +111,10 @@ object TZDBCodeGenerator {
           case (z, f) =>
             TUPLE(
               List(LIT(z.name),
-                   zoneRulesSym.DOT("of")(zoneOffsetSym.DOT("ofTotalSeconds")(
-                     LIT(f.baseStandardOffset.getTotalSeconds
+                   zoneRulesSym.DOT("of")(
+                     zoneOffsetSym.DOT("ofTotalSeconds")(LIT(f.baseStandardOffset.getTotalSeconds))
                    ))
-            )))
+            )
         })
       )
 
