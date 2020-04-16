@@ -166,6 +166,7 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
     treeToString(
       exportTzdb(TzdbVersion("2018a"),
                  "org.threeten.bp",
+                 "org.threeten.bp",
                  link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
                  _ => true)
     ) should include("import scala.scalajs.js")
@@ -173,6 +174,7 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
   it should "include the version" in {
     treeToString(
       exportTzdb(TzdbVersion("2018a"),
+                 "org.threeten.bp",
                  "org.threeten.bp",
                  link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
                  _ => true)
@@ -208,6 +210,7 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
     treeToString(TreeGenerator[ZoneRulesParams].generateTree(params)).trim shouldBe s"""js.Dynamic.literal(("s", 3600), ("w", 0), ("t", scala.scalajs.js.Array[scala.scalajs.js.Array[Int]](scala.scalajs.js.Array[Int](2017032, 36900, 3600, 7200))), ("l", scala.scalajs.js.Array[scala.scalajs.js.Array[Int]](scala.scalajs.js.Array[Int](2005307, 0, 0, 7200))), ("r", scala.scalajs.js.Array[scala.scalajs.js.Array[Int]](scala.scalajs.js.Array[Int](1, 3, 1, 43200, 0, 0, 0, 3600, 7200))))"""
     treeToString(
       exportTzdb(TzdbVersion("2018a"),
+                 "org.threeten.bp",
                  "org.threeten.bp",
                  link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
                  _ => true)

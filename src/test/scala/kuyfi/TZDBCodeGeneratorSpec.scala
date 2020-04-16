@@ -169,9 +169,10 @@ class TZDBCodeGeneratorSpec extends AnyFlatSpec with Matchers {
     treeToString(
       exportTzdb(TzdbVersion("2018e"),
                  "org.threeten.bp",
+                 "org.threeten.bp",
                  link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
                  _ => true)
-    ) should include("import scala.scalajs.js")
+    ) should include("import org.threeten.bp.zone._")
   }
   it should "generate from zone rules param" in {
     val standardTransitions = List(
@@ -209,11 +210,13 @@ class TZDBCodeGeneratorSpec extends AnyFlatSpec with Matchers {
       |  ZoneRules.of(bso, bwo, standardTransitions asJava, transitionList asJava, lastRules asJava)
       |}""".stripMargin
 
-    treeToString(
+    val r = treeToString(
       exportTzdb(TzdbVersion("2018e"),
-                 "org.threeten.bp",
+                 "java.time",
+                 "java.time",
                  link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
                  _ => true)
-    ) should include("import scala.scalajs.js")
+    )
+    r should include("import java.time.zone._")
   }
 }

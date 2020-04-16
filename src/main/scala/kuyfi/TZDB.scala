@@ -365,6 +365,8 @@ object TZDB {
   final case class TzdbVersion(ver: String)
   val DefaultTzdbVersion: TzdbVersion = TzdbVersion("Unknown")
 
+  final case class Imports(imports: String)
+
   /**
     * Coproduct for the content of lines on the parsed files
     */
