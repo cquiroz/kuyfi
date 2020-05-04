@@ -33,12 +33,12 @@ object ZoneRulesBuilder {
             val zoneRules: Option[ZoneRulesParams] = windows.headOption.map { firstWindow =>
               val loopSavings        = firstWindow.fixedSavingAmountSeconds.getOrElse(0)
               val loopStandardOffset = firstWindow.standardOffset.toZoneOffset
-              val firstWallOffset =
+              val firstWallOffset    =
                 ZoneOffset.ofTotalSeconds(loopStandardOffset.getTotalSeconds + loopSavings)
-              val loopWindowStart  = LocalDateTime.of(Year.MIN_VALUE, 1, 1, 0, 0)
-              val loopWindowOffset = firstWallOffset
+              val loopWindowStart    = LocalDateTime.of(Year.MIN_VALUE, 1, 1, 0, 0)
+              val loopWindowOffset   = firstWallOffset
 
-              val start = TransitionsAccumulator(
+              val start       = TransitionsAccumulator(
                 loopWindowStart,
                 loopWindowOffset,
                 loopStandardOffset,
@@ -54,31 +54,33 @@ object ZoneRulesBuilder {
                                              ls,
                                              standardTransitions,
                                              transitionList,
-                                             transitionRules),
-                      timeZoneWindow) =>
+                                             transitionRules
+                      ),
+                      timeZoneWindow
+                    ) =>
                   val tzw = timeZoneWindow.tidy(lws.getYear)
 
-                  val effectiveSavings = tzw.fixedSavingAmountSeconds.getOrElse {
+                  val effectiveSavings                = tzw.fixedSavingAmountSeconds.getOrElse {
                     tzw match {
                       case RulesTimeZoneWindow(_, _, _, _, windowRules) =>
                         @tailrec
-                        def go(savings: Int, rule: List[Rule]): Int = rule match {
-                          case h :: rest =>
-                            val trans = h.toTransitionParams(lso, ls)
-                            if (trans.toEpochSecond > lws.toEpochSecond(lwo)) {
-                              savings
-                            } else {
-                              go(h.save.seconds, rest)
-                            }
-                          case Nil => 0
-                        }
+                        def go(savings: Int, rule: List[Rule]): Int =
+                          rule match {
+                            case h :: rest =>
+                              val trans = h.toTransitionParams(lso, ls)
+                              if (trans.toEpochSecond > lws.toEpochSecond(lwo))
+                                savings
+                              else
+                                go(h.save.seconds, rest)
+                            case Nil       => 0
+                          }
 
                         go(0, windowRules.ruleList)
-                      case _ => 0
+                      case _                                            => 0
                     }
                   }
-                  val (newStdTransitions, newLso) =
-                    if (lso != tzw.standardOffset.toZoneOffset) {
+                  val (newStdTransitions, newLso)     =
+                    if (lso != tzw.standardOffset.toZoneOffset)
                       (List(
                          ZoneOffsetTransitionParams(
                            LocalDateTime.ofEpochSecond(lws.toEpochSecond(lwo), 0, lso),
@@ -86,33 +88,36 @@ object ZoneRulesBuilder {
                            tzw.standardOffset.toZoneOffset
                          )
                        ),
-                       tzw.standardOffset.toZoneOffset)
-                    } else {
+                       tzw.standardOffset.toZoneOffset
+                      )
+                    else
                       (Nil, lso)
-                    }
                   val effectiveWallOffset: ZoneOffset =
                     ZoneOffset.ofTotalSeconds(newLso.getTotalSeconds + effectiveSavings)
-                  val newTransitions = if (lwo != effectiveWallOffset) {
-                    List(ZoneOffsetTransitionParams(lws, lwo, effectiveWallOffset))
-                  } else {
-                    Nil
-                  }
-                  val (newLs, moreTransitions) = tzw match {
+                  val newTransitions                  =
+                    if (lwo != effectiveWallOffset)
+                      List(ZoneOffsetTransitionParams(lws, lwo, effectiveWallOffset))
+                    else
+                      Nil
+                  val (newLs, moreTransitions)        = tzw match {
                     case RulesTimeZoneWindow(_, _, _, _, windowRules) =>
                       windowRules.ruleList.foldLeft((effectiveSavings, newTransitions)) {
                         case ((savings, transitions), r) =>
                           val transition = r.toTransitionParams(newLso, savings)
 
-                          if ((transition.toEpochSecond >= lws.toEpochSecond(lwo)) && (transition.toEpochSecond < tzw
-                                .createDateTimeEpochSecond(
-                                  savings
-                                )) && (transition.offsetBefore != transition.offsetAfter)) {
+                          if (
+                            (transition.toEpochSecond >= lws.toEpochSecond(
+                              lwo
+                            )) && (transition.toEpochSecond < tzw
+                              .createDateTimeEpochSecond(
+                                savings
+                              )) && (transition.offsetBefore != transition.offsetAfter)
+                          )
                             (r.save.seconds, transitions :+ transition.toZoneOffsetTransition)
-                          } else {
+                          else
                             (savings, transitions)
-                          }
                       }
-                    case _ =>
+                    case _                                            =>
                       (effectiveSavings, newTransitions)
                   }
 
@@ -125,15 +130,16 @@ object ZoneRulesBuilder {
                           val transitionRule = r.toTransitionRule(newLso, savings)
                           (r.save.seconds, tr :+ transitionRule._1)
                       }
-                    case _ =>
+                    case _                                           =>
                       (newLs, Nil)
                   }
 
                   val newLoopWindowOffset = tzw.createWallOffset(finalLs)
-                  val newLoopWindowStart =
+                  val newLoopWindowStart  =
                     LocalDateTime.ofEpochSecond(tzw.createDateTimeEpochSecond(finalLs),
                                                 0,
-                                                newLoopWindowOffset)
+                                                newLoopWindowOffset
+                    )
                   TransitionsAccumulator(
                     newLoopWindowStart,
                     newLoopWindowOffset,
@@ -144,19 +150,20 @@ object ZoneRulesBuilder {
                     transitionRules ::: finalRules
                   )
               }
-              if (zone.transitions.length == 1) {
+              if (zone.transitions.length == 1)
                 FixedZoneRulesParams(firstWindow.standardOffset.toZoneOffset,
                                      firstWallOffset,
                                      accumulator.standardTransitions,
                                      accumulator.transitionsList,
-                                     accumulator.transitionRules)
-              } else {
+                                     accumulator.transitionRules
+                )
+              else
                 StandardRulesParams(firstWindow.standardOffset.toZoneOffset,
                                     firstWallOffset,
                                     accumulator.standardTransitions,
                                     accumulator.transitionsList,
-                                    accumulator.transitionRules)
-              }
+                                    accumulator.transitionRules
+                )
             }
             zone -> zoneRules
         }
@@ -175,29 +182,31 @@ object ZoneRulesBuilder {
     implicit val caseItem2: Case.Aux[BlankLine, U] = at[BlankLine](_ => identity)
     implicit val caseItem3: Case.Aux[Link, U]      = at[Link](_ => identity)
     implicit val caseItem4: Case.Aux[Rule, U]      = at[Rule](_ => identity)
-    implicit val caseItem5: Case.Aux[Zone, U] = at[Zone] { zone => (c: WindowsCollector) =>
+    implicit val caseItem5: Case.Aux[Zone, U]      = at[Zone] { zone => (c: WindowsCollector) =>
       val newWindows = zone.transitions.foldLeft(List.empty[TimeZoneWindow]) {
         (windows, transition) =>
           def windowForever(offset: GmtOffset): TimeZoneWindow =
             FixedTimeZoneWindow(offset,
                                 LocalDateTime.MAX,
                                 TimeDefinition.WALL,
-                                transition.ruleId.fixedOffset)
+                                transition.ruleId.fixedOffset
+            )
 
           def windowWithFixedOffset(offset: GmtOffset)(until: Until): TimeZoneWindow =
             FixedTimeZoneWindow(offset,
                                 until.toDateTime,
                                 until.at.map(_.timeDefinition).getOrElse(TimeDefinition.WALL),
-                                transition.ruleId.fixedOffset)
+                                transition.ruleId.fixedOffset
+            )
 
           val w: TimeZoneWindow = transition.ruleId match {
-            case NullRule =>
+            case NullRule            =>
               transition.until.fold(windowForever(transition.offset))(
                 windowWithFixedOffset(transition.offset)
               )
             case FixedOffset(offset) =>
               transition.until.fold(windowForever(offset))(windowWithFixedOffset(transition.offset))
-            case RuleId(ruleId) =>
+            case RuleId(ruleId)      =>
               val rules: List[Rule] = c.rules.getOrElse(ruleId, Nil)
               val adjustedRules     = rules.map(_.adjustForwards)
               transition.until.fold(
@@ -205,13 +214,15 @@ object ZoneRulesBuilder {
                                     LocalDateTime.MAX,
                                     TimeDefinition.WALL,
                                     transition.ruleId.fixedOffset,
-                                    adjustedRules)
+                                    adjustedRules
+                )
               ) { until =>
                 RulesTimeZoneWindow(transition.offset,
                                     until.toDateTime,
                                     until.at.map(_.timeDefinition).getOrElse(TimeDefinition.WALL),
                                     transition.ruleId.fixedOffset,
-                                    adjustedRules)
+                                    adjustedRules
+                )
               }
           }
 
@@ -238,7 +249,7 @@ object ZoneRulesBuilder {
     * Calculates all the zone rules for the rows
     */
   def calculateTransitionParams(rows: List[Row]): Map[Zone, ZoneRulesParams] = {
-    val rulesByName: RulesById = rows.flatMap(_.fold(collectRules).apply(Nil)).groupBy(_.name)
+    val rulesByName: RulesById                 = rows.flatMap(_.fold(collectRules).apply(Nil)).groupBy(_.name)
     val collectedRules: List[WindowsCollector] =
       rows.map(_.fold(toWindows).apply(WindowsCollector(rulesByName, Map.empty)))
     collectedRules.filter(_.zoneWindows.nonEmpty).flatMap(_.toRules).toMap
@@ -258,18 +269,19 @@ object ZoneRulesBuilder {
     val rules = calculateTransitions(rows).map(x => (x._1.name, x._2))
     val links = rows.flatMap(_.select[Link])
 
-    def go(toResolve: List[Link]): Map[String, ZoneRules] = toResolve match {
-      case Nil => Map.empty
-      case r =>
-        val (in, out) = r.partition(l => rules.exists(x => x._1 == l.from))
-        val found     = in.flatMap(link => rules.get(link.from).map(u => link.to -> u))
+    def go(toResolve: List[Link]): Map[String, ZoneRules] =
+      toResolve match {
+        case Nil => Map.empty
+        case r   =>
+          val (in, out) = r.partition(l => rules.exists(x => x._1 == l.from))
+          val found     = in.flatMap(link => rules.get(link.from).map(u => link.to -> u))
 
-        val rel = out.flatMap { link =>
-          val recursive = links.find(x => x.to == link.from)
-          recursive.map(l => link.copy(from = l.from))
-        }
-        found.toMap ++ go(rel)
-    }
+          val rel = out.flatMap { link =>
+            val recursive = links.find(x => x.to == link.from)
+            recursive.map(l => link.copy(from = l.from))
+          }
+          found.toMap ++ go(rel)
+      }
     rules ++ go(links)
   }
 }
