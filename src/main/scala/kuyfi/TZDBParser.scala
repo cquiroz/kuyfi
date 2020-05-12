@@ -31,8 +31,8 @@ object TZDBParser {
     }
 
   implicit class Parser2Coproduct[A](val a: Parser[A]) extends AnyVal {
-    def liftC[C <: shapeless.Coproduct](
-      implicit inj: shapeless.ops.coproduct.Inject[C, A]
+    def liftC[C <: shapeless.Coproduct](implicit
+      inj: shapeless.ops.coproduct.Inject[C, A]
     ): Parser[C] = a.map(_.liftC[C])
   }
 
@@ -45,7 +45,7 @@ object TZDBParser {
   private val whitespace: Parser[Char]          = tab | space
   private val linkSeparator: Parser[List[Char]] = many(whitespace)
 
-  private val months: List[(String, Month)] =
+  private val months: List[(String, Month)]   =
     Month.values().map(m => (m.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), m)).toList
   private val days: List[(String, DayOfWeek)] =
     DayOfWeek.values().map(m => (m.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), m)).toList
@@ -165,13 +165,13 @@ object TZDBParser {
       hourMinParserOf |
       int.map(h => GmtOffset(h, 0, 0))
 
-  val atParser: Parser[At] =
-    (timeParser ~ chr('w')).map { case ((r, e, t), _)       => AtWallTime(t, e, r): At } |
-      (timeParser ~ chr('s')).map { case ((r, e, t), _)     => AtStandardTime(t, e, r): At } |
+  val atParser: Parser[At]      =
+    (timeParser ~ chr('w')).map { case ((r, e, t), _) => AtWallTime(t, e, r): At } |
+      (timeParser ~ chr('s')).map { case ((r, e, t), _) => AtStandardTime(t, e, r): At } |
       (timeParser ~ oneOf("zgu")).map { case ((r, e, t), _) => AtUniversalTime(t, e, r): At } |
-      (opt(whitespace) ~> timeParser).map { case (r, e, t)  => AtWallTime(t, e, r): At }
+      (opt(whitespace) ~> timeParser).map { case (r, e, t) => AtWallTime(t, e, r): At }
 
-  val saveParser: Parser[Save] =
+  val saveParser: Parser[Save]  =
     (opt(chr('-')) ~ timeParser).map { case (s, (_, _, l)) => Save(s.isEmpty, l) }
 
   val toEndLine: Parser[String] = takeWhile(_ =!= '\n') <~ opt(nl)
@@ -243,7 +243,7 @@ object TZDBParser {
   val zoneTransitionListParser: Parser[List[ZoneTransition]] =
     (zoneTransitionParser ~ many(continuationZoneTransitionParser)).map { case (a, b) => a :: b }
 
-  val zoneParser: Parser[Zone] =
+  val zoneParser: Parser[Zone]                               =
     for {
       _     <- string("Zone") <~ whitespace
       name  <- identifier <~ whitespace
@@ -259,9 +259,9 @@ object TZDBParser {
   val fileParser: Parser[List[Row]] =
     for {
       c <- many(
-        commentParser.liftC[Row] | ruleParser.liftC[Row] | zoneParserNl.liftC[Row] | linkParser
-          .liftC[Row] | blankLine.liftC[Row]
-      )
+             commentParser.liftC[Row] | ruleParser.liftC[Row] | zoneParserNl.liftC[Row] | linkParser
+               .liftC[Row] | blankLine.liftC[Row]
+           )
     } yield c
 
   def parseFile(text: String): ParseResult[List[Row]] =
@@ -284,48 +284,50 @@ object TZDBParser {
   /**
     * Parse the version
     */
-  def parseVersion(dir: File): IO[Option[TzdbVersion]] = IO {
-    dir match {
-      case x if x.isDirectory =>
-        val files = x.list
-        files
-          .filter(_ === "version")
-          .map(f =>
-            Files
-              .readAllLines(new File(dir, f).toPath, StandardCharsets.UTF_8)
-              .asScala
-              .mkString("\n")
-          )
-          .map(TzdbVersion.apply)
-          .toList
-          .headOption
-      case _ => None
-    }
-  }
-
-  /**
-    * Entry point. Takes a dir with the TZDB files and parses them into Rows
-    */
-  def parseAll(dir: File): IO[List[Row]] = IO {
-    dir match {
-      case x if x.isDirectory =>
-        val files = x.list
-        val parsed =
+  def parseVersion(dir: File): IO[Option[TzdbVersion]] =
+    IO {
+      dir match {
+        case x if x.isDirectory =>
+          val files = x.list
           files
-            .filter(f => tzdbFiles.contains(f))
+            .filter(_ === "version")
             .map(f =>
               Files
                 .readAllLines(new File(dir, f).toPath, StandardCharsets.UTF_8)
                 .asScala
                 .mkString("\n")
             )
-            .map(parseFile)
-        val rows = parsed.toList.combineAll match {
-          case Done(_, v) => v
-          case _          => Nil
-        }
-        rows
-      case _ => Nil
+            .map(TzdbVersion.apply)
+            .toList
+            .headOption
+        case _                  => None
+      }
     }
-  }
+
+  /**
+    * Entry point. Takes a dir with the TZDB files and parses them into Rows
+    */
+  def parseAll(dir:     File): IO[List[Row]]           =
+    IO {
+      dir match {
+        case x if x.isDirectory =>
+          val files  = x.list
+          val parsed =
+            files
+              .filter(f => tzdbFiles.contains(f))
+              .map(f =>
+                Files
+                  .readAllLines(new File(dir, f).toPath, StandardCharsets.UTF_8)
+                  .asScala
+                  .mkString("\n")
+              )
+              .map(parseFile)
+          val rows   = parsed.toList.combineAll match {
+            case Done(_, v) => v
+            case _          => Nil
+          }
+          rows
+        case _                  => Nil
+      }
+    }
 }

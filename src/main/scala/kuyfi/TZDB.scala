@@ -34,7 +34,8 @@ object TZDB {
     def apply(time: LocalTime): At =
       AtWallTime(time,
                  time.getHour == 24 && time.getMinute == 0 && time.getSecond == 0,
-                 rollOver = 0)
+                 rollOver = 0
+      )
   }
 
   final case class AtStandardTime(time: LocalTime, endOfDay: Boolean, rollOver: Int) extends At {
@@ -138,14 +139,14 @@ object TZDB {
       (dayOfMonthIndicator, dayOfWeek) match {
         case (None, Some(dw)) =>
           LocalDate.of(y, month, lastDay).`with`(TemporalAdjusters.lastInMonth(dw))
-        case (None, None) => LocalDate.of(y, month, lastDay)
-        case (Some(_), _) => LocalDate.of(y, month, dayOnYear(y, month))
+        case (None, None)     => LocalDate.of(y, month, lastDay)
+        case (Some(_), _)     => LocalDate.of(y, month, dayOnYear(y, month))
       }
     }
-    def adjustRoll(hrs: Int): On =
+    def adjustRoll(hrs:      Int): On =
       this match {
         case d: DayOfTheMonth => DayOfTheMonth(d.i + (1 + (hrs / 24)))
-        case d: LastWeekday   => LastWeekday(d.d.plus(((1 + (hrs / 24))).toLong))
+        case d: LastWeekday   => LastWeekday(d.d.plus((1 + (hrs / 24)).toLong))
         case d: AfterWeekday  => d.copy(day = d.day + (1 + (hrs / 24)))
         case d: BeforeWeekday => d.copy(day = d.day + (1 + (hrs / 24)))
       }
@@ -180,9 +181,9 @@ object TZDB {
 
   sealed trait RuleYear extends Product with Serializable
   final case class GivenYear(year: Int) extends RuleYear
-  case object Minimum extends RuleYear
-  case object Maximum extends RuleYear
-  case object Only extends RuleYear
+  case object Minimum   extends RuleYear
+  case object Maximum   extends RuleYear
+  case object Only      extends RuleYear
 
   object RuleYear {
     implicit val order: Order[RuleYear] = Order.from { (a, b) =>
@@ -207,7 +208,7 @@ object TZDB {
     offsetBefore: ZoneOffset,
     offsetAfter:  ZoneOffset
   ) {
-    def toEpochSecond: Long = transition.toEpochSecond(offsetBefore)
+    def toEpochSecond: Long                                = transition.toEpochSecond(offsetBefore)
     def toZoneOffsetTransition: ZoneOffsetTransitionParams =
       ZoneOffsetTransitionParams(transition, offsetBefore, offsetAfter)
   }
@@ -235,29 +236,29 @@ object TZDB {
     val endYear: Int   = toInt(to, startYear)
 
     def adjustRoll: Rule =
-      if (at.rollOver > 0) {
+      if (at.rollOver > 0)
         copy(on = on.adjustRoll(at.rollOver))
-      } else {
+      else
         this
-      }
 
-    def adjustForwards: Rule = on match {
-      case BeforeWeekday(weekDay, dayOfMonth) =>
-        val adjustedDate = LocalDate.of(2004, this.month, dayOfMonth).minusDays(6)
-        val before       = BeforeWeekday(weekDay, adjustedDate.getDayOfMonth)
-        val month        = adjustedDate.getMonth
-        copy(month = month, on = before)
-      case _ => this
-    }
+    def adjustForwards: Rule =
+      on match {
+        case BeforeWeekday(weekDay, dayOfMonth) =>
+          val adjustedDate = LocalDate.of(2004, this.month, dayOfMonth).minusDays(6)
+          val before       = BeforeWeekday(weekDay, adjustedDate.getDayOfMonth)
+          val month        = adjustedDate.getMonth
+          copy(month = month, on = before)
+        case _                                  => this
+      }
 
     def toLocalDate: LocalDate = {
       val date = on match {
-        case LastWeekday(d) =>
+        case LastWeekday(d)              =>
           val monthLen: Int = month.length(IsoChronology.INSTANCE.isLeapYear(startYear.toLong))
           LocalDate.of(startYear, month, monthLen).`with`(TemporalAdjusters.previousOrSame(d))
-        case DayOfTheMonth(d) =>
+        case DayOfTheMonth(d)            =>
           LocalDate.of(startYear, month, d)
-        case AfterWeekday(dayOfWeek, d) =>
+        case AfterWeekday(dayOfWeek, d)  =>
           LocalDate.of(startYear, month, d).`with`(TemporalAdjusters.nextOrSame(dayOfWeek))
         case BeforeWeekday(dayOfWeek, d) =>
           LocalDate.of(startYear, month, d).`with`(TemporalAdjusters.nextOrSame(dayOfWeek))
@@ -287,7 +288,8 @@ object TZDB {
                                     at.timeDefinition,
                                     standardOffset,
                                     trans.offsetBefore,
-                                    trans.offsetAfter)
+                                    trans.offsetAfter
+        )
       }
 
       val dayOfMonth =
@@ -296,10 +298,10 @@ object TZDB {
         if (at.endOfDay && !(d == 28 && (month == Month.FEBRUARY))) {
           val date = LocalDate.of(2004, month, d).plusDays(1)
           (transitionRule(date.getDayOfMonth, on.dayOfWeek.map(_.plus(1)).orNull, endOfDay = false),
-           copy(on                                                                         = on.onDay(date.getDayOfMonth), month = date.getMonth, at = at.noEndOfDay))
-        } else {
+           copy(on = on.onDay(date.getDayOfMonth), month = date.getMonth, at = at.noEndOfDay)
+          )
+        } else
           (transitionRule(d, on.dayOfWeek.orNull, at.endOfDay), this)
-        }
       }
     }
 
@@ -314,7 +316,7 @@ object TZDB {
     * Comments and blank lines
     */
   final case class Comment(comment: String) extends Product with Serializable
-  final case class BlankLine(line:  String) extends Product with Serializable
+  final case class BlankLine(line: String) extends Product with Serializable
 
   final case class ZoneOffsetTransitionParams(
     transition:   LocalDateTime,
@@ -334,7 +336,7 @@ object TZDB {
     standardOffsetTransitionList: List[ZoneOffsetTransitionParams],
     transitionList:               List[ZoneOffsetTransitionParams],
     lastRules:                    List[ZoneOffsetTransitionRule]
-  ) extends ZoneRulesParams {
+  ) extends ZoneRulesParams  {
     def toZoneRules =
       ZoneRules.of(
         baseStandardOffset,

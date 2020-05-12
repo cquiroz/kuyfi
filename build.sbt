@@ -21,8 +21,8 @@ inThisBuild(
 
 val commonSettings: Seq[Setting[_]] = Seq(
   organization := "io.github.cquiroz",
-  scalaVersion := "2.13.1",
-  crossScalaVersions := Seq("2.12.10", "2.13.1"),
+  scalaVersion := "2.13.2",
+  crossScalaVersions := Seq("2.12.10", "2.13.2"),
   description := "TZDB parser"
 )
 
@@ -33,13 +33,13 @@ lazy val kuyfi: Project = project
     name := "kuyfi",
     Test / run / fork := true,
     libraryDependencies ++= Seq(
-      "org.tpolecat" %% "atto-core" % "0.7.2",
+      "org.tpolecat" %% "atto-core" % "0.8.0",
       "org.typelevel" %% "cats-core" % "2.1.1",
       "org.typelevel" %% "cats-effect" % "2.1.3",
       "org.typelevel" %% "mouse" % "0.25",
       "com.chuusai" %% "shapeless" % "2.3.3",
       "com.eed3si9n" %% "treehugger" % "0.4.4",
-      "org.scalatest" %% "scalatest" % "3.1.1" % "test",
+      "org.scalatest" %% "scalatest" % "3.1.2" % "test",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6"
     ),
     scalacOptions ~= (_.filterNot(

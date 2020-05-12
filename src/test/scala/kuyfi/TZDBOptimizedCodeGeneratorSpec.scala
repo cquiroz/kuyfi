@@ -16,7 +16,8 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
       ZoneTransition(GmtOffset(0, -23, -40),
                      NullRule,
                      "LMT",
-                     Some(Until(1880, Some(Month.AUGUST), Some(DayOfTheMonth(2)), None))),
+                     Some(Until(1880, Some(Month.AUGUST), Some(DayOfTheMonth(2)), None))
+      ),
       ZoneTransition(GmtOffset(0, -25, -21),
                      NullRule,
                      "DMT",
@@ -24,8 +25,10 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
                        Until(1916,
                              Some(Month.MAY),
                              Some(DayOfTheMonth(21)),
-                             Some(AtWallTime(LocalTime.of(2, 0))))
-                     )),
+                             Some(AtWallTime(LocalTime.of(2, 0)))
+                       )
+                     )
+      ),
       ZoneTransition(
         GmtOffset(0, -25, -21),
         FixedOffset(GmtOffset(1, 0, 0)),
@@ -34,13 +37,15 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
           Until(1916,
                 Some(Month.OCTOBER),
                 Some(DayOfTheMonth(1)),
-                Some(AtStandardTime(LocalTime.of(2, 0))))
+                Some(AtStandardTime(LocalTime.of(2, 0)))
+          )
         )
       ),
       ZoneTransition(GmtOffset(0, 0, 0),
                      RuleId("GB-Eire"),
                      "%s",
-                     Some(Until(1968, Some(Month.OCTOBER), Some(DayOfTheMonth(27)), None))),
+                     Some(Until(1968, Some(Month.OCTOBER), Some(DayOfTheMonth(27)), None))
+      ),
       ZoneTransition(GmtOffset(1, 0, 0),
                      NullRule,
                      "BST",
@@ -48,12 +53,15 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
                        Until(1971,
                              Some(Month.OCTOBER),
                              Some(DayOfTheMonth(31)),
-                             Some(AtUniversalTime(LocalTime.of(2, 0))))
-                     )),
+                             Some(AtUniversalTime(LocalTime.of(2, 0)))
+                       )
+                     )
+      ),
       ZoneTransition(GmtOffset(0, 0, 0),
                      RuleId("GB-Eire"),
                      "%s",
-                     Some(Until(1996, None, None, None))),
+                     Some(Until(1996, None, None, None))
+      ),
       ZoneTransition(GmtOffset(0, 0, 0), RuleId("EU"), "GMT/BST", None)
     )
   )
@@ -68,20 +76,24 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
       ZoneTransition(GmtOffset(1, 0, 0),
                      RuleId("Libya"),
                      "CE%sT",
-                     Some(Until(1959, None, None, None))),
+                     Some(Until(1959, None, None, None))
+      ),
       ZoneTransition(GmtOffset(2, 0, 0), NullRule, "EET", Some(Until(1982, None, None, None))),
       ZoneTransition(GmtOffset(1, 0, 0),
                      RuleId("Libya"),
                      "CE%sT",
-                     Some(Until(1990, Some(Month.MAY), Some(DayOfTheMonth(4)), None))),
+                     Some(Until(1990, Some(Month.MAY), Some(DayOfTheMonth(4)), None))
+      ),
       ZoneTransition(GmtOffset(2, 0, 0),
                      NullRule,
                      "EET",
-                     Some(Until(1996, Some(Month.SEPTEMBER), Some(DayOfTheMonth(30)), None))),
+                     Some(Until(1996, Some(Month.SEPTEMBER), Some(DayOfTheMonth(30)), None))
+      ),
       ZoneTransition(GmtOffset(1, 0, 0),
                      RuleId("Libya"),
                      "CE%sT",
-                     Some(Until(1997, Some(Month.OCTOBER), Some(DayOfTheMonth(4)), None))),
+                     Some(Until(1997, Some(Month.OCTOBER), Some(DayOfTheMonth(4)), None))
+      ),
       ZoneTransition(GmtOffset(2, 0, 0),
                      NullRule,
                      "EET",
@@ -89,8 +101,10 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
                        Until(2012,
                              Some(Month.NOVEMBER),
                              Some(DayOfTheMonth(10)),
-                             Some(AtWallTime(LocalTime.of(2, 0))))
-                     )),
+                             Some(AtWallTime(LocalTime.of(2, 0)))
+                       )
+                     )
+      ),
       ZoneTransition(GmtOffset(1, 0, 0),
                      RuleId("Libya"),
                      "CE%sT",
@@ -98,8 +112,10 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
                        Until(2013,
                              Some(Month.OCTOBER),
                              Some(DayOfTheMonth(25)),
-                             Some(AtWallTime(LocalTime.of(2, 0))))
-                     )),
+                             Some(AtWallTime(LocalTime.of(2, 0)))
+                       )
+                     )
+      ),
       ZoneTransition(GmtOffset(2, 0, 0), NullRule, "EET", None)
     )
   )
@@ -112,13 +128,19 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
 
   "TZDB Code generator" should
     "generate a name from a Zone" in {
-    treeToString(TreeGenerator[Zone].generateTree(zone1)) shouldBe "(\"Europe/Belfast\", rules.Europe_Belfast)"
+    treeToString(
+      TreeGenerator[Zone].generateTree(zone1)
+    ) shouldBe "(\"Europe/Belfast\", rules.Europe_Belfast)"
   }
   it should "generate a name from a Fixed offset Zone" in {
-    treeToString(TreeGenerator[Zone].generateTree(zoneFixed)) shouldBe "(\"Etc/GMT+1\", rules.Etc_GMT_plus_1)"
+    treeToString(
+      TreeGenerator[Zone].generateTree(zoneFixed)
+    ) shouldBe "(\"Etc/GMT+1\", rules.Etc_GMT_plus_1)"
   }
   it should "generate a tuple from a Link" in {
-    treeToString(TreeGenerator[Link].generateTree(link2)) shouldBe "(\"America/Aruba\", \"America/Curacao\")"
+    treeToString(
+      TreeGenerator[Link].generateTree(link2)
+    ) shouldBe "(\"America/Aruba\", \"America/Curacao\")"
   }
   it should "clean dangling links" in {
     val rows1 = link1.liftC[Row] :: link2.liftC[Row] :: Nil
@@ -137,15 +159,19 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
                                            TimeDefinition.UTC,
                                            ZoneOffset.ofHours(0),
                                            ZoneOffset.ofHours(1),
-                                           ZoneOffset.ofHours(2))
-    treeToString(TreeGenerator[ZoneOffsetTransitionRule].generateTree(rule)) shouldBe s"scala.scalajs.js.Array[Int](1, 3, 1, 43200, 0, 0, 0, 3600, 7200)"
+                                           ZoneOffset.ofHours(2)
+    )
+    treeToString(
+      TreeGenerator[ZoneOffsetTransitionRule].generateTree(rule)
+    ) shouldBe s"scala.scalajs.js.Array[Int](1, 3, 1, 43200, 0, 0, 0, 3600, 7200)"
   }
   it should "generate from zone offset transition" in {
     treeToString(
       TreeGenerator[ZoneOffsetTransitionParams].generateTree(
         ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15),
                                    ZoneOffset.ofHours(1),
-                                   ZoneOffset.ofHours(2))
+                                   ZoneOffset.ofHours(2)
+        )
       )
     ) shouldBe s"scala.scalajs.js.Array[Int](2017032, 36900, 3600, 7200)"
   }
@@ -160,7 +186,9 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
     ) shouldBe s"scala.scalajs.js.Array[Int](2017, 32, 36925)"
   }
   it should "generate from offset" in {
-    treeToString(TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))) shouldBe s"val zo_3723: Int = 3723"
+    treeToString(
+      TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))
+    ) shouldBe s"val zo_3723: Int = 3723"
   }
   it should "import a top level package" in {
     treeToString(
@@ -168,7 +196,8 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
                  "org.threeten.bp",
                  "org.threeten.bp",
                  link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
-                 _ => true)
+                 _ => true
+      )
     ) should include("import scala.scalajs.js")
   }
   it should "include the version" in {
@@ -177,21 +206,24 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
                  "org.threeten.bp",
                  "org.threeten.bp",
                  link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
-                 _ => true)
+                 _ => true
+      )
     ) should include("2018a")
   }
   it should "generate from zone rules param" in {
     val standardTransitions = List(
       ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15),
                                  ZoneOffset.ofHours(1),
-                                 ZoneOffset.ofHours(2))
+                                 ZoneOffset.ofHours(2)
+      )
     )
-    val transitions = List(
+    val transitions         = List(
       ZoneOffsetTransitionParams(LocalDateTime.of(2005, Month.NOVEMBER, 3, 0, 0),
                                  ZoneOffset.ofHours(0),
-                                 ZoneOffset.ofHours(2))
+                                 ZoneOffset.ofHours(2)
+      )
     )
-    val rule = List(
+    val rule                = List(
       ZoneOffsetTransitionRule.of(Month.JANUARY,
                                   3,
                                   DayOfWeek.MONDAY,
@@ -200,20 +232,25 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
                                   TimeDefinition.UTC,
                                   ZoneOffset.ofHours(0),
                                   ZoneOffset.ofHours(1),
-                                  ZoneOffset.ofHours(2))
+                                  ZoneOffset.ofHours(2)
+      )
     )
-    val params = StandardRulesParams(ZoneOffset.ofHours(1),
+    val params              = StandardRulesParams(ZoneOffset.ofHours(1),
                                      ZoneOffset.ofHours(0),
                                      standardTransitions,
                                      transitions,
-                                     rule)
-    treeToString(TreeGenerator[ZoneRulesParams].generateTree(params)).trim shouldBe s"""js.Dynamic.literal(("s", 3600), ("w", 0), ("t", scala.scalajs.js.Array[scala.scalajs.js.Array[Int]](scala.scalajs.js.Array[Int](2017032, 36900, 3600, 7200))), ("l", scala.scalajs.js.Array[scala.scalajs.js.Array[Int]](scala.scalajs.js.Array[Int](2005307, 0, 0, 7200))), ("r", scala.scalajs.js.Array[scala.scalajs.js.Array[Int]](scala.scalajs.js.Array[Int](1, 3, 1, 43200, 0, 0, 0, 3600, 7200))))"""
+                                     rule
+    )
+    treeToString(
+      TreeGenerator[ZoneRulesParams].generateTree(params)
+    ).trim shouldBe s"""js.Dynamic.literal(("s", 3600), ("w", 0), ("t", scala.scalajs.js.Array[scala.scalajs.js.Array[Int]](scala.scalajs.js.Array[Int](2017032, 36900, 3600, 7200))), ("l", scala.scalajs.js.Array[scala.scalajs.js.Array[Int]](scala.scalajs.js.Array[Int](2005307, 0, 0, 7200))), ("r", scala.scalajs.js.Array[scala.scalajs.js.Array[Int]](scala.scalajs.js.Array[Int](1, 3, 1, 43200, 0, 0, 0, 3600, 7200))))"""
     treeToString(
       exportTzdb(TzdbVersion("2018a"),
                  "org.threeten.bp",
                  "org.threeten.bp",
                  link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
-                 _ => true)
+                 _ => true
+      )
     ) should include("import scala.scalajs.js")
   }
 }

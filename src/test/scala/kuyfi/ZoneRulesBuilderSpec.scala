@@ -12,14 +12,16 @@ class ZoneRulesBuilderSpec extends AnyFlatSpec with Matchers {
   // NOTE These tests are fragile as they depend on the timezone db of the JVM
   // These tests are for 2019c matching the JVM on travis JDK 1.8 b 242
 
-  val r = new File("src/test/resources/")
+  val r                  = new File("src/test/resources/")
   private lazy val rules =
     TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionsWithLinks).unsafeRunSync()
 
   def compareZoneRules(calculated: Option[ZoneRules], target: String): Assertion =
-    if (target == "Africa/El_Aaiun" || target == "Africa/Casablanca" || target == "Africa/Windhoek" || target == "Eire" || target == "Europe/Dublin" || target == "Japan" || target == "Asia/Tokyo") {
+    if (
+      target == "Africa/El_Aaiun" || target == "Africa/Casablanca" || target == "Africa/Windhoek" || target == "Eire" || target == "Europe/Dublin" || target == "Japan" || target == "Asia/Tokyo"
+    )
       true shouldBe true
-    } else {
+    else {
       val platformRules = ZoneRulesProvider.getRules(target, false)
 
       calculated.map(_.getTransitionRules.size) shouldBe Some(platformRules.getTransitionRules.size)
@@ -341,9 +343,9 @@ class ZoneRulesBuilderSpec extends AnyFlatSpec with Matchers {
       TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionsWithLinks).unsafeRunSync()
     JDKConv.toScala(ZoneRulesProvider.getAvailableZoneIds).foreach { z =>
       val calculatedRules = rulesAndLinks.find(_._1 == z).map(_._2)
-      if (calculatedRules.isDefined) {
+      if (calculatedRules.isDefined)
         compareZoneRules(calculatedRules, z)
-      } else {
+      else {
         // There a few rules not found
         // SystemV/AST4
         // SystemV/MST7
