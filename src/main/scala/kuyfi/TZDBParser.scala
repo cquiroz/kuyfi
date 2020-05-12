@@ -307,7 +307,7 @@ object TZDBParser {
   /**
     * Entry point. Takes a dir with the TZDB files and parses them into Rows
     */
-  def parseAll(dir:     File): IO[List[Row]]           =
+  def parseAll(dir: File): IO[List[Row]] =
     IO {
       dir match {
         case x if x.isDirectory =>

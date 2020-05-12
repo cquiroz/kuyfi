@@ -46,7 +46,7 @@ object TZDBCodeGenerator {
       }
 
     // Globally visible type class instances
-    implicit def intInstance: TreeGenerator[Int] = instance(LIT.apply)
+    implicit def intInstance: TreeGenerator[Int]       = instance(LIT.apply)
     implicit def stringInstance: TreeGenerator[String] = instance(LIT.apply)
 
     // Encoders for products
@@ -468,7 +468,7 @@ object TZDBCodeGenerator {
       .toList
 
     // Split standard rules
-    val groupedRules: List[Tree]                    = standard
+    val groupedRules: List[Tree] = standard
       .groupBy(_._1.scalaGroup(groupingSize))
       .map {
         case (groupName, blockRules) =>

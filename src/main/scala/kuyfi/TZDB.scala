@@ -133,7 +133,7 @@ object TZDB {
     def dayOfMonthIndicator: Option[Int] = None
     def dayOnYear(y: Int, m: Month): Int
     def dayOfWeek: Option[DayOfWeek] = None
-    def onDay(d:             Int): On
+    def onDay(d:        Int): On
     def dateTimeInContext(y: Int, month: Month): LocalDate = {
       val lastDay = month.length(Year.isLeap(y.toLong))
       (dayOfMonthIndicator, dayOfWeek) match {
@@ -143,7 +143,7 @@ object TZDB {
         case (Some(_), _)     => LocalDate.of(y, month, dayOnYear(y, month))
       }
     }
-    def adjustRoll(hrs:      Int): On =
+    def adjustRoll(hrs: Int): On =
       this match {
         case d: DayOfTheMonth => DayOfTheMonth(d.i + (1 + (hrs / 24)))
         case d: LastWeekday   => LastWeekday(d.d.plus((1 + (hrs / 24)).toLong))
@@ -158,7 +158,7 @@ object TZDB {
   }
   final case class LastWeekday(d: DayOfWeek) extends On {
     override def dayOfWeek: Option[DayOfWeek] = Some(d)
-    override def onDay(d:     Int): On = this
+    override def onDay(d: Int): On = this
     override def dayOnYear(y: Int, m: Month): Int = {
       val lastDay = m.length(Year.isLeap(y.toLong))
       LocalDate.of(y, m, lastDay).`with`(TemporalAdjusters.previousOrSame(d)).getDayOfMonth
