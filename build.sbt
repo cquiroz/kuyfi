@@ -36,7 +36,7 @@ lazy val kuyfi: Project = project
       "org.tpolecat" %% "atto-core" % "0.8.0",
       "org.typelevel" %% "cats-core" % "2.1.1",
       "org.typelevel" %% "cats-effect" % "2.1.3",
-      "org.typelevel" %% "mouse" % "0.24",
+      "org.typelevel" %% "mouse" % "0.25",
       "com.chuusai" %% "shapeless" % "2.3.3",
       "com.eed3si9n" %% "treehugger" % "0.4.4",
       "org.scalatest" %% "scalatest" % "3.1.2" % "test",
