@@ -336,7 +336,7 @@ object TZDB {
     standardOffsetTransitionList: List[ZoneOffsetTransitionParams],
     transitionList:               List[ZoneOffsetTransitionParams],
     lastRules:                    List[ZoneOffsetTransitionRule]
-  ) extends ZoneRulesParams  {
+  ) extends ZoneRulesParams {
     def toZoneRules =
       ZoneRules.of(
         baseStandardOffset,
