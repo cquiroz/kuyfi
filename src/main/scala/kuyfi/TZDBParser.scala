@@ -4,7 +4,7 @@ import atto._, Atto.{ char => chr, _ }
 import atto.ParseResult.{ Done, Fail }
 import cats._
 import cats.effect._
-import cats.implicits._
+import cats.syntax.all._
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
