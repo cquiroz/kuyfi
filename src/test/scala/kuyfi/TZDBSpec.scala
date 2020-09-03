@@ -1,6 +1,6 @@
 package kuyfi
 
-import cats.implicits._
+import cats.syntax.all._
 import java.time.{ DayOfWeek, LocalDateTime, LocalTime, Month }
 import kuyfi.TZDB._
 import org.scalatest.flatspec.AnyFlatSpec
