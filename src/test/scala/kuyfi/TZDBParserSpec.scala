@@ -14,8 +14,8 @@ import TZDBParser._
 class TZDBParserSpec extends AnyFlatSpec with Matchers {
   "TZDBParser from field" should
     "parse from maximum" in {
-    (fromParser.parseOnly("maximum")) shouldBe Done("", Maximum)
-  }
+      (fromParser.parseOnly("maximum")) shouldBe Done("", Maximum)
+    }
   it should "parse from minimum" in {
     (fromParser.parseOnly("minimum")) shouldBe Done("", Minimum)
   }
@@ -25,8 +25,8 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
 
   "TZDBParser to field" should
     "parse to maximum" in {
-    (toParser.parseOnly("maximum")) shouldBe Done("", Maximum)
-  }
+      (toParser.parseOnly("maximum")) shouldBe Done("", Maximum)
+    }
   it should "parse to minimum" in {
     (toParser.parseOnly("minimum")) shouldBe Done("", Minimum)
   }
@@ -39,8 +39,8 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
 
   "TZDBParser in field" should
     "parse in June" in {
-    (monthParser.parseOnly("Jun")) shouldBe Done("", Month.JUNE)
-  }
+      (monthParser.parseOnly("Jun")) shouldBe Done("", Month.JUNE)
+    }
   it should "parse in December" in {
     (monthParser.parseOnly("Dec")) shouldBe Done("", Month.DECEMBER)
   }
@@ -50,8 +50,8 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
 
   "TZDBParser dayParser" should
     "parse Mon" in {
-    (dayParser.parseOnly("Mon")) shouldBe Done("", DayOfWeek.MONDAY)
-  }
+      (dayParser.parseOnly("Mon")) shouldBe Done("", DayOfWeek.MONDAY)
+    }
   it should "parse in Sun" in {
     (dayParser.parseOnly("Sun")) shouldBe Done("", DayOfWeek.SUNDAY)
   }
@@ -61,28 +61,28 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
 
   "TZDBParser AfterWeekday" should
     "sun after the eighth" in {
-    (afterWeekdayParser.parseOnly("Sun>=8")) shouldBe Done("", AfterWeekday(DayOfWeek.SUNDAY, 8))
-  }
+      (afterWeekdayParser.parseOnly("Sun>=8")) shouldBe Done("", AfterWeekday(DayOfWeek.SUNDAY, 8))
+    }
 
   "TZDBParser BeforeWeekday" should
     "sun before the 25th" in {
-    (beforeWeekdayParser.parseOnly("Sun<=25")) shouldBe Done("",
-                                                             BeforeWeekday(DayOfWeek.SUNDAY, 25)
-    )
-  }
+      (beforeWeekdayParser.parseOnly("Sun<=25")) shouldBe Done("",
+                                                               BeforeWeekday(DayOfWeek.SUNDAY, 25)
+      )
+    }
 
   "TZDBParser LastWeekday of" should
     "last sunday" in {
-    (lastWeekdayParser.parseOnly("lastSun")) shouldBe Done("", LastWeekday(DayOfWeek.SUNDAY))
-  }
+      (lastWeekdayParser.parseOnly("lastSun")) shouldBe Done("", LastWeekday(DayOfWeek.SUNDAY))
+    }
   it should "last monday" in {
     (lastWeekdayParser.parseOnly("lastMon")) shouldBe Done("", LastWeekday(DayOfWeek.MONDAY))
   }
 
   "TZDBParser on" should
     "fixed day" in {
-    (onParser.parseOnly("24")) shouldBe Done("", DayOfTheMonth(24))
-  }
+      (onParser.parseOnly("24")) shouldBe Done("", DayOfTheMonth(24))
+    }
   it should "calculate dayOfMontIndicator for fixed day" in {
     onParser.parseOnly("24").map(_.dayOfMonthIndicator) shouldBe Done("", Some(24))
   }
@@ -98,8 +98,8 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
 
   "TZDBParser AtTime parser" should
     "parse single number time" in {
-    (atParser.parseOnly("2")) shouldBe Done("", AtWallTime(LocalTime.of(2, 0)))
-  }
+      (atParser.parseOnly("2")) shouldBe Done("", AtWallTime(LocalTime.of(2, 0)))
+    }
   it should "parse wall time two number time" in {
     (atParser.parseOnly("16")) shouldBe Done("", AtWallTime(LocalTime.of(16, 0)))
   }
@@ -166,154 +166,154 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
 
   "TZDBParser" should
     "parse Rules" in {
-    val rules = List(
-      "Rule Japan 1948 1951 - Sep Sat>=8 25:00 0 S"          ->
-        Rule(
-          "Japan",
-          GivenYear(1948),
-          GivenYear(1951),
-          Month.SEPTEMBER,
-          AfterWeekday(DayOfWeek.SATURDAY, 9),
-          AtWallTime(LocalTime.of(1, 0), true, 1),
-          Save(true, LocalTime.of(0, 0)),
-          Letter("S")
-        ),
-      "Rule	Algeria	1916	only	-	Jun	14	23:00s	1:00	S"        ->
-        Rule("Algeria",
-             GivenYear(1916),
-             Only,
-             Month.JUNE,
-             DayOfTheMonth(14),
-             AtStandardTime(LocalTime.of(23, 0)),
-             Save(true, LocalTime.of(1, 0)),
-             Letter("S")
-        ),
-      "Rule	Egypt	1995	2010	-	Apr	lastFri	 0:00s	1:00	S"     ->
-        Rule(
-          "Egypt",
-          GivenYear(1995),
-          GivenYear(2010),
-          Month.APRIL,
-          LastWeekday(DayOfWeek.FRIDAY),
-          AtStandardTime(LocalTime.of(0, 0)),
-          Save(true, LocalTime.of(1, 0)),
-          Letter("S")
-        ),
-      "Rule	Egypt	2007	only	-	Sep	Thu>=1	24:00	0	-"          ->
-        Rule(
-          "Egypt",
-          GivenYear(2007),
-          Only,
-          Month.SEPTEMBER,
-          AfterWeekday(DayOfWeek.THURSDAY, 1),
-          AtWallTime(LocalTime.of(0, 0), true, 0),
-          Save(true, LocalTime.of(0, 0)),
-          Letter("-")
-        ),
-      "Rule	Ghana	1920	1942	-	Sep	 1	0:00	0:20	GHST"         ->
-        Rule("Ghana",
-             GivenYear(1920),
-             GivenYear(1942),
-             Month.SEPTEMBER,
-             DayOfTheMonth(1),
-             AtWallTime(LocalTime.of(0, 0)),
-             Save(true, LocalTime.of(0, 20)),
-             Letter("GHST")
-        ),
-      "Rule RussiaAsia	1981	1984	-	Apr	1	 0:00	1:00	S"       ->
-        Rule("RussiaAsia",
-             GivenYear(1981),
-             GivenYear(1984),
-             Month.APRIL,
-             DayOfTheMonth(1),
-             AtWallTime(LocalTime.of(0, 0)),
-             Save(true, LocalTime.of(1, 0)),
-             Letter("S")
-        ),
-      "Rule	Lebanon	1993	max	-	Mar	lastSun	0:00	1:00	S"      ->
-        Rule("Lebanon",
-             GivenYear(1993),
-             Maximum,
-             Month.MARCH,
-             LastWeekday(DayOfWeek.SUNDAY),
-             AtWallTime(LocalTime.of(0, 0)),
-             Save(true, LocalTime.of(1, 0)),
-             Letter("S")
-        ),
-      "Rule	Syria	1991	only	-	Apr	 1	0:00	1:00	S"            ->
-        Rule("Syria",
-             GivenYear(1991),
-             Only,
-             Month.APRIL,
-             DayOfTheMonth(1),
-             AtWallTime(LocalTime.of(0, 0)),
-             Save(true, LocalTime.of(1, 0)),
-             Letter("S")
-        ),
-      "Rule	Regina	1945	only	-	Aug	14	23:00u	1:00	P # Peace" ->
-        Rule("Regina",
-             GivenYear(1945),
-             Only,
-             Month.AUGUST,
-             DayOfTheMonth(14),
-             AtUniversalTime(LocalTime.of(23, 0)),
-             Save(true, LocalTime.of(1, 0)),
-             Letter("P")
-        ),
-      "Rule Indianapolis 1941	only	-	Jun	22	2:00	1:00	D"     ->
-        Rule("Indianapolis",
-             GivenYear(1941),
-             Only,
-             Month.JUNE,
-             DayOfTheMonth(22),
-             AtWallTime(LocalTime.of(2, 0)),
-             Save(true, LocalTime.of(1, 0)),
-             Letter("D")
-        ),
-      "Rule	Syria	2007	only	-	Nov	 Fri>=1	0:00	0	-"          ->
-        Rule("Syria",
-             GivenYear(2007),
-             Only,
-             Month.NOVEMBER,
-             AfterWeekday(DayOfWeek.FRIDAY, 1),
-             AtWallTime(LocalTime.of(0, 0)),
-             Save(true, LocalTime.of(0, 0)),
-             Letter("-")
-        ),
-      "Rule	Morocco	2011	only	-	Jul	31	 0	0	-"               ->
-        Rule("Morocco",
-             GivenYear(2011),
-             Only,
-             Month.JULY,
-             DayOfTheMonth(31),
-             AtWallTime(LocalTime.of(0, 0)),
-             Save(true, LocalTime.of(0, 0)),
-             Letter("-")
-        ),
-      "Rule	SystemV	1974	only	-	Jan	6	2:00	1:00	D"           ->
-        Rule("SystemV",
-             GivenYear(1974),
-             Only,
-             Month.JANUARY,
-             DayOfTheMonth(6),
-             AtWallTime(LocalTime.of(2, 0)),
-             Save(true, LocalTime.of(1, 0)),
-             Letter("D")
-        ),
-      "Rule	Eire	1996	max	-	Oct	lastSun	 1:00u	-1:00	GMT"    ->
-        Rule(
-          "Eire",
-          GivenYear(1996),
-          Maximum,
-          Month.OCTOBER,
-          LastWeekday(DayOfWeek.SUNDAY),
-          AtUniversalTime(LocalTime.of(1, 0)),
-          Save(false, LocalTime.of(1, 0)),
-          Letter("GMT")
-        )
-    )
-    rules.foreach(rule => (ruleParser.parseOnly(rule._1)) shouldBe Done("", rule._2))
-  }
+      val rules = List(
+        "Rule Japan 1948 1951 - Sep Sat>=8 25:00 0 S"          ->
+          Rule(
+            "Japan",
+            GivenYear(1948),
+            GivenYear(1951),
+            Month.SEPTEMBER,
+            AfterWeekday(DayOfWeek.SATURDAY, 9),
+            AtWallTime(LocalTime.of(1, 0), true, 1),
+            Save(true, LocalTime.of(0, 0)),
+            Letter("S")
+          ),
+        "Rule	Algeria	1916	only	-	Jun	14	23:00s	1:00	S"        ->
+          Rule("Algeria",
+               GivenYear(1916),
+               Only,
+               Month.JUNE,
+               DayOfTheMonth(14),
+               AtStandardTime(LocalTime.of(23, 0)),
+               Save(true, LocalTime.of(1, 0)),
+               Letter("S")
+          ),
+        "Rule	Egypt	1995	2010	-	Apr	lastFri	 0:00s	1:00	S"     ->
+          Rule(
+            "Egypt",
+            GivenYear(1995),
+            GivenYear(2010),
+            Month.APRIL,
+            LastWeekday(DayOfWeek.FRIDAY),
+            AtStandardTime(LocalTime.of(0, 0)),
+            Save(true, LocalTime.of(1, 0)),
+            Letter("S")
+          ),
+        "Rule	Egypt	2007	only	-	Sep	Thu>=1	24:00	0	-"          ->
+          Rule(
+            "Egypt",
+            GivenYear(2007),
+            Only,
+            Month.SEPTEMBER,
+            AfterWeekday(DayOfWeek.THURSDAY, 1),
+            AtWallTime(LocalTime.of(0, 0), true, 0),
+            Save(true, LocalTime.of(0, 0)),
+            Letter("-")
+          ),
+        "Rule	Ghana	1920	1942	-	Sep	 1	0:00	0:20	GHST"         ->
+          Rule("Ghana",
+               GivenYear(1920),
+               GivenYear(1942),
+               Month.SEPTEMBER,
+               DayOfTheMonth(1),
+               AtWallTime(LocalTime.of(0, 0)),
+               Save(true, LocalTime.of(0, 20)),
+               Letter("GHST")
+          ),
+        "Rule RussiaAsia	1981	1984	-	Apr	1	 0:00	1:00	S"       ->
+          Rule("RussiaAsia",
+               GivenYear(1981),
+               GivenYear(1984),
+               Month.APRIL,
+               DayOfTheMonth(1),
+               AtWallTime(LocalTime.of(0, 0)),
+               Save(true, LocalTime.of(1, 0)),
+               Letter("S")
+          ),
+        "Rule	Lebanon	1993	max	-	Mar	lastSun	0:00	1:00	S"      ->
+          Rule("Lebanon",
+               GivenYear(1993),
+               Maximum,
+               Month.MARCH,
+               LastWeekday(DayOfWeek.SUNDAY),
+               AtWallTime(LocalTime.of(0, 0)),
+               Save(true, LocalTime.of(1, 0)),
+               Letter("S")
+          ),
+        "Rule	Syria	1991	only	-	Apr	 1	0:00	1:00	S"            ->
+          Rule("Syria",
+               GivenYear(1991),
+               Only,
+               Month.APRIL,
+               DayOfTheMonth(1),
+               AtWallTime(LocalTime.of(0, 0)),
+               Save(true, LocalTime.of(1, 0)),
+               Letter("S")
+          ),
+        "Rule	Regina	1945	only	-	Aug	14	23:00u	1:00	P # Peace" ->
+          Rule("Regina",
+               GivenYear(1945),
+               Only,
+               Month.AUGUST,
+               DayOfTheMonth(14),
+               AtUniversalTime(LocalTime.of(23, 0)),
+               Save(true, LocalTime.of(1, 0)),
+               Letter("P")
+          ),
+        "Rule Indianapolis 1941	only	-	Jun	22	2:00	1:00	D"     ->
+          Rule("Indianapolis",
+               GivenYear(1941),
+               Only,
+               Month.JUNE,
+               DayOfTheMonth(22),
+               AtWallTime(LocalTime.of(2, 0)),
+               Save(true, LocalTime.of(1, 0)),
+               Letter("D")
+          ),
+        "Rule	Syria	2007	only	-	Nov	 Fri>=1	0:00	0	-"          ->
+          Rule("Syria",
+               GivenYear(2007),
+               Only,
+               Month.NOVEMBER,
+               AfterWeekday(DayOfWeek.FRIDAY, 1),
+               AtWallTime(LocalTime.of(0, 0)),
+               Save(true, LocalTime.of(0, 0)),
+               Letter("-")
+          ),
+        "Rule	Morocco	2011	only	-	Jul	31	 0	0	-"               ->
+          Rule("Morocco",
+               GivenYear(2011),
+               Only,
+               Month.JULY,
+               DayOfTheMonth(31),
+               AtWallTime(LocalTime.of(0, 0)),
+               Save(true, LocalTime.of(0, 0)),
+               Letter("-")
+          ),
+        "Rule	SystemV	1974	only	-	Jan	6	2:00	1:00	D"           ->
+          Rule("SystemV",
+               GivenYear(1974),
+               Only,
+               Month.JANUARY,
+               DayOfTheMonth(6),
+               AtWallTime(LocalTime.of(2, 0)),
+               Save(true, LocalTime.of(1, 0)),
+               Letter("D")
+          ),
+        "Rule	Eire	1996	max	-	Oct	lastSun	 1:00u	-1:00	GMT"    ->
+          Rule(
+            "Eire",
+            GivenYear(1996),
+            Maximum,
+            Month.OCTOBER,
+            LastWeekday(DayOfWeek.SUNDAY),
+            AtUniversalTime(LocalTime.of(1, 0)),
+            Save(false, LocalTime.of(1, 0)),
+            Letter("GMT")
+          )
+      )
+      rules.foreach(rule => (ruleParser.parseOnly(rule._1)) shouldBe Done("", rule._2))
+    }
   it should "parse Link" in {
     val links = List(
       "Link America/Curacao America/Aruba"                                   ->
@@ -1275,8 +1275,7 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
       .fromInputStream(this.getClass.getResourceAsStream("/systemv"), "UTF-8")
       .mkString
     val r    = TZDBParser.parseFile(text)
-    r should matchPattern {
-      case Done("", _) =>
+    r should matchPattern { case Done("", _) =>
     }
   }
   it should "parse all relevant files" in {
@@ -1285,8 +1284,7 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
         scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(s"/$f"), "UTF-8").mkString
       val r    = TZDBParser.parseFile(text)
       // Checks that it ingests the whole file
-      r should matchPattern {
-        case Done("", _) =>
+      r should matchPattern { case Done("", _) =>
       }
     }
   }

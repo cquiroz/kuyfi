@@ -28,147 +28,145 @@ object ZoneRulesBuilder {
   ) {
     def toRules: Map[Zone, ZoneRulesParams] =
       zoneWindows
-        .map {
-          case (zone, windows) =>
-            val zoneRules: Option[ZoneRulesParams] = windows.headOption.map { firstWindow =>
-              val loopSavings        = firstWindow.fixedSavingAmountSeconds.getOrElse(0)
-              val loopStandardOffset = firstWindow.standardOffset.toZoneOffset
-              val firstWallOffset    =
-                ZoneOffset.ofTotalSeconds(loopStandardOffset.getTotalSeconds + loopSavings)
-              val loopWindowStart    = LocalDateTime.of(Year.MIN_VALUE, 1, 1, 0, 0)
-              val loopWindowOffset   = firstWallOffset
+        .map { case (zone, windows) =>
+          val zoneRules: Option[ZoneRulesParams] = windows.headOption.map { firstWindow =>
+            val loopSavings        = firstWindow.fixedSavingAmountSeconds.getOrElse(0)
+            val loopStandardOffset = firstWindow.standardOffset.toZoneOffset
+            val firstWallOffset    =
+              ZoneOffset.ofTotalSeconds(loopStandardOffset.getTotalSeconds + loopSavings)
+            val loopWindowStart    = LocalDateTime.of(Year.MIN_VALUE, 1, 1, 0, 0)
+            val loopWindowOffset   = firstWallOffset
 
-              val start       = TransitionsAccumulator(
-                loopWindowStart,
-                loopWindowOffset,
-                loopStandardOffset,
-                loopSavings,
-                List.empty[ZoneOffsetTransitionParams],
-                List.empty[ZoneOffsetTransitionParams],
-                List.empty[ZoneOffsetTransitionRule]
-              )
-              val accumulator = windows.foldLeft(start) {
-                case (TransitionsAccumulator(lws,
-                                             lwo,
-                                             lso,
-                                             ls,
-                                             standardTransitions,
-                                             transitionList,
-                                             transitionRules
-                      ),
-                      timeZoneWindow
-                    ) =>
-                  val tzw = timeZoneWindow.tidy(lws.getYear)
+            val start       = TransitionsAccumulator(
+              loopWindowStart,
+              loopWindowOffset,
+              loopStandardOffset,
+              loopSavings,
+              List.empty[ZoneOffsetTransitionParams],
+              List.empty[ZoneOffsetTransitionParams],
+              List.empty[ZoneOffsetTransitionRule]
+            )
+            val accumulator = windows.foldLeft(start) {
+              case (TransitionsAccumulator(lws,
+                                           lwo,
+                                           lso,
+                                           ls,
+                                           standardTransitions,
+                                           transitionList,
+                                           transitionRules
+                    ),
+                    timeZoneWindow
+                  ) =>
+                val tzw = timeZoneWindow.tidy(lws.getYear)
 
-                  val effectiveSavings                = tzw.fixedSavingAmountSeconds.getOrElse {
-                    tzw match {
-                      case RulesTimeZoneWindow(_, _, _, _, windowRules) =>
-                        @tailrec
-                        def go(savings: Int, rule: List[Rule]): Int =
-                          rule match {
-                            case h :: rest =>
-                              val trans = h.toTransitionParams(lso, ls)
-                              if (trans.toEpochSecond > lws.toEpochSecond(lwo))
-                                savings
-                              else
-                                go(h.save.seconds, rest)
-                            case Nil       => 0
-                          }
-
-                        go(0, windowRules.ruleList)
-                      case _                                            => 0
-                    }
-                  }
-                  val (newStdTransitions, newLso)     =
-                    if (lso != tzw.standardOffset.toZoneOffset)
-                      (List(
-                         ZoneOffsetTransitionParams(
-                           LocalDateTime.ofEpochSecond(lws.toEpochSecond(lwo), 0, lso),
-                           lso,
-                           tzw.standardOffset.toZoneOffset
-                         )
-                       ),
-                       tzw.standardOffset.toZoneOffset
-                      )
-                    else
-                      (Nil, lso)
-                  val effectiveWallOffset: ZoneOffset =
-                    ZoneOffset.ofTotalSeconds(newLso.getTotalSeconds + effectiveSavings)
-                  val newTransitions                  =
-                    if (lwo != effectiveWallOffset)
-                      List(ZoneOffsetTransitionParams(lws, lwo, effectiveWallOffset))
-                    else
-                      Nil
-                  val (newLs, moreTransitions)        = tzw match {
+                val effectiveSavings                = tzw.fixedSavingAmountSeconds.getOrElse {
+                  tzw match {
                     case RulesTimeZoneWindow(_, _, _, _, windowRules) =>
-                      windowRules.ruleList.foldLeft((effectiveSavings, newTransitions)) {
-                        case ((savings, transitions), r) =>
-                          val transition = r.toTransitionParams(newLso, savings)
+                      @tailrec
+                      def go(savings: Int, rule: List[Rule]): Int =
+                        rule match {
+                          case h :: rest =>
+                            val trans = h.toTransitionParams(lso, ls)
+                            if (trans.toEpochSecond > lws.toEpochSecond(lwo))
+                              savings
+                            else
+                              go(h.save.seconds, rest)
+                          case Nil       => 0
+                        }
 
-                          if (
-                            (transition.toEpochSecond >= lws.toEpochSecond(
-                              lwo
-                            )) && (transition.toEpochSecond < tzw
-                              .createDateTimeEpochSecond(
-                                savings
-                              )) && (transition.offsetBefore != transition.offsetAfter)
-                          )
-                            (r.save.seconds, transitions :+ transition.toZoneOffsetTransition)
-                          else
-                            (savings, transitions)
-                      }
-                    case _                                            =>
-                      (effectiveSavings, newTransitions)
+                      go(0, windowRules.ruleList)
+                    case _                                            => 0
                   }
-
-                  val (finalLs, finalRules) = tzw match {
-                    case RulesTimeZoneWindow(_, _, _, _, splitRules) =>
-                      splitRules.lastRuleList.foldLeft(
-                        (newLs, List.empty[ZoneOffsetTransitionRule])
-                      ) {
-                        case ((savings, tr), r) =>
-                          val transitionRule = r.toTransitionRule(newLso, savings)
-                          (r.save.seconds, tr :+ transitionRule._1)
-                      }
-                    case _                                           =>
-                      (newLs, Nil)
-                  }
-
-                  val newLoopWindowOffset = tzw.createWallOffset(finalLs)
-                  val newLoopWindowStart  =
-                    LocalDateTime.ofEpochSecond(tzw.createDateTimeEpochSecond(finalLs),
-                                                0,
-                                                newLoopWindowOffset
+                }
+                val (newStdTransitions, newLso)     =
+                  if (lso != tzw.standardOffset.toZoneOffset)
+                    (List(
+                       ZoneOffsetTransitionParams(
+                         LocalDateTime.ofEpochSecond(lws.toEpochSecond(lwo), 0, lso),
+                         lso,
+                         tzw.standardOffset.toZoneOffset
+                       )
+                     ),
+                     tzw.standardOffset.toZoneOffset
                     )
-                  TransitionsAccumulator(
-                    newLoopWindowStart,
-                    newLoopWindowOffset,
-                    newLso,
-                    finalLs,
-                    standardTransitions ::: newStdTransitions,
-                    transitionList ::: moreTransitions,
-                    transitionRules ::: finalRules
+                  else
+                    (Nil, lso)
+                val effectiveWallOffset: ZoneOffset =
+                  ZoneOffset.ofTotalSeconds(newLso.getTotalSeconds + effectiveSavings)
+                val newTransitions                  =
+                  if (lwo != effectiveWallOffset)
+                    List(ZoneOffsetTransitionParams(lws, lwo, effectiveWallOffset))
+                  else
+                    Nil
+                val (newLs, moreTransitions)        = tzw match {
+                  case RulesTimeZoneWindow(_, _, _, _, windowRules) =>
+                    windowRules.ruleList.foldLeft((effectiveSavings, newTransitions)) {
+                      case ((savings, transitions), r) =>
+                        val transition = r.toTransitionParams(newLso, savings)
+
+                        if (
+                          (transition.toEpochSecond >= lws.toEpochSecond(
+                            lwo
+                          )) && (transition.toEpochSecond < tzw
+                            .createDateTimeEpochSecond(
+                              savings
+                            )) && (transition.offsetBefore != transition.offsetAfter)
+                        )
+                          (r.save.seconds, transitions :+ transition.toZoneOffsetTransition)
+                        else
+                          (savings, transitions)
+                    }
+                  case _                                            =>
+                    (effectiveSavings, newTransitions)
+                }
+
+                val (finalLs, finalRules) = tzw match {
+                  case RulesTimeZoneWindow(_, _, _, _, splitRules) =>
+                    splitRules.lastRuleList.foldLeft(
+                      (newLs, List.empty[ZoneOffsetTransitionRule])
+                    ) { case ((savings, tr), r) =>
+                      val transitionRule = r.toTransitionRule(newLso, savings)
+                      (r.save.seconds, tr :+ transitionRule._1)
+                    }
+                  case _                                           =>
+                    (newLs, Nil)
+                }
+
+                val newLoopWindowOffset = tzw.createWallOffset(finalLs)
+                val newLoopWindowStart  =
+                  LocalDateTime.ofEpochSecond(tzw.createDateTimeEpochSecond(finalLs),
+                                              0,
+                                              newLoopWindowOffset
                   )
-              }
-              if (zone.transitions.length == 1)
-                FixedZoneRulesParams(firstWindow.standardOffset.toZoneOffset,
-                                     firstWallOffset,
-                                     accumulator.standardTransitions,
-                                     accumulator.transitionsList,
-                                     accumulator.transitionRules
-                )
-              else
-                StandardRulesParams(firstWindow.standardOffset.toZoneOffset,
-                                    firstWallOffset,
-                                    accumulator.standardTransitions,
-                                    accumulator.transitionsList,
-                                    accumulator.transitionRules
+                TransitionsAccumulator(
+                  newLoopWindowStart,
+                  newLoopWindowOffset,
+                  newLso,
+                  finalLs,
+                  standardTransitions ::: newStdTransitions,
+                  transitionList ::: moreTransitions,
+                  transitionRules ::: finalRules
                 )
             }
-            zone -> zoneRules
+            if (zone.transitions.length == 1)
+              FixedZoneRulesParams(firstWindow.standardOffset.toZoneOffset,
+                                   firstWallOffset,
+                                   accumulator.standardTransitions,
+                                   accumulator.transitionsList,
+                                   accumulator.transitionRules
+              )
+            else
+              StandardRulesParams(firstWindow.standardOffset.toZoneOffset,
+                                  firstWallOffset,
+                                  accumulator.standardTransitions,
+                                  accumulator.transitionsList,
+                                  accumulator.transitionRules
+              )
+          }
+          zone -> zoneRules
         }
-        .collect {
-          case (z, Some(r)) => z -> r
+        .collect { case (z, Some(r)) =>
+          z -> r
         }
   }
 

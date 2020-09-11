@@ -128,10 +128,10 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
 
   "TZDB Code generator" should
     "generate a name from a Zone" in {
-    treeToString(
-      TreeGenerator[Zone].generateTree(zone1)
-    ) shouldBe "(\"Europe/Belfast\", rules.Europe_Belfast)"
-  }
+      treeToString(
+        TreeGenerator[Zone].generateTree(zone1)
+      ) shouldBe "(\"Europe/Belfast\", rules.Europe_Belfast)"
+    }
   it should "generate a name from a Fixed offset Zone" in {
     treeToString(
       TreeGenerator[Zone].generateTree(zoneFixed)

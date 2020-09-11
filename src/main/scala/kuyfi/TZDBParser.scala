@@ -73,8 +73,8 @@ object TZDBParser {
   }
 
   def parseOneOf[A](items: List[(String, A)], msg: String): Parser[A] = {
-    val p = items.map {
-      case (i, v) => string(i).map(_ => v)
+    val p = items.map { case (i, v) =>
+      string(i).map(_ => v)
     }
 
     p.foldRight(err[A](msg))(_ | _)
@@ -119,10 +119,9 @@ object TZDBParser {
       m <- int
     } yield (n.isDefined, h, m)
 
-  val hourMinParserLT: Parser[(Int, Boolean, LocalTime)] = hourMinParser.map {
-    case (_, h, m) =>
-      val (endOfDay, hours) = fixHourRange(h)
-      (if (h > 24) h % 24 else 0, endOfDay, LocalTime.of(hours, m))
+  val hourMinParserLT: Parser[(Int, Boolean, LocalTime)] = hourMinParser.map { case (_, h, m) =>
+    val (endOfDay, hours) = fixHourRange(h)
+    (if (h > 24) h % 24 else 0, endOfDay, LocalTime.of(hours, m))
   }
 
   val hourMinParserOf: Parser[GmtOffset] = hourMinParser.map {

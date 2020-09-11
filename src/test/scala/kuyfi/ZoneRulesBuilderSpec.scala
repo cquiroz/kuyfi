@@ -34,8 +34,8 @@ class ZoneRulesBuilderSpec extends AnyFlatSpec with Matchers {
 
   "ZoneRulesBuilder" should
     "do a full calculation for all tzdb" in {
-    rules.size shouldBe 593
-  }
+      rules.size shouldBe 593
+    }
   it should "calculate the transitions for Europe/London" in {
     val calculatedRules = rules.find(_._1 == "Europe/London").map(_._2)
     compareZoneRules(calculatedRules, "Europe/London")
