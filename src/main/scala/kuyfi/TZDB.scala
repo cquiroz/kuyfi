@@ -10,13 +10,11 @@ import mouse.all._
 import shapeless._
 import shapeless.ops.coproduct.Inject
 
-/**
-  * Model of the TimeZone Database
+/** Model of the TimeZone Database
   */
 object TZDB {
 
-  /**
-    * Definition of timestamps
+  /** Definition of timestamps
     */
   sealed trait At extends Product with Serializable {
     def time: LocalTime
@@ -60,8 +58,7 @@ object TZDB {
     implicit val order: Order[At] = Order.from((a, b) => a.time.compareTo(b.time))
   }
 
-  /**
-    * Model for Zone entries on TZDB
+  /** Model for Zone entries on TZDB
     */
   final case class GmtOffset(h: Int, m: Int, s: Int) {
     def toZoneOffset: ZoneOffset = ZoneOffset.ofHoursMinutesSeconds(h, m, s)
@@ -118,8 +115,7 @@ object TZDB {
         .toLowerCase
   }
 
-  /**
-    * Model for Rule Entries
+  /** Model for Rule Entries
     */
   final case class Letter(letter: String)
   final case class Save(positive: Boolean, time: LocalTime) {
@@ -307,13 +303,11 @@ object TZDB {
 
   }
 
-  /**
-    * Model for Link entries
+  /** Model for Link entries
     */
   final case class Link(from: String, to: String) extends Product with Serializable
 
-  /**
-    * Comments and blank lines
+  /** Comments and blank lines
     */
   final case class Comment(comment: String) extends Product with Serializable
   final case class BlankLine(line: String) extends Product with Serializable
@@ -369,8 +363,7 @@ object TZDB {
 
   final case class Imports(imports: String)
 
-  /**
-    * Coproduct for the content of lines on the parsed files
+  /** Coproduct for the content of lines on the parsed files
     */
   type Row = Comment :+: BlankLine :+: Link :+: Rule :+: Zone :+: CNil
 

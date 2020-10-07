@@ -15,8 +15,7 @@ import mouse.boolean._
 import scala.jdk.CollectionConverters._
 import TZDB._
 
-/**
-  * Defines atto parsers to read tzdb files
+/** Defines atto parsers to read tzdb files
   */
 object TZDBParser {
   // Useful Monoid
@@ -280,8 +279,7 @@ object TZDBParser {
     "systemv"
   )
 
-  /**
-    * Parse the version
+  /** Parse the version
     */
   def parseVersion(dir: File): IO[Option[TzdbVersion]] =
     IO {
@@ -303,8 +301,7 @@ object TZDBParser {
       }
     }
 
-  /**
-    * Entry point. Takes a dir with the TZDB files and parses them into Rows
+  /** Entry point. Takes a dir with the TZDB files and parses them into Rows
     */
   def parseAll(dir: File): IO[List[Row]] =
     IO {

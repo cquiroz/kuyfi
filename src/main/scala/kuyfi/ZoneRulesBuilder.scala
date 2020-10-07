@@ -170,8 +170,7 @@ object ZoneRulesBuilder {
         }
   }
 
-  /**
-    * Creat timezone windows from the zone transitions
+  /** Creat timezone windows from the zone transitions
     */
   object toWindows extends Poly1 {
     type U = WindowsCollector => WindowsCollector
@@ -230,8 +229,7 @@ object ZoneRulesBuilder {
     }
   }
 
-  /**
-    * Collects all the rules
+  /** Collects all the rules
     */
   object collectRules extends Poly1 {
     type U = List[Rule] => List[Rule]
@@ -243,8 +241,7 @@ object ZoneRulesBuilder {
     implicit val caseZone: Case.Aux[Zone, U]       = at[Zone](_ => identity)
   }
 
-  /**
-    * Calculates all the zone rules for the rows
+  /** Calculates all the zone rules for the rows
     */
   def calculateTransitionParams(rows: List[Row]): Map[Zone, ZoneRulesParams] = {
     val rulesByName: RulesById                 = rows.flatMap(_.fold(collectRules).apply(Nil)).groupBy(_.name)
@@ -253,14 +250,12 @@ object ZoneRulesBuilder {
     collectedRules.filter(_.zoneWindows.nonEmpty).flatMap(_.toRules).toMap
   }
 
-  /**
-    * Calculates all the zone rules for the rows
+  /** Calculates all the zone rules for the rows
     */
   def calculateTransitions(rows: List[Row]): Map[Zone, ZoneRules] =
     calculateTransitionParams(rows).map { case (z, p) => (z, p.toZoneRules) }
 
-  /**
-    * Calculates all the zone rules for the rows
+  /** Calculates all the zone rules for the rows
     * and adds copies for the linked rules
     */
   def calculateTransitionsWithLinks(rows: List[Row]): Map[String, ZoneRules] = {
