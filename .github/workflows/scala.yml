@@ -11,8 +11,10 @@ jobs:
       - name: Set up JDK 1.8
         uses: olafurpg/setup-scala@v7
         with:
-          java-version: adoptjdk@11
+          java-version: adopt@1.11.0-9
       - name: Checking your code format
-        run: sbt scalafmtCheckAll
+        run: |
+          java -version
+          sbt scalafmtCheckAll
       - name: Run tests
         run: csbt +test
