@@ -10,7 +10,7 @@ import org.scalatest.matchers.should.Matchers
 class ZoneRulesBuilderSpec extends AnyFlatSpec with Matchers {
 
   // NOTE These tests are fragile as they depend on the timezone db of the JVM
-  // These tests are for 2019c matching the JVM on travis JDK 1.8 b 242
+  // These tests are for 2020o matching the JVM on travis JDK 11.0-9
 
   val r                  = new File("src/test/resources/")
   private lazy val rules =
@@ -34,13 +34,13 @@ class ZoneRulesBuilderSpec extends AnyFlatSpec with Matchers {
 
   "ZoneRulesBuilder" should
     "do a full calculation for all tzdb" in {
-      rules.size shouldBe 593
+      rules.size shouldBe 594
     }
   it should "calculate the transitions for Europe/London" in {
     val calculatedRules = rules.find(_._1 == "Europe/London").map(_._2)
     compareZoneRules(calculatedRules, "Europe/London")
   }
-  it should "calculate the transitions for America/Chihuahua" in {
+  it should "calculfate the transitions for America/Chihuahua" in {
     val calculatedRules = rules.find(_._1 == "America/Chihuahua").map(_._2)
     compareZoneRules(calculatedRules, "America/Chihuahua")
   }
