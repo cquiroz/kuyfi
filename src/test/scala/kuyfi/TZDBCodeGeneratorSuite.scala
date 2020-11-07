@@ -4,11 +4,9 @@ import java.time.zone.ZoneOffsetTransitionRule
 import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 import java.time.{ DayOfWeek, LocalDateTime, LocalTime, Month, ZoneOffset }
 import kuyfi.TZDB._
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
-  import TZDBCodeGenerator.OptimizedTreeGenerator._
+class TZDBCodeGeneratorSpec extends munit.FunSuite {
+  import TZDBCodeGenerator.PureTreeGenerator._
 
   val zone1 = Zone(
     "Europe/Belfast",
@@ -126,31 +124,44 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
   import TZDBCodeGenerator._
   import treehugger.forest._
 
-  "TZDB Code generator" should
-    "generate a name from a Zone" in {
-      treeToString(
-        TreeGenerator[Zone].generateTree(zone1)
-      ) shouldBe "(\"Europe/Belfast\", rules.Europe_Belfast)"
-    }
-  it should "generate a name from a Fixed offset Zone" in {
-    treeToString(
-      TreeGenerator[Zone].generateTree(zoneFixed)
-    ) shouldBe "(\"Etc/GMT+1\", rules.Etc_GMT_plus_1)"
+  test("generate a name from a Zone") {
+    assertEquals(treeToString(
+                   TreeGenerator[Zone].generateTree(zone1)
+                 ),
+                 "(\"Europe/Belfast\", Europe_Belfast)"
+    )
   }
-  it should "generate a tuple from a Link" in {
-    treeToString(
-      TreeGenerator[Link].generateTree(link2)
-    ) shouldBe "(\"America/Aruba\", \"America/Curacao\")"
+  test("generate a name from a Fixed offset Zone") {
+    assertEquals(treeToString(
+                   TreeGenerator[Zone].generateTree(zoneFixed)
+                 ),
+                 "(\"Etc/GMT+1\", Etc_GMT_plus_1)"
+    )
   }
-  it should "clean dangling links" in {
+  test("generate a tuple from a Link") {
+    assertEquals(treeToString(
+                   TreeGenerator[Link].generateTree(link2)
+                 ),
+                 "(\"America/Aruba\", \"America/Curacao\")"
+    )
+  }
+  test("clean dangling links") {
     val rows1 = link1.liftC[Row] :: link2.liftC[Row] :: Nil
-    cleanLinks(rows1) shouldBe empty
+    assert(cleanLinks(rows1).isEmpty)
 
     val rows2 = link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil
 
-    cleanLinks(rows2) should have size 2
+    assertEquals(cleanLinks(rows2).length, 2)
   }
-  it should "generate from zone offset transition rule" in {
+  test("generate an object from a List of Zones") {
+    assertEquals(
+      treeToString(
+        TreeGenerator[List[Zone]].generateTree(List(zone1, zone2))
+      ),
+      "lazy val allZones: Map[String, ZoneRules] = Map((\"Europe/Belfast\", Europe_Belfast), (\"Africa/Tripoli\", Africa_Tripoli))"
+    )
+  }
+  test("generate from zone offset transition rule") {
     val rule = ZoneOffsetTransitionRule.of(Month.JANUARY,
                                            3,
                                            DayOfWeek.MONDAY,
@@ -161,56 +172,59 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
                                            ZoneOffset.ofHours(1),
                                            ZoneOffset.ofHours(2)
     )
-    treeToString(
-      TreeGenerator[ZoneOffsetTransitionRule].generateTree(rule)
-    ) shouldBe s"scala.scalajs.js.Array[Int](1, 3, 1, 43200, 0, 0, 0, 3600, 7200)"
+    assertEquals(
+      treeToString(
+        TreeGenerator[ZoneOffsetTransitionRule].generateTree(rule)
+      ),
+      s"ZoneOffsetTransitionRule.of(Month.JANUARY, 3, DayOfWeek.MONDAY, LocalTime.of(12, 0, 0, 0), false, ZoneOffsetTransitionRule.TimeDefinition.UTC, ZoneOffset.ofTotalSeconds(0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200))"
+    )
   }
-  it should "generate from zone offset transition" in {
-    treeToString(
-      TreeGenerator[ZoneOffsetTransitionParams].generateTree(
-        ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15),
-                                   ZoneOffset.ofHours(1),
-                                   ZoneOffset.ofHours(2)
+  test("generate from zone offset transition") {
+    assertEquals(
+      treeToString(
+        TreeGenerator[ZoneOffsetTransitionParams].generateTree(
+          ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15),
+                                     ZoneOffset.ofHours(1),
+                                     ZoneOffset.ofHours(2)
+          )
         )
-      )
-    ) shouldBe s"scala.scalajs.js.Array[Int](2017032, 36900, 3600, 7200)"
+      ),
+      s"ZoneOffsetTransition.of(LocalDateTime.of(2017, 2, 1, 10, 15, 0, 0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200))"
+    )
   }
-  it should "generate from Month" in {
-    treeToString(TreeGenerator[Month].generateTree(Month.JANUARY))  shouldBe s"1"
-    treeToString(TreeGenerator[Month].generateTree(Month.DECEMBER)) shouldBe s"12"
+  test("generate from Month") {
+    assertEquals(treeToString(TreeGenerator[Month].generateTree(Month.JANUARY)), s"Month.JANUARY")
+    assertEquals(treeToString(TreeGenerator[Month].generateTree(Month.DECEMBER)), s"Month.DECEMBER")
   }
-  it should "generate from LocalDateTime" in {
-    treeToString(
-      TreeGenerator[LocalDateTime]
-        .generateTree(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15, 25))
-    ) shouldBe s"scala.scalajs.js.Array[Int](2017, 32, 36925)"
+  test("generate from LocalDateTime") {
+    assertEquals(
+      treeToString(
+        TreeGenerator[LocalDateTime]
+          .generateTree(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15, 25))
+      ),
+      s"LocalDateTime.of(2017, 2, 1, 10, 15, 25, 0)"
+    )
   }
-  it should "generate from offset" in {
-    treeToString(
-      TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))
-    ) shouldBe s"val zo_3723: Int = 3723"
+  test("generate from offset") {
+    assertEquals(treeToString(
+                   TreeGenerator[ZoneOffset].generateTree(ZoneOffset.ofHoursMinutesSeconds(1, 2, 3))
+                 ),
+                 s"ZoneOffset.ofTotalSeconds(${1 * 3600 + 2 * 60 + 3})"
+    )
   }
-  it should "import a top level package" in {
-    treeToString(
-      exportTzdb(TzdbVersion("2018a"),
-                 "org.threeten.bp",
-                 "org.threeten.bp",
-                 link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
-                 _ => true
-      )
-    ) should include("import scala.scalajs.js")
+  test("import a top level package") {
+    assert(
+      treeToString(
+        exportTzdb(TzdbVersion("2018e"),
+                   "org.threeten.bp",
+                   "org.threeten.bp",
+                   link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
+                   _ => true
+        )
+      ).contains("import org.threeten.bp.zone._")
+    )
   }
-  it should "include the version" in {
-    treeToString(
-      exportTzdb(TzdbVersion("2018a"),
-                 "org.threeten.bp",
-                 "org.threeten.bp",
-                 link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
-                 _ => true
-      )
-    ) should include("2018a")
-  }
-  it should "generate from zone rules param" in {
+  test("generate from zone rules param") {
     val standardTransitions = List(
       ZoneOffsetTransitionParams(LocalDateTime.of(2017, Month.FEBRUARY, 1, 10, 15),
                                  ZoneOffset.ofHours(1),
@@ -241,16 +255,26 @@ class TZDBOptimizedCodeGeneratorSpec extends AnyFlatSpec with Matchers {
                                      transitions,
                                      rule
     )
-    treeToString(
-      TreeGenerator[ZoneRulesParams].generateTree(params)
-    ).trim shouldBe s"""js.Dynamic.literal(("s", 3600), ("w", 0), ("t", scala.scalajs.js.Array[scala.scalajs.js.Array[Int]](scala.scalajs.js.Array[Int](2017032, 36900, 3600, 7200))), ("l", scala.scalajs.js.Array[scala.scalajs.js.Array[Int]](scala.scalajs.js.Array[Int](2005307, 0, 0, 7200))), ("r", scala.scalajs.js.Array[scala.scalajs.js.Array[Int]](scala.scalajs.js.Array[Int](1, 3, 1, 43200, 0, 0, 0, 3600, 7200))))"""
-    treeToString(
-      exportTzdb(TzdbVersion("2018a"),
-                 "org.threeten.bp",
-                 "org.threeten.bp",
+    assertEquals(
+      treeToString(TreeGenerator[ZoneRulesParams].generateTree(params)).trim,
+      s"""{
+      |  val bso: ZoneOffset = ZoneOffset.ofTotalSeconds(3600)
+      |  val bwo: ZoneOffset = ZoneOffset.ofTotalSeconds(0)
+      |  val standardTransitions: List[ZoneOffsetTransition] = List(ZoneOffsetTransition.of(LocalDateTime.of(2017, 2, 1, 10, 15, 0, 0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200)))
+      |  val transitionList: List[ZoneOffsetTransition] = List(ZoneOffsetTransition.of(LocalDateTime.of(2005, 11, 3, 0, 0, 0, 0), ZoneOffset.ofTotalSeconds(0), ZoneOffset.ofTotalSeconds(7200)))
+      |  val lastRules: List[ZoneOffsetTransitionRule] = List(ZoneOffsetTransitionRule.of(Month.JANUARY, 3, DayOfWeek.MONDAY, LocalTime.of(12, 0, 0, 0), false, ZoneOffsetTransitionRule.TimeDefinition.UTC, ZoneOffset.ofTotalSeconds(0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200)))
+      |  ZoneRules.of(bso, bwo, standardTransitions asJava, transitionList asJava, lastRules asJava)
+      |}""".stripMargin
+    )
+
+    val r = treeToString(
+      exportTzdb(TzdbVersion("2018e"),
+                 "java.time",
+                 "java.time",
                  link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
                  _ => true
       )
-    ) should include("import scala.scalajs.js")
+    )
+    assert(r.contains("import java.time.zone._"))
   }
 }

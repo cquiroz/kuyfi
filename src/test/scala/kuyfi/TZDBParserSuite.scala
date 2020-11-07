@@ -6,315 +6,309 @@ import atto._
 import Atto._
 import atto.ParseResult.{ Done, Fail }
 import java.io.File
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 import TZDB._
 import TZDBParser._
 
-class TZDBParserSpec extends AnyFlatSpec with Matchers {
-  "TZDBParser from field" should
-    "parse from maximum" in {
-      (fromParser.parseOnly("maximum")) shouldBe Done("", Maximum)
-    }
-  it should "parse from minimum" in {
-    (fromParser.parseOnly("minimum")) shouldBe Done("", Minimum)
+class TZDBParserSuite extends munit.FunSuite {
+  test("parse from maximum") {
+    assertEquals((fromParser.parseOnly("maximum")), Done("", Maximum))
   }
-  it should "parse with a date" in {
-    (fromParser.parseOnly("1974")) shouldBe Done("", GivenYear(1974))
+  test("parse from minimum") {
+    assertEquals((fromParser.parseOnly("minimum")), Done("", Minimum))
   }
-
-  "TZDBParser to field" should
-    "parse to maximum" in {
-      (toParser.parseOnly("maximum")) shouldBe Done("", Maximum)
-    }
-  it should "parse to minimum" in {
-    (toParser.parseOnly("minimum")) shouldBe Done("", Minimum)
-  }
-  it should "parse to only" in {
-    (toParser.parseOnly("only")) shouldBe Done("", Only)
-  }
-  it should "parse with a date" in {
-    (toParser.parseOnly("1974")) shouldBe Done("", GivenYear(1974))
+  test("parse with a date") {
+    assertEquals((fromParser.parseOnly("1974")), Done("", GivenYear(1974)))
   }
 
-  "TZDBParser in field" should
-    "parse in June" in {
-      (monthParser.parseOnly("Jun")) shouldBe Done("", Month.JUNE)
-    }
-  it should "parse in December" in {
-    (monthParser.parseOnly("Dec")) shouldBe Done("", Month.DECEMBER)
+  test("parse to maximum") {
+    assertEquals((toParser.parseOnly("maximum")), Done("", Maximum))
   }
-  it should "parse non valid" in {
-    (monthParser.parseOnly("abc")) shouldBe Fail("abc", Nil, "unknown month")
+  test("parse to minimum") {
+    assertEquals((toParser.parseOnly("minimum")), Done("", Minimum))
   }
-
-  "TZDBParser dayParser" should
-    "parse Mon" in {
-      (dayParser.parseOnly("Mon")) shouldBe Done("", DayOfWeek.MONDAY)
-    }
-  it should "parse in Sun" in {
-    (dayParser.parseOnly("Sun")) shouldBe Done("", DayOfWeek.SUNDAY)
+  test("parse to only") {
+    assertEquals((toParser.parseOnly("only")), Done("", Only))
   }
-  it should "parse non valid" in {
-    (dayParser.parseOnly("abc")) shouldBe Fail("abc", Nil, "unknown day")
+  test("parse with a date") {
+    assertEquals((toParser.parseOnly("1974")), Done("", GivenYear(1974)))
   }
 
-  "TZDBParser AfterWeekday" should
-    "sun after the eighth" in {
-      (afterWeekdayParser.parseOnly("Sun>=8")) shouldBe Done("", AfterWeekday(DayOfWeek.SUNDAY, 8))
-    }
-
-  "TZDBParser BeforeWeekday" should
-    "sun before the 25th" in {
-      (beforeWeekdayParser.parseOnly("Sun<=25")) shouldBe Done("",
-                                                               BeforeWeekday(DayOfWeek.SUNDAY, 25)
-      )
-    }
-
-  "TZDBParser LastWeekday of" should
-    "last sunday" in {
-      (lastWeekdayParser.parseOnly("lastSun")) shouldBe Done("", LastWeekday(DayOfWeek.SUNDAY))
-    }
-  it should "last monday" in {
-    (lastWeekdayParser.parseOnly("lastMon")) shouldBe Done("", LastWeekday(DayOfWeek.MONDAY))
+  test("parse in June") {
+    assertEquals((monthParser.parseOnly("Jun")), Done("", Month.JUNE))
+  }
+  test("parse in December") {
+    assertEquals((monthParser.parseOnly("Dec")), Done("", Month.DECEMBER))
+  }
+  test("parse non valid") {
+    assertEquals((monthParser.parseOnly("abc")), Fail("abc", Nil, "unknown month"))
   }
 
-  "TZDBParser on" should
-    "fixed day" in {
-      (onParser.parseOnly("24")) shouldBe Done("", DayOfTheMonth(24))
-    }
-  it should "calculate dayOfMontIndicator for fixed day" in {
-    onParser.parseOnly("24").map(_.dayOfMonthIndicator) shouldBe Done("", Some(24))
+  test("parse Mon") {
+    assertEquals((dayParser.parseOnly("Mon")), Done("", DayOfWeek.MONDAY))
   }
-  it should "calculate dayOfMontIndicator for lastSun" in {
-    onParser.parseOnly("lastSun").map(_.dayOfMonthIndicator) shouldBe Done("", None)
+  test("parse in Sun") {
+    assertEquals((dayParser.parseOnly("Sun")), Done("", DayOfWeek.SUNDAY))
   }
-  it should "calculate dayOfMontIndicator for Sat>=5" in {
-    onParser.parseOnly("Sat>=5").map(_.dayOfMonthIndicator) shouldBe Done("", Some(5))
-  }
-  it should "calculate dayOfMontIndicator for Sat<=5" in {
-    onParser.parseOnly("Sat<=5").map(_.dayOfMonthIndicator) shouldBe Done("", Some(5))
+  test("parse non valid") {
+    assertEquals((dayParser.parseOnly("abc")), Fail("abc", Nil, "unknown day"))
   }
 
-  "TZDBParser AtTime parser" should
-    "parse single number time" in {
-      (atParser.parseOnly("2")) shouldBe Done("", AtWallTime(LocalTime.of(2, 0)))
-    }
-  it should "parse wall time two number time" in {
-    (atParser.parseOnly("16")) shouldBe Done("", AtWallTime(LocalTime.of(16, 0)))
-  }
-  it should "parse wall time h:m time" in {
-    (atParser.parseOnly("2:00")) shouldBe Done("", AtWallTime(LocalTime.of(2, 0)))
-  }
-  it should "parse wall time h:m 24h time" in {
-    (atParser.parseOnly("15:00")) shouldBe Done("", AtWallTime(LocalTime.of(15, 0)))
-  }
-  it should "parse wall time h:m:s time" in {
-    (atParser.parseOnly("1:28:14")) shouldBe Done("", AtWallTime(LocalTime.of(1, 28, 14)))
-  }
-  it should "parse explicit wall time two number time" in {
-    (atParser.parseOnly("16w")) shouldBe Done("", AtWallTime(LocalTime.of(16, 0)))
-  }
-  it should "parse explicit wall time h:m time" in {
-    (atParser.parseOnly("2:00w")) shouldBe Done("", AtWallTime(LocalTime.of(2, 0)))
-  }
-  it should "parse explicit wall time h:m 24h time" in {
-    (atParser.parseOnly("15:00w")) shouldBe Done("", AtWallTime(LocalTime.of(15, 0)))
-  }
-  it should "parse explicit wall time h:m:s time" in {
-    (atParser.parseOnly("1:28:14w")) shouldBe Done("", AtWallTime(LocalTime.of(1, 28, 14)))
-  }
-  it should "parse explicit standard time two number time" in {
-    (atParser.parseOnly("16s")) shouldBe Done("", AtStandardTime(LocalTime.of(16, 0)))
-  }
-  it should "parse explicit standard time h:m time" in {
-    (atParser.parseOnly("2:00s")) shouldBe Done("", AtStandardTime(LocalTime.of(2, 0)))
-  }
-  it should "parse explicit standard time h:m 24h time" in {
-    (atParser.parseOnly("15:00s")) shouldBe Done("", AtStandardTime(LocalTime.of(15, 0)))
-  }
-  it should "parse explicit standard time h:m:s time" in {
-    (atParser.parseOnly("1:28:14s")) shouldBe Done("", AtStandardTime(LocalTime.of(1, 28, 14)))
-  }
-  it should "parse explicit universal time two number time" in {
-    (atParser.parseOnly("16u")) shouldBe Done("", AtUniversalTime(LocalTime.of(16, 0)))
-  }
-  it should "parse explicit universal time h:m time" in {
-    (atParser.parseOnly("2:00u")) shouldBe Done("", AtUniversalTime(LocalTime.of(2, 0)))
-  }
-  it should "parse explicit universal time h:m 24h time" in {
-    (atParser.parseOnly("15:00u")) shouldBe Done("", AtUniversalTime(LocalTime.of(15, 0)))
-  }
-  it should "parse explicit gmt time h:m 24h time" in {
-    (atParser.parseOnly("15:00g")) shouldBe Done("", AtUniversalTime(LocalTime.of(15, 0)))
-  }
-  it should "parse explicit z time h:m 24h time" in {
-    (atParser.parseOnly("15:00z")) shouldBe Done("", AtUniversalTime(LocalTime.of(15, 0)))
-  }
-  it should "parse explicit universal time h:m:s time" in {
-    (atParser.parseOnly("1:28:14u")) shouldBe Done("", AtUniversalTime(LocalTime.of(1, 28, 14)))
-  }
-  it should "calculate if at the end of day" in {
-    atParser.parseOnly("2:20").map(_.endOfDay)   shouldBe Done("", false)
-    atParser.parseOnly("2:20s").map(_.endOfDay)  shouldBe Done("", false)
-    atParser.parseOnly("2:20u").map(_.endOfDay)  shouldBe Done("", false)
-    atParser.parseOnly("24:00g").map(_.endOfDay) shouldBe Done("", true)
-    //(atParser parseOnly "-").map(_.endOfDay) shouldBe Done("", false)
-    atParser.parseOnly("3z").map(_.endOfDay)     shouldBe Done("", false)
-    atParser.parseOnly("0:00").map(_.endOfDay)   shouldBe Done("", false)
+  test("sun after the eighth") {
+    assertEquals((afterWeekdayParser.parseOnly("Sun>=8")),
+                 Done("", AfterWeekday(DayOfWeek.SUNDAY, 8))
+    )
   }
 
-  "TZDBParser" should
-    "parse Rules" in {
-      val rules = List(
-        "Rule Japan 1948 1951 - Sep Sat>=8 25:00 0 S"          ->
-          Rule(
-            "Japan",
-            GivenYear(1948),
-            GivenYear(1951),
-            Month.SEPTEMBER,
-            AfterWeekday(DayOfWeek.SATURDAY, 9),
-            AtWallTime(LocalTime.of(1, 0), true, 1),
-            Save(true, LocalTime.of(0, 0)),
-            Letter("S")
-          ),
-        "Rule	Algeria	1916	only	-	Jun	14	23:00s	1:00	S"        ->
-          Rule("Algeria",
-               GivenYear(1916),
-               Only,
-               Month.JUNE,
-               DayOfTheMonth(14),
-               AtStandardTime(LocalTime.of(23, 0)),
-               Save(true, LocalTime.of(1, 0)),
-               Letter("S")
-          ),
-        "Rule	Egypt	1995	2010	-	Apr	lastFri	 0:00s	1:00	S"     ->
-          Rule(
-            "Egypt",
-            GivenYear(1995),
-            GivenYear(2010),
-            Month.APRIL,
-            LastWeekday(DayOfWeek.FRIDAY),
-            AtStandardTime(LocalTime.of(0, 0)),
-            Save(true, LocalTime.of(1, 0)),
-            Letter("S")
-          ),
-        "Rule	Egypt	2007	only	-	Sep	Thu>=1	24:00	0	-"          ->
-          Rule(
-            "Egypt",
-            GivenYear(2007),
-            Only,
-            Month.SEPTEMBER,
-            AfterWeekday(DayOfWeek.THURSDAY, 1),
-            AtWallTime(LocalTime.of(0, 0), true, 0),
-            Save(true, LocalTime.of(0, 0)),
-            Letter("-")
-          ),
-        "Rule	Ghana	1920	1942	-	Sep	 1	0:00	0:20	GHST"         ->
-          Rule("Ghana",
-               GivenYear(1920),
-               GivenYear(1942),
-               Month.SEPTEMBER,
-               DayOfTheMonth(1),
-               AtWallTime(LocalTime.of(0, 0)),
-               Save(true, LocalTime.of(0, 20)),
-               Letter("GHST")
-          ),
-        "Rule RussiaAsia	1981	1984	-	Apr	1	 0:00	1:00	S"       ->
-          Rule("RussiaAsia",
-               GivenYear(1981),
-               GivenYear(1984),
-               Month.APRIL,
-               DayOfTheMonth(1),
-               AtWallTime(LocalTime.of(0, 0)),
-               Save(true, LocalTime.of(1, 0)),
-               Letter("S")
-          ),
-        "Rule	Lebanon	1993	max	-	Mar	lastSun	0:00	1:00	S"      ->
-          Rule("Lebanon",
-               GivenYear(1993),
-               Maximum,
-               Month.MARCH,
-               LastWeekday(DayOfWeek.SUNDAY),
-               AtWallTime(LocalTime.of(0, 0)),
-               Save(true, LocalTime.of(1, 0)),
-               Letter("S")
-          ),
-        "Rule	Syria	1991	only	-	Apr	 1	0:00	1:00	S"            ->
-          Rule("Syria",
-               GivenYear(1991),
-               Only,
-               Month.APRIL,
-               DayOfTheMonth(1),
-               AtWallTime(LocalTime.of(0, 0)),
-               Save(true, LocalTime.of(1, 0)),
-               Letter("S")
-          ),
-        "Rule	Regina	1945	only	-	Aug	14	23:00u	1:00	P # Peace" ->
-          Rule("Regina",
-               GivenYear(1945),
-               Only,
-               Month.AUGUST,
-               DayOfTheMonth(14),
-               AtUniversalTime(LocalTime.of(23, 0)),
-               Save(true, LocalTime.of(1, 0)),
-               Letter("P")
-          ),
-        "Rule Indianapolis 1941	only	-	Jun	22	2:00	1:00	D"     ->
-          Rule("Indianapolis",
-               GivenYear(1941),
-               Only,
-               Month.JUNE,
-               DayOfTheMonth(22),
-               AtWallTime(LocalTime.of(2, 0)),
-               Save(true, LocalTime.of(1, 0)),
-               Letter("D")
-          ),
-        "Rule	Syria	2007	only	-	Nov	 Fri>=1	0:00	0	-"          ->
-          Rule("Syria",
-               GivenYear(2007),
-               Only,
-               Month.NOVEMBER,
-               AfterWeekday(DayOfWeek.FRIDAY, 1),
-               AtWallTime(LocalTime.of(0, 0)),
-               Save(true, LocalTime.of(0, 0)),
-               Letter("-")
-          ),
-        "Rule	Morocco	2011	only	-	Jul	31	 0	0	-"               ->
-          Rule("Morocco",
-               GivenYear(2011),
-               Only,
-               Month.JULY,
-               DayOfTheMonth(31),
-               AtWallTime(LocalTime.of(0, 0)),
-               Save(true, LocalTime.of(0, 0)),
-               Letter("-")
-          ),
-        "Rule	SystemV	1974	only	-	Jan	6	2:00	1:00	D"           ->
-          Rule("SystemV",
-               GivenYear(1974),
-               Only,
-               Month.JANUARY,
-               DayOfTheMonth(6),
-               AtWallTime(LocalTime.of(2, 0)),
-               Save(true, LocalTime.of(1, 0)),
-               Letter("D")
-          ),
-        "Rule	Eire	1996	max	-	Oct	lastSun	 1:00u	-1:00	GMT"    ->
-          Rule(
-            "Eire",
-            GivenYear(1996),
-            Maximum,
-            Month.OCTOBER,
-            LastWeekday(DayOfWeek.SUNDAY),
-            AtUniversalTime(LocalTime.of(1, 0)),
-            Save(false, LocalTime.of(1, 0)),
-            Letter("GMT")
-          )
-      )
-      rules.foreach(rule => (ruleParser.parseOnly(rule._1)) shouldBe Done("", rule._2))
-    }
-  it should "parse Link" in {
+  test("sun before the 25th") {
+    assertEquals((beforeWeekdayParser.parseOnly("Sun<=25")),
+                 Done("", BeforeWeekday(DayOfWeek.SUNDAY, 25))
+    )
+  }
+
+  test("last sunday") {
+    assertEquals((lastWeekdayParser.parseOnly("lastSun")), Done("", LastWeekday(DayOfWeek.SUNDAY)))
+  }
+  test("last monday") {
+    assertEquals((lastWeekdayParser.parseOnly("lastMon")), Done("", LastWeekday(DayOfWeek.MONDAY)))
+  }
+
+  test("fixed day") {
+    assertEquals((onParser.parseOnly("24")), Done("", DayOfTheMonth(24)))
+  }
+  test("calculate dayOfMontIndicator for fixed day") {
+    assertEquals(onParser.parseOnly("24").map(_.dayOfMonthIndicator), Done("", Some(24)))
+  }
+  test("calculate dayOfMontIndicator for lastSun") {
+    assertEquals(onParser.parseOnly("lastSun").map(_.dayOfMonthIndicator), Done("", None))
+  }
+  test("calculate dayOfMontIndicator for Sat>=5") {
+    assertEquals(onParser.parseOnly("Sat>=5").map(_.dayOfMonthIndicator), Done("", Some(5)))
+  }
+  test("calculate dayOfMontIndicator for Sat<=5") {
+    assertEquals(onParser.parseOnly("Sat<=5").map(_.dayOfMonthIndicator), Done("", Some(5)))
+  }
+
+  test("parse single number time") {
+    assertEquals((atParser.parseOnly("2")), Done("", AtWallTime(LocalTime.of(2, 0))))
+  }
+  test("parse wall time two number time") {
+    assertEquals((atParser.parseOnly("16")), Done("", AtWallTime(LocalTime.of(16, 0))))
+  }
+  test("parse wall time h:m time") {
+    assertEquals((atParser.parseOnly("2:00")), Done("", AtWallTime(LocalTime.of(2, 0))))
+  }
+  test("parse wall time h:m 24h time") {
+    assertEquals((atParser.parseOnly("15:00")), Done("", AtWallTime(LocalTime.of(15, 0))))
+  }
+  test("parse wall time h:m:s time") {
+    assertEquals((atParser.parseOnly("1:28:14")), Done("", AtWallTime(LocalTime.of(1, 28, 14))))
+  }
+  test("parse explicit wall time two number time") {
+    assertEquals((atParser.parseOnly("16w")), Done("", AtWallTime(LocalTime.of(16, 0))))
+  }
+  test("parse explicit wall time h:m time") {
+    assertEquals((atParser.parseOnly("2:00w")), Done("", AtWallTime(LocalTime.of(2, 0))))
+  }
+  test("parse explicit wall time h:m 24h time") {
+    assertEquals((atParser.parseOnly("15:00w")), Done("", AtWallTime(LocalTime.of(15, 0))))
+  }
+  test("parse explicit wall time h:m:s time") {
+    assertEquals((atParser.parseOnly("1:28:14w")), Done("", AtWallTime(LocalTime.of(1, 28, 14))))
+  }
+  test("parse explicit standard time two number time") {
+    assertEquals((atParser.parseOnly("16s")), Done("", AtStandardTime(LocalTime.of(16, 0))))
+  }
+  test("parse explicit standard time h:m time") {
+    assertEquals((atParser.parseOnly("2:00s")), Done("", AtStandardTime(LocalTime.of(2, 0))))
+  }
+  test("parse explicit standard time h:m 24h time") {
+    assertEquals((atParser.parseOnly("15:00s")), Done("", AtStandardTime(LocalTime.of(15, 0))))
+  }
+  test("parse explicit standard time h:m:s time") {
+    assertEquals((atParser.parseOnly("1:28:14s")),
+                 Done("", AtStandardTime(LocalTime.of(1, 28, 14)))
+    )
+  }
+  test("parse explicit universal time two number time") {
+    assertEquals((atParser.parseOnly("16u")), Done("", AtUniversalTime(LocalTime.of(16, 0))))
+  }
+  test("parse explicit universal time h:m time") {
+    assertEquals((atParser.parseOnly("2:00u")), Done("", AtUniversalTime(LocalTime.of(2, 0))))
+  }
+  test("parse explicit universal time h:m 24h time") {
+    assertEquals((atParser.parseOnly("15:00u")), Done("", AtUniversalTime(LocalTime.of(15, 0))))
+  }
+  test("parse explicit gmt time h:m 24h time") {
+    assertEquals((atParser.parseOnly("15:00g")), Done("", AtUniversalTime(LocalTime.of(15, 0))))
+  }
+  test("parse explicit z time h:m 24h time") {
+    assertEquals((atParser.parseOnly("15:00z")), Done("", AtUniversalTime(LocalTime.of(15, 0))))
+  }
+  test("parse explicit universal time h:m:s time") {
+    assertEquals((atParser.parseOnly("1:28:14u")),
+                 Done("", AtUniversalTime(LocalTime.of(1, 28, 14)))
+    )
+  }
+  test("calculate if at the end of day") {
+    assertEquals(atParser.parseOnly("2:20").map(_.endOfDay), Done("", false))
+    assertEquals(atParser.parseOnly("2:20s").map(_.endOfDay), Done("", false))
+    assertEquals(atParser.parseOnly("2:20u").map(_.endOfDay), Done("", false))
+    assertEquals(atParser.parseOnly("24:00g").map(_.endOfDay), Done("", true))
+    //(atParser parseOnly "-").map(_.endOfDay) , Done("", false)
+    assertEquals(atParser.parseOnly("3z").map(_.endOfDay), Done("", false))
+    assertEquals(atParser.parseOnly("0:00").map(_.endOfDay), Done("", false))
+  }
+
+  test("parse Rules") {
+    val rules = List(
+      "Rule Japan 1948 1951 - Sep Sat>=8 25:00 0 S"          ->
+        Rule(
+          "Japan",
+          GivenYear(1948),
+          GivenYear(1951),
+          Month.SEPTEMBER,
+          AfterWeekday(DayOfWeek.SATURDAY, 9),
+          AtWallTime(LocalTime.of(1, 0), true, 1),
+          Save(true, LocalTime.of(0, 0)),
+          Letter("S")
+        ),
+      "Rule	Algeria	1916	only	-	Jun	14	23:00s	1:00	S"        ->
+        Rule("Algeria",
+             GivenYear(1916),
+             Only,
+             Month.JUNE,
+             DayOfTheMonth(14),
+             AtStandardTime(LocalTime.of(23, 0)),
+             Save(true, LocalTime.of(1, 0)),
+             Letter("S")
+        ),
+      "Rule	Egypt	1995	2010	-	Apr	lastFri	 0:00s	1:00	S"     ->
+        Rule(
+          "Egypt",
+          GivenYear(1995),
+          GivenYear(2010),
+          Month.APRIL,
+          LastWeekday(DayOfWeek.FRIDAY),
+          AtStandardTime(LocalTime.of(0, 0)),
+          Save(true, LocalTime.of(1, 0)),
+          Letter("S")
+        ),
+      "Rule	Egypt	2007	only	-	Sep	Thu>=1	24:00	0	-"          ->
+        Rule(
+          "Egypt",
+          GivenYear(2007),
+          Only,
+          Month.SEPTEMBER,
+          AfterWeekday(DayOfWeek.THURSDAY, 1),
+          AtWallTime(LocalTime.of(0, 0), true, 0),
+          Save(true, LocalTime.of(0, 0)),
+          Letter("-")
+        ),
+      "Rule	Ghana	1920	1942	-	Sep	 1	0:00	0:20	GHST"         ->
+        Rule("Ghana",
+             GivenYear(1920),
+             GivenYear(1942),
+             Month.SEPTEMBER,
+             DayOfTheMonth(1),
+             AtWallTime(LocalTime.of(0, 0)),
+             Save(true, LocalTime.of(0, 20)),
+             Letter("GHST")
+        ),
+      "Rule RussiaAsia	1981	1984	-	Apr	1	 0:00	1:00	S"       ->
+        Rule("RussiaAsia",
+             GivenYear(1981),
+             GivenYear(1984),
+             Month.APRIL,
+             DayOfTheMonth(1),
+             AtWallTime(LocalTime.of(0, 0)),
+             Save(true, LocalTime.of(1, 0)),
+             Letter("S")
+        ),
+      "Rule	Lebanon	1993	max	-	Mar	lastSun	0:00	1:00	S"      ->
+        Rule("Lebanon",
+             GivenYear(1993),
+             Maximum,
+             Month.MARCH,
+             LastWeekday(DayOfWeek.SUNDAY),
+             AtWallTime(LocalTime.of(0, 0)),
+             Save(true, LocalTime.of(1, 0)),
+             Letter("S")
+        ),
+      "Rule	Syria	1991	only	-	Apr	 1	0:00	1:00	S"            ->
+        Rule("Syria",
+             GivenYear(1991),
+             Only,
+             Month.APRIL,
+             DayOfTheMonth(1),
+             AtWallTime(LocalTime.of(0, 0)),
+             Save(true, LocalTime.of(1, 0)),
+             Letter("S")
+        ),
+      "Rule	Regina	1945	only	-	Aug	14	23:00u	1:00	P # Peace" ->
+        Rule("Regina",
+             GivenYear(1945),
+             Only,
+             Month.AUGUST,
+             DayOfTheMonth(14),
+             AtUniversalTime(LocalTime.of(23, 0)),
+             Save(true, LocalTime.of(1, 0)),
+             Letter("P")
+        ),
+      "Rule Indianapolis 1941	only	-	Jun	22	2:00	1:00	D"     ->
+        Rule("Indianapolis",
+             GivenYear(1941),
+             Only,
+             Month.JUNE,
+             DayOfTheMonth(22),
+             AtWallTime(LocalTime.of(2, 0)),
+             Save(true, LocalTime.of(1, 0)),
+             Letter("D")
+        ),
+      "Rule	Syria	2007	only	-	Nov	 Fri>=1	0:00	0	-"          ->
+        Rule("Syria",
+             GivenYear(2007),
+             Only,
+             Month.NOVEMBER,
+             AfterWeekday(DayOfWeek.FRIDAY, 1),
+             AtWallTime(LocalTime.of(0, 0)),
+             Save(true, LocalTime.of(0, 0)),
+             Letter("-")
+        ),
+      "Rule	Morocco	2011	only	-	Jul	31	 0	0	-"               ->
+        Rule("Morocco",
+             GivenYear(2011),
+             Only,
+             Month.JULY,
+             DayOfTheMonth(31),
+             AtWallTime(LocalTime.of(0, 0)),
+             Save(true, LocalTime.of(0, 0)),
+             Letter("-")
+        ),
+      "Rule	SystemV	1974	only	-	Jan	6	2:00	1:00	D"           ->
+        Rule("SystemV",
+             GivenYear(1974),
+             Only,
+             Month.JANUARY,
+             DayOfTheMonth(6),
+             AtWallTime(LocalTime.of(2, 0)),
+             Save(true, LocalTime.of(1, 0)),
+             Letter("D")
+        ),
+      "Rule	Eire	1996	max	-	Oct	lastSun	 1:00u	-1:00	GMT"    ->
+        Rule(
+          "Eire",
+          GivenYear(1996),
+          Maximum,
+          Month.OCTOBER,
+          LastWeekday(DayOfWeek.SUNDAY),
+          AtUniversalTime(LocalTime.of(1, 0)),
+          Save(false, LocalTime.of(1, 0)),
+          Letter("GMT")
+        )
+    )
+    rules.foreach(rule => assertEquals((ruleParser.parseOnly(rule._1)), Done("", rule._2)))
+  }
+  test("parse Link") {
     val links = List(
       "Link America/Curacao America/Aruba"                                   ->
         Link("America/Curacao", "America/Aruba"),
@@ -329,9 +323,9 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
       "Link Africa/Abidjan Africa/Sao_Tome	# São Tomé and Príncipe"          ->
         Link("Africa/Abidjan", "Africa/Sao_Tome")
     )
-    links.foreach(link => (linkParser.parseOnly(link._1)) shouldBe Done("", link._2))
+    links.foreach(link => assertEquals((linkParser.parseOnly(link._1)), Done("", link._2)))
   }
-  it should "parse single-line Zone" in {
+  test("parse single-line Zone") {
     val zones = List(
       "Zone	EST		 -5:00	-	EST"                                         ->
         Zone("EST", List(ZoneTransition(GmtOffset(-5, 0, 0), NullRule, "EST", None))),
@@ -407,9 +401,9 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
           )
         )
     )
-    zones.foreach(zone => (zoneParser.parseOnly(zone._1)) shouldBe Done("", zone._2))
+    zones.foreach(zone => assertEquals((zoneParser.parseOnly(zone._1)), Done("", zone._2)))
   }
-  it should "parse a multi-line Zone" in {
+  test("parse a multi-line Zone") {
     val zones     = List(
       """Zone Pacific/Honolulu	-10:31:26 -	LMT	1896 Jan 13 12:00
           |			-10:30	-	HST	1933 Apr 30  2:00
@@ -798,24 +792,24 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
           )
         )
     )
-    zones.foreach(zone => (zoneParserNl.parseOnly(zone._1)) shouldBe Done("", zone._2))
+    zones.foreach(zone => assertEquals((zoneParserNl.parseOnly(zone._1)), Done("", zone._2)))
     // Tests some special cases
     // The first zone has an unknown rule
     val firstRule = zones.headOption.flatMap(z => z._2.transitions.headOption.map(_.ruleId))
-    firstRule shouldBe Some(NullRule)
+    assertEquals(firstRule, Some(NullRule))
 
     // The second zone has an id
     val secondRule = zones.lift(1).flatMap(_._2.transitions.lift(1).map(_.ruleId))
-    secondRule shouldBe Some(RuleId("US"))
+    assertEquals(secondRule, Some(RuleId("US")))
 
     // The third zone has a fixed offset
     val thirdRule = zones.headOption.flatMap(_._2.transitions.lift(2).map(_.ruleId))
-    thirdRule shouldBe Some(FixedOffset(GmtOffset(1, 0, 0)))
+    assertEquals(thirdRule, Some(FixedOffset(GmtOffset(1, 0, 0))))
     // The third zone has a fixed offset
     val fifthRule = zones.lift(5).flatMap(_._2.transitions.lift(2).map(_.offset))
-    fifthRule shouldBe Some(GmtOffset(-4, -30, 0))
+    assertEquals(fifthRule, Some(GmtOffset(-4, -30, 0)))
   }
-  it should "parse contiguous Zones" in {
+  test("parse contiguous Zones") {
     val zones = List(
       """Zone America/Juneau	 15:02:19 -	LMT	1867 Oct 18
           |			 -8:57:41 -	LMT	1900 Aug 20 12:00
@@ -969,9 +963,9 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
           )
         )
     )
-    zones.foreach(zone => (many(zoneParserNl).parseOnly(zone._1)) shouldBe Done("", zone._2))
+    zones.foreach(zone => assertEquals((many(zoneParserNl).parseOnly(zone._1)), Done("", zone._2)))
   }
-  it should "parse contiguous Zones with inconsistent left padding" in {
+  test("parse contiguous Zones with inconsistent left padding") {
     val zones = List(
       """Zone Pacific/Majuro	 11:24:48 -	LMT	1901
           |			 11:00	-	+11	1914 Oct
@@ -1075,9 +1069,9 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
           )
         )
     )
-    zones.foreach(zone => (many(zoneParserNl).parseOnly(zone._1)) shouldBe Done("", zone._2))
+    zones.foreach(zone => assertEquals((many(zoneParserNl).parseOnly(zone._1)), Done("", zone._2)))
   }
-  it should "parse Zones with comments" in {
+  test("parse Zones with comments") {
     val zones = List(
       """Zone	Africa/Tripoli	0:52:44 -	LMT	1920
           |			1:00	Libya	CE%sT	1959
@@ -1268,58 +1262,70 @@ class TZDBParserSpec extends AnyFlatSpec with Matchers {
           )
         )
     )
-    zones.foreach(zone => (zoneParser.parseOnly(zone._1)) shouldBe Done("", zone._2))
+    zones.foreach(zone => assertEquals(zoneParser.parseOnly(zone._1), Done("", zone._2)))
   }
-  it should "parse a complete file" in {
+  test("parse a complete file") {
     val text = scala.io.Source
       .fromInputStream(this.getClass.getResourceAsStream("/systemv"), "UTF-8")
       .mkString
     val r    = TZDBParser.parseFile(text)
-    r should matchPattern { case Done("", _) =>
+    r match {
+      case Done("", _) => assert(true)
+      case _           => fail("parsing failure")
     }
   }
-  it should "parse all relevant files" in {
+  test("parse all relevant files") {
     TZDBParser.tzdbFiles.foreach { f =>
       val text =
         scala.io.Source.fromInputStream(this.getClass.getResourceAsStream(s"/$f"), "UTF-8").mkString
       val r    = TZDBParser.parseFile(text)
       // Checks that it ingests the whole file
-      r should matchPattern { case Done("", _) =>
+      r match {
+        case Done("", _) => assert(true)
+        case _           => fail("parsing failed")
       }
     }
   }
-  it should "parse a whole dir" in {
+  test("parse a whole dir") {
 
     val r    = new File("src/test/resources/")
     val rows = TZDBParser.parseAll(r).unsafeRunSync()
     // Check a few well-known items
-    rows.flatMap(_.select[Link]) should contain(Link("America/Port_of_Spain", "America/Anguilla"))
-    rows.flatMap(_.select[Rule]) should contain(
-      Rule(
-        "Thule",
-        GivenYear(1993),
-        GivenYear(2006),
-        Month.OCTOBER,
-        LastWeekday(DayOfWeek.SUNDAY),
-        AtWallTime(LocalTime.of(2, 0)),
-        Save(true, LocalTime.of(0, 0)),
-        Letter("S")
-      )
-    )
-    rows.flatMap(_.select[Zone]) should contain(
-      Zone(
-        "Africa/Cairo",
-        List(
-          ZoneTransition(GmtOffset(2, 5, 9),
-                         NullRule,
-                         "LMT",
-                         Some(Until(1900, Some(Month.OCTOBER), None, None))
-          ),
-          ZoneTransition(GmtOffset(2, 0, 0), RuleId("Egypt"), "EE%sT", None)
+    assert(rows.flatMap(_.select[Link]).contains(Link("America/Port_of_Spain", "America/Anguilla")))
+    assert(
+      rows
+        .flatMap(_.select[Rule])
+        .contains(
+          Rule(
+            "Thule",
+            GivenYear(1993),
+            GivenYear(2006),
+            Month.OCTOBER,
+            LastWeekday(DayOfWeek.SUNDAY),
+            AtWallTime(LocalTime.of(2, 0)),
+            Save(true, LocalTime.of(0, 0)),
+            Letter("S")
+          )
         )
-      )
     )
-    rows should not be empty
+    assert(
+      rows
+        .flatMap(_.select[Zone])
+        .contains(
+          Zone(
+            "Africa/Cairo",
+            List(
+              ZoneTransition(GmtOffset(2, 5, 9),
+                             NullRule,
+                             "LMT",
+                             Some(Until(1900, Some(Month.OCTOBER), None, None))
+              ),
+              ZoneTransition(GmtOffset(2, 0, 0), RuleId("Egypt"), "EE%sT", None)
+            )
+          )
+        )
+    )
+    assert(rows.nonEmpty)
   }
 
 }
