@@ -37,7 +37,7 @@ lazy val kuyfi: Project = project
       "org.tpolecat"           %% "atto-core"               % "0.8.0",
       "org.typelevel"          %% "cats-core"               % "2.3.0",
       "org.typelevel"          %% "cats-effect"             % "2.3.0",
-      "org.typelevel"          %% "mouse"                   % "0.25",
+      "org.typelevel"          %% "mouse"                   % "0.26",
       "com.chuusai"            %% "shapeless"               % "2.3.3",
       "com.eed3si9n"           %% "treehugger"              % "0.4.4",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.3.1",
