@@ -11,7 +11,6 @@ import java.nio.file.Files
 import java.time.format.TextStyle
 import java.time.{ DayOfWeek, LocalTime, Month }
 import java.util.Locale
-import mouse.boolean._
 import scala.jdk.CollectionConverters._
 import TZDB._
 
@@ -156,7 +155,7 @@ object TZDBParser {
       int.map(fixHourRange).map(h => (0, h._1, LocalTime.of(h._2, 0)))
 
   private def fixHourRange(h: Int): (Boolean, Int) =
-    (h >= 24, (h >= 24).fold(h - 24, h))
+    (h >= 24, if (h >= 24) h - 24 else h)
 
   val gmtOffsetParser: Parser[GmtOffset] =
     hourMinSecParserOf |
