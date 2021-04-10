@@ -6,7 +6,6 @@ import java.time.chrono.IsoChronology
 import java.time.temporal.TemporalAdjusters
 import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 import java.time.zone.{ ZoneOffsetTransition, ZoneOffsetTransitionRule, ZoneRules }
-import mouse.all._
 import shapeless._
 import shapeless.ops.coproduct.Inject
 
@@ -22,7 +21,7 @@ object TZDB {
     def noEndOfDay: At
     def timeDefinition: TimeDefinition
     def rollOver: Int
-    def adjustDateForEndOfDay(d: LocalDate): LocalDate = endOfDay.fold(d.plusDays(1), d)
+    def adjustDateForEndOfDay(d: LocalDate): LocalDate = if (endOfDay) d.plusDays(1) else d
   }
   final case class AtWallTime(time: LocalTime, endOfDay: Boolean, rollOver: Int) extends At {
     override def noEndOfDay = copy(endOfDay = false)
@@ -289,7 +288,9 @@ object TZDB {
       }
 
       val dayOfMonth =
-        on.dayOfMonthIndicator.orElse((month != Month.FEBRUARY).option(month.maxLength - 6))
+        on.dayOfMonthIndicator.orElse(
+          if (month != Month.FEBRUARY) Some(month.maxLength - 6) else None
+        )
       dayOfMonth.fold((transitionRule(-1, on.dayOfWeek.orNull, at.endOfDay), this)) { d =>
         if (at.endOfDay && !(d == 28 && (month == Month.FEBRUARY))) {
           val date = LocalDate.of(2004, month, d).plusDays(1)
