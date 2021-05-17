@@ -34,13 +34,13 @@ lazy val kuyfi: Project = project
     name := "kuyfi",
     Test / run / fork := true,
     libraryDependencies ++= Seq(
-      "org.tpolecat"           %% "atto-core"               % "0.9.4",
+      "org.tpolecat"           %% "atto-core"               % "0.9.5",
       "org.typelevel"          %% "cats-core"               % "2.6.1",
-      "org.typelevel"          %% "cats-effect"             % "2.5.1",
-      "com.chuusai"            %% "shapeless"               % "2.3.6",
+      "org.typelevel"          %% "cats-effect"             % "2.5.0",
+      "com.chuusai"            %% "shapeless"               % "2.3.7",
       "com.eed3si9n"           %% "treehugger"              % "0.4.4",
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.3",
-      "org.scalameta"          %% "munit"                   % "0.7.25" % Test
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.4",
+      "org.scalameta"          %% "munit"                   % "0.7.26" % Test
     ),
     testFrameworks += new TestFramework("munit.Framework"),
     scalacOptions ~= (_.filterNot(
