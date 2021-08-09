@@ -40,7 +40,7 @@ lazy val kuyfi: Project = project
       "com.chuusai"            %% "shapeless"               % "2.3.7",
       "com.eed3si9n"           %% "treehugger"              % "0.4.4",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.5.0",
-      "org.scalameta"          %% "munit"                   % "0.7.27" % Test
+      "org.scalameta"          %% "munit"                   % "0.7.28" % Test
     ),
     testFrameworks += new TestFramework("munit.Framework"),
     scalacOptions ~= (_.filterNot(
