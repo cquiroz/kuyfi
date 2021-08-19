@@ -255,8 +255,7 @@ object ZoneRulesBuilder {
   def calculateTransitions(rows: List[Row]): Map[Zone, ZoneRules] =
     calculateTransitionParams(rows).map { case (z, p) => (z, p.toZoneRules) }
 
-  /** Calculates all the zone rules for the rows
-    * and adds copies for the linked rules
+  /** Calculates all the zone rules for the rows and adds copies for the linked rules
     */
   def calculateTransitionsWithLinks(rows: List[Row]): Map[String, ZoneRules] = {
     val rules = calculateTransitions(rows).map(x => (x._1.name, x._2))

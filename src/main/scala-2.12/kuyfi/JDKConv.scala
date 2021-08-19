@@ -1,6 +1,6 @@
 package kuyfi
 
-import java.util.{ Map => JMap, List => JList, Set => JSet }
+import java.util.{ List => JList, Map => JMap, Set => JSet }
 import scala.collection.JavaConverters._
 
 object JDKConv {

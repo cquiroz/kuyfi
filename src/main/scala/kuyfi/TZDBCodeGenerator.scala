@@ -224,15 +224,15 @@ object TZDBCodeGenerator {
       TreeGenerator.instance(l =>
         BLOCK(
           List(
-            VAL("bso", "ZoneOffset") := l.baseStandardOffset.toTree,
-            VAL("bwo", "ZoneOffset") := l.baseWallOffset.toTree,
+            VAL("bso", "ZoneOffset")                                 := l.baseStandardOffset.toTree,
+            VAL("bwo", "ZoneOffset")                                 := l.baseWallOffset.toTree,
             VAL("standardTransitions", "List[ZoneOffsetTransition]") := LIST(
               l.standardOffsetTransitionList.map(_.toTree)
             ),
-            VAL("transitionList", "List[ZoneOffsetTransition]") := LIST(
+            VAL("transitionList", "List[ZoneOffsetTransition]")      := LIST(
               l.transitionList.map(_.toTree)
             ),
-            VAL("lastRules", "List[ZoneOffsetTransitionRule]") := LIST(l.lastRules.map(_.toTree)),
+            VAL("lastRules", "List[ZoneOffsetTransitionRule]")       := LIST(l.lastRules.map(_.toTree)),
             zoneRulesSym.DOT("of")(REF("bso"),
                                    REF("bwo"),
                                    REF("standardTransitions").POSTFIX("asJava"),
@@ -243,7 +243,7 @@ object TZDBCodeGenerator {
         )
       )
 
-    implicit val version: TreeGenerator[TzdbVersion] =
+    implicit val version: TreeGenerator[TzdbVersion]   =
       TreeGenerator.instance(v => LAZYVAL("version", TYPE_REF("String")) := LIT(v.ver))
 
     implicit var imports: ImportTreeGenerator[Imports] =
@@ -410,7 +410,7 @@ object TZDBCodeGenerator {
         )
       )
 
-    implicit val version: TreeGenerator[TzdbVersion] =
+    implicit val version: TreeGenerator[TzdbVersion]   =
       TreeGenerator.instance(v => LAZYVAL("version", TYPE_REF("String")) := LIT(v.ver))
 
     implicit var imports: ImportTreeGenerator[Imports] =
