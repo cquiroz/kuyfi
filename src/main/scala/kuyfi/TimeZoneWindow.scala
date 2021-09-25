@@ -10,21 +10,21 @@ object TimeZoneWindow {
     def windowEnd: LocalDateTime
     def timeDefinition: TimeDefinition
     def fixedSavingAmountSeconds: Option[Int]
-    def createWallOffset(savingsSecs: Int): ZoneOffset =
+    def createWallOffset(savingsSecs: Int): ZoneOffset    =
       ZoneOffset.ofTotalSeconds(standardOffset.toZoneOffset.getTotalSeconds + savingsSecs)
     def createDateTimeEpochSecond(savingsSecs: Int): Long = {
       val wallOffset = createWallOffset(savingsSecs)
       val ldt        = timeDefinition.createDateTime(windowEnd, standardOffset.toZoneOffset, wallOffset)
       ldt.toEpochSecond(wallOffset)
     }
-    def tidy(windowStartYear:         Int): TimeZoneWindow
+    def tidy(windowStartYear: Int): TimeZoneWindow
   }
 
   def ruleOrderings(f: Rule => RuleYear): scala.Ordering[Rule] =
     new scala.Ordering[Rule]() {
 
-      private val ruleOrdering = RuleYear.order.toOrdering
-      private val atOrdering   = At.order.toOrdering
+      private val ruleOrdering                    = RuleYear.order.toOrdering
+      private val atOrdering                      = At.order.toOrdering
       override def compare(x: Rule, y: Rule): Int = {
         val rulesCmp = ruleOrdering.compare(f(x), f(y))
         if (rulesCmp == 0) {
