@@ -27,7 +27,7 @@ val commonSettings: Seq[Setting[_]] = Seq(
   description        := "TZDB parser"
 )
 
-lazy val kuyfi: Project = project
+lazy val kuyfi: Project             = project
   .in(file("."))
   .settings(commonSettings: _*)
   .settings(
@@ -51,7 +51,7 @@ lazy val kuyfi: Project = project
     ))
   )
 
-lazy val docs = project
+lazy val docs                       = project
   .in(file("docs"))
   .dependsOn(kuyfi)
   .settings(commonSettings)
