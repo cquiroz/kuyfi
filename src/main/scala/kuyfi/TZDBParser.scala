@@ -34,11 +34,11 @@ object TZDBParser {
     ): Parser[C] = a.map(_.liftC[C])
   }
 
-  private val space                                              = chr(' ')
-  private val semicolon                                          = chr(':')
-  private val tab                                                = chr('\t')
-  private val nl                                                 = chr('\n')
-  private val identifier                                         = stringOf1(noneOf(" \t\n"))
+  private val space      = chr(' ')
+  private val semicolon  = chr(':')
+  private val tab        = chr('\t')
+  private val nl         = chr('\n')
+  private val identifier = stringOf1(noneOf(" \t\n"))
 
   private val whitespace: Parser[Char]          = tab | space
   private val linkSeparator: Parser[List[Char]] = many(whitespace)
@@ -154,7 +154,7 @@ object TZDBParser {
       hourMinParserLT |
       int.map(fixHourRange).map(h => (0, h._1, LocalTime.of(h._2, 0)))
 
-  private def fixHourRange(h: Int): (Boolean, Int)  =
+  private def fixHourRange(h: Int): (Boolean, Int) =
     (h >= 24, if (h >= 24) h - 24 else h)
 
   val gmtOffsetParser: Parser[GmtOffset] =
