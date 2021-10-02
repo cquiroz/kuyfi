@@ -15,7 +15,7 @@ object TZDB {
 
   /** Definition of timestamps
     */
-  sealed trait At                                                                     extends Product with Serializable {
+  sealed trait At                                                                extends Product with Serializable {
     def time: LocalTime
     def endOfDay: Boolean
     def noEndOfDay: At
@@ -23,7 +23,7 @@ object TZDB {
     def rollOver: Int
     def adjustDateForEndOfDay(d: LocalDate): LocalDate = if (endOfDay) d.plusDays(1) else d
   }
-  final case class AtWallTime(time: LocalTime, endOfDay: Boolean, rollOver: Int)      extends At                        {
+  final case class AtWallTime(time: LocalTime, endOfDay: Boolean, rollOver: Int) extends At                        {
     override def noEndOfDay = copy(endOfDay = false)
     val timeDefinition      = TimeDefinition.WALL
   }
@@ -35,7 +35,7 @@ object TZDB {
       )
   }
 
-  final case class AtStandardTime(time: LocalTime, endOfDay: Boolean, rollOver: Int)  extends At                        {
+  final case class AtStandardTime(time: LocalTime, endOfDay: Boolean, rollOver: Int) extends At {
     override def noEndOfDay = copy(endOfDay = false)
     val timeDefinition      = TimeDefinition.STANDARD
   }
@@ -44,7 +44,7 @@ object TZDB {
       this(time, time.getHour == 24 && time.getMinute == 0 && time.getSecond == 0, rollOver = 0)
   }
 
-  final case class AtUniversalTime(time: LocalTime, endOfDay: Boolean, rollOver: Int) extends At                        {
+  final case class AtUniversalTime(time: LocalTime, endOfDay: Boolean, rollOver: Int) extends At {
     override def noEndOfDay = copy(endOfDay = false)
     val timeDefinition      = TimeDefinition.UTC
   }
@@ -63,7 +63,7 @@ object TZDB {
     def toZoneOffset: ZoneOffset = ZoneOffset.ofHoursMinutesSeconds(h, m, s)
   }
 
-  object GmtOffset                                                                 {
+  object GmtOffset {
     val zero: GmtOffset = GmtOffset(0, 0, 0)
   }
 
@@ -78,14 +78,14 @@ object TZDB {
     }
   }
 
-  sealed trait ZoneRule                           extends Product with Serializable {
+  sealed trait ZoneRule extends Product with Serializable {
     def fixedOffset: Option[Int] = None
   }
 
-  case object NullRule                            extends ZoneRule                  {
+  case object NullRule                            extends ZoneRule {
     override val fixedOffset: Option[Int] = Some(0)
   }
-  final case class FixedOffset(offset: GmtOffset) extends ZoneRule                  {
+  final case class FixedOffset(offset: GmtOffset) extends ZoneRule {
     override val fixedOffset: Option[Int] = Some(
       Duration
         .ofHours(offset.h.toLong)
@@ -124,7 +124,7 @@ object TZDB {
     }
   }
 
-  sealed trait On extends Product with Serializable {
+  sealed trait On                                        extends Product with Serializable {
     def dayOfMonthIndicator: Option[Int] = None
     def dayOnYear(y: Int, m: Month): Int
     def dayOfWeek: Option[DayOfWeek] = None
@@ -146,12 +146,12 @@ object TZDB {
         case d: BeforeWeekday => d.copy(day = d.day + (1 + (hrs / 24)))
       }
   }
-  final case class DayOfTheMonth(i: Int) extends On {
+  final case class DayOfTheMonth(i: Int)                 extends On                        {
     override val dayOfMonthIndicator              = Some(i)
     override def onDay(d: Int)                    = DayOfTheMonth(d)
     override def dayOnYear(y: Int, m: Month): Int = i
   }
-  final case class LastWeekday(d: DayOfWeek) extends On {
+  final case class LastWeekday(d: DayOfWeek)             extends On                        {
     override def dayOfWeek: Option[DayOfWeek]     = Some(d)
     override def onDay(d: Int): On                = this
     override def dayOnYear(y: Int, m: Month): Int = {
@@ -159,14 +159,14 @@ object TZDB {
       LocalDate.of(y, m, lastDay).`with`(TemporalAdjusters.previousOrSame(d)).getDayOfMonth
     }
   }
-  final case class AfterWeekday(d: DayOfWeek, day: Int) extends On {
+  final case class AfterWeekday(d: DayOfWeek, day: Int)  extends On                        {
     override val dayOfMonthIndicator              = Some(day)
     override def onDay(i: Int)                    = AfterWeekday(d.plus(1), i)
     override def dayOfWeek: Option[DayOfWeek]     = Some(d)
     override def dayOnYear(y: Int, m: Month): Int =
       LocalDate.of(y, m, day).`with`(TemporalAdjusters.nextOrSame(d)).getDayOfMonth
   }
-  final case class BeforeWeekday(d: DayOfWeek, day: Int) extends On {
+  final case class BeforeWeekday(d: DayOfWeek, day: Int) extends On                        {
     override val dayOfMonthIndicator              = Some(day)
     override def onDay(i: Int)                    = BeforeWeekday(d.plus(1), i)
     override def dayOfWeek: Option[DayOfWeek]     = Some(d)
@@ -174,7 +174,7 @@ object TZDB {
       LocalDate.of(y, m, day).`with`(TemporalAdjusters.previousOrSame(d)).getDayOfMonth
   }
 
-  sealed trait RuleYear extends Product with Serializable
+  sealed trait RuleYear                 extends Product with Serializable
   final case class GivenYear(year: Int) extends RuleYear
   case object Minimum                   extends RuleYear
   case object Maximum                   extends RuleYear
