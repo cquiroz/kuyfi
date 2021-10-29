@@ -63,6 +63,6 @@ lazy val docs = project
     micrositeGithubOwner    := "cquiroz",
     micrositeGithubRepo     := "kuyfi",
     micrositeBaseUrl        := "/kuyfi",
-    //micrositeDocumentationUrl := "/scala-java-time/docs/",
+    // micrositeDocumentationUrl := "/scala-java-time/docs/",
     micrositeHighlightTheme := "color-brewer"
   )
