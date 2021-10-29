@@ -154,7 +154,7 @@ class TZDBParserSuite extends munit.FunSuite {
     assertEquals(atParser.parseOnly("2:20s").map(_.endOfDay), Done("", false))
     assertEquals(atParser.parseOnly("2:20u").map(_.endOfDay), Done("", false))
     assertEquals(atParser.parseOnly("24:00g").map(_.endOfDay), Done("", true))
-    //(atParser parseOnly "-").map(_.endOfDay) , Done("", false)
+    // (atParser parseOnly "-").map(_.endOfDay) , Done("", false)
     assertEquals(atParser.parseOnly("3z").map(_.endOfDay), Done("", false))
     assertEquals(atParser.parseOnly("0:00").map(_.endOfDay), Done("", false))
   }
