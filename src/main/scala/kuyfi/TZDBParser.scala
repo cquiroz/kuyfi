@@ -53,22 +53,20 @@ object TZDBParser {
       string("minimum") |
       string("maximum")
 
-  val fromParser: Parser[RuleYear] = {
+  val fromParser: Parser[RuleYear] =
     stringOf1(digit).map(y => GivenYear(y.toInt)) |
       string("minimum").map(_ => Minimum: RuleYear) |
       string("maximum").map(_ => Maximum: RuleYear) |
       string("max").map(_ => Maximum: RuleYear) |
       string("min").map(_ => Minimum: RuleYear)
-  }
 
-  val toParser: Parser[RuleYear] = {
+  val toParser: Parser[RuleYear] =
     stringOf1(digit).map(y => GivenYear(y.toInt)) |
       string("minimum").map(_ => Minimum: RuleYear) |
       string("maximum").map(_ => Maximum: RuleYear) |
       string("max").map(_ => Maximum: RuleYear) |
       string("min").map(_ => Minimum: RuleYear) |
       string("only").map(_ => Only: RuleYear)
-  }
 
   def parseOneOf[A](items: List[(String, A)], msg: String): Parser[A] = {
     val p = items.map { case (i, v) =>
