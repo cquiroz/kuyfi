@@ -21,7 +21,7 @@ object TimeZoneWindow {
   }
 
   def ruleOrderings(f: Rule => RuleYear): scala.Ordering[Rule] =
-    new scala.Ordering[Rule]() {
+    new scala.Ordering[Rule] {
 
       private val ruleOrdering                    = RuleYear.order.toOrdering
       private val atOrdering                      = At.order.toOrdering
