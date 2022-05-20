@@ -99,7 +99,7 @@ object TZDBParser {
     } yield LastWeekday(d)
 
   val onParser: Parser[On] =
-    (opt(space) ~> int.map(DayOfTheMonth.apply)) |
+    opt(space) ~> int.map(DayOfTheMonth.apply) |
       afterWeekdayParser |
       beforeWeekdayParser |
       lastWeekdayParser
