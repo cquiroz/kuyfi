@@ -140,10 +140,10 @@ object TZDB {
     }
     def adjustRoll(hrs: Int): On                           =
       this match {
-        case d: DayOfTheMonth => DayOfTheMonth(d.i + (1 + (hrs / 24)))
-        case d: LastWeekday   => LastWeekday(d.d.plus((1 + (hrs / 24)).toLong))
-        case d: AfterWeekday  => d.copy(day = d.day + (1 + (hrs / 24)))
-        case d: BeforeWeekday => d.copy(day = d.day + (1 + (hrs / 24)))
+        case d: DayOfTheMonth => DayOfTheMonth(d.i + (1 + hrs / 24))
+        case d: LastWeekday   => LastWeekday(d.d.plus((1 + hrs / 24).toLong))
+        case d: AfterWeekday  => d.copy(day = d.day + (1 + hrs / 24))
+        case d: BeforeWeekday => d.copy(day = d.day + (1 + hrs / 24))
       }
   }
   final case class DayOfTheMonth(i: Int)                 extends On                        {
@@ -292,7 +292,7 @@ object TZDB {
           if (month != Month.FEBRUARY) Some(month.maxLength - 6) else None
         )
       dayOfMonth.fold((transitionRule(-1, on.dayOfWeek.orNull, at.endOfDay), this)) { d =>
-        if (at.endOfDay && !(d == 28 && (month == Month.FEBRUARY))) {
+        if (at.endOfDay && !(d == 28 && month == Month.FEBRUARY)) {
           val date = LocalDate.of(2004, month, d).plusDays(1)
           (transitionRule(date.getDayOfMonth, on.dayOfWeek.map(_.plus(1)).orNull, endOfDay = false),
            copy(on = on.onDay(date.getDayOfMonth), month = date.getMonth, at = at.noEndOfDay)

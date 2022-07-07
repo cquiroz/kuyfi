@@ -11,69 +11,69 @@ import TZDBParser._
 
 class TZDBParserSuite extends munit.FunSuite {
   test("parse from maximum") {
-    assertEquals((fromParser.parseOnly("maximum")), Done("", Maximum))
+    assertEquals(fromParser.parseOnly("maximum"), Done("", Maximum))
   }
   test("parse from minimum") {
-    assertEquals((fromParser.parseOnly("minimum")), Done("", Minimum))
+    assertEquals(fromParser.parseOnly("minimum"), Done("", Minimum))
   }
   test("parse with a date") {
-    assertEquals((fromParser.parseOnly("1974")), Done("", GivenYear(1974)))
+    assertEquals(fromParser.parseOnly("1974"), Done("", GivenYear(1974)))
   }
 
   test("parse to maximum") {
-    assertEquals((toParser.parseOnly("maximum")), Done("", Maximum))
+    assertEquals(toParser.parseOnly("maximum"), Done("", Maximum))
   }
   test("parse to minimum") {
-    assertEquals((toParser.parseOnly("minimum")), Done("", Minimum))
+    assertEquals(toParser.parseOnly("minimum"), Done("", Minimum))
   }
   test("parse to only") {
-    assertEquals((toParser.parseOnly("only")), Done("", Only))
+    assertEquals(toParser.parseOnly("only"), Done("", Only))
   }
   test("parse with a date") {
-    assertEquals((toParser.parseOnly("1974")), Done("", GivenYear(1974)))
+    assertEquals(toParser.parseOnly("1974"), Done("", GivenYear(1974)))
   }
 
   test("parse in June") {
-    assertEquals((monthParser.parseOnly("Jun")), Done("", Month.JUNE))
+    assertEquals(monthParser.parseOnly("Jun"), Done("", Month.JUNE))
   }
   test("parse in December") {
-    assertEquals((monthParser.parseOnly("Dec")), Done("", Month.DECEMBER))
+    assertEquals(monthParser.parseOnly("Dec"), Done("", Month.DECEMBER))
   }
   test("parse non valid") {
-    assertEquals((monthParser.parseOnly("abc")), Fail("abc", Nil, "unknown month"))
+    assertEquals(monthParser.parseOnly("abc"), Fail("abc", Nil, "unknown month"))
   }
 
   test("parse Mon") {
-    assertEquals((dayParser.parseOnly("Mon")), Done("", DayOfWeek.MONDAY))
+    assertEquals(dayParser.parseOnly("Mon"), Done("", DayOfWeek.MONDAY))
   }
   test("parse in Sun") {
-    assertEquals((dayParser.parseOnly("Sun")), Done("", DayOfWeek.SUNDAY))
+    assertEquals(dayParser.parseOnly("Sun"), Done("", DayOfWeek.SUNDAY))
   }
   test("parse non valid") {
-    assertEquals((dayParser.parseOnly("abc")), Fail("abc", Nil, "unknown day"))
+    assertEquals(dayParser.parseOnly("abc"), Fail("abc", Nil, "unknown day"))
   }
 
   test("sun after the eighth") {
-    assertEquals((afterWeekdayParser.parseOnly("Sun>=8")),
+    assertEquals(afterWeekdayParser.parseOnly("Sun>=8"),
                  Done("", AfterWeekday(DayOfWeek.SUNDAY, 8))
     )
   }
 
   test("sun before the 25th") {
-    assertEquals((beforeWeekdayParser.parseOnly("Sun<=25")),
+    assertEquals(beforeWeekdayParser.parseOnly("Sun<=25"),
                  Done("", BeforeWeekday(DayOfWeek.SUNDAY, 25))
     )
   }
 
   test("last sunday") {
-    assertEquals((lastWeekdayParser.parseOnly("lastSun")), Done("", LastWeekday(DayOfWeek.SUNDAY)))
+    assertEquals(lastWeekdayParser.parseOnly("lastSun"), Done("", LastWeekday(DayOfWeek.SUNDAY)))
   }
   test("last monday") {
-    assertEquals((lastWeekdayParser.parseOnly("lastMon")), Done("", LastWeekday(DayOfWeek.MONDAY)))
+    assertEquals(lastWeekdayParser.parseOnly("lastMon"), Done("", LastWeekday(DayOfWeek.MONDAY)))
   }
 
   test("fixed day") {
-    assertEquals((onParser.parseOnly("24")), Done("", DayOfTheMonth(24)))
+    assertEquals(onParser.parseOnly("24"), Done("", DayOfTheMonth(24)))
   }
   test("calculate dayOfMontIndicator for fixed day") {
     assertEquals(onParser.parseOnly("24").map(_.dayOfMonthIndicator), Done("", Some(24)))
@@ -89,65 +89,61 @@ class TZDBParserSuite extends munit.FunSuite {
   }
 
   test("parse single number time") {
-    assertEquals((atParser.parseOnly("2")), Done("", AtWallTime(LocalTime.of(2, 0))))
+    assertEquals(atParser.parseOnly("2"), Done("", AtWallTime(LocalTime.of(2, 0))))
   }
   test("parse wall time two number time") {
-    assertEquals((atParser.parseOnly("16")), Done("", AtWallTime(LocalTime.of(16, 0))))
+    assertEquals(atParser.parseOnly("16"), Done("", AtWallTime(LocalTime.of(16, 0))))
   }
   test("parse wall time h:m time") {
-    assertEquals((atParser.parseOnly("2:00")), Done("", AtWallTime(LocalTime.of(2, 0))))
+    assertEquals(atParser.parseOnly("2:00"), Done("", AtWallTime(LocalTime.of(2, 0))))
   }
   test("parse wall time h:m 24h time") {
-    assertEquals((atParser.parseOnly("15:00")), Done("", AtWallTime(LocalTime.of(15, 0))))
+    assertEquals(atParser.parseOnly("15:00"), Done("", AtWallTime(LocalTime.of(15, 0))))
   }
   test("parse wall time h:m:s time") {
-    assertEquals((atParser.parseOnly("1:28:14")), Done("", AtWallTime(LocalTime.of(1, 28, 14))))
+    assertEquals(atParser.parseOnly("1:28:14"), Done("", AtWallTime(LocalTime.of(1, 28, 14))))
   }
   test("parse explicit wall time two number time") {
-    assertEquals((atParser.parseOnly("16w")), Done("", AtWallTime(LocalTime.of(16, 0))))
+    assertEquals(atParser.parseOnly("16w"), Done("", AtWallTime(LocalTime.of(16, 0))))
   }
   test("parse explicit wall time h:m time") {
-    assertEquals((atParser.parseOnly("2:00w")), Done("", AtWallTime(LocalTime.of(2, 0))))
+    assertEquals(atParser.parseOnly("2:00w"), Done("", AtWallTime(LocalTime.of(2, 0))))
   }
   test("parse explicit wall time h:m 24h time") {
-    assertEquals((atParser.parseOnly("15:00w")), Done("", AtWallTime(LocalTime.of(15, 0))))
+    assertEquals(atParser.parseOnly("15:00w"), Done("", AtWallTime(LocalTime.of(15, 0))))
   }
   test("parse explicit wall time h:m:s time") {
-    assertEquals((atParser.parseOnly("1:28:14w")), Done("", AtWallTime(LocalTime.of(1, 28, 14))))
+    assertEquals(atParser.parseOnly("1:28:14w"), Done("", AtWallTime(LocalTime.of(1, 28, 14))))
   }
   test("parse explicit standard time two number time") {
-    assertEquals((atParser.parseOnly("16s")), Done("", AtStandardTime(LocalTime.of(16, 0))))
+    assertEquals(atParser.parseOnly("16s"), Done("", AtStandardTime(LocalTime.of(16, 0))))
   }
   test("parse explicit standard time h:m time") {
-    assertEquals((atParser.parseOnly("2:00s")), Done("", AtStandardTime(LocalTime.of(2, 0))))
+    assertEquals(atParser.parseOnly("2:00s"), Done("", AtStandardTime(LocalTime.of(2, 0))))
   }
   test("parse explicit standard time h:m 24h time") {
-    assertEquals((atParser.parseOnly("15:00s")), Done("", AtStandardTime(LocalTime.of(15, 0))))
+    assertEquals(atParser.parseOnly("15:00s"), Done("", AtStandardTime(LocalTime.of(15, 0))))
   }
   test("parse explicit standard time h:m:s time") {
-    assertEquals((atParser.parseOnly("1:28:14s")),
-                 Done("", AtStandardTime(LocalTime.of(1, 28, 14)))
-    )
+    assertEquals(atParser.parseOnly("1:28:14s"), Done("", AtStandardTime(LocalTime.of(1, 28, 14))))
   }
   test("parse explicit universal time two number time") {
-    assertEquals((atParser.parseOnly("16u")), Done("", AtUniversalTime(LocalTime.of(16, 0))))
+    assertEquals(atParser.parseOnly("16u"), Done("", AtUniversalTime(LocalTime.of(16, 0))))
   }
   test("parse explicit universal time h:m time") {
-    assertEquals((atParser.parseOnly("2:00u")), Done("", AtUniversalTime(LocalTime.of(2, 0))))
+    assertEquals(atParser.parseOnly("2:00u"), Done("", AtUniversalTime(LocalTime.of(2, 0))))
   }
   test("parse explicit universal time h:m 24h time") {
-    assertEquals((atParser.parseOnly("15:00u")), Done("", AtUniversalTime(LocalTime.of(15, 0))))
+    assertEquals(atParser.parseOnly("15:00u"), Done("", AtUniversalTime(LocalTime.of(15, 0))))
   }
   test("parse explicit gmt time h:m 24h time") {
-    assertEquals((atParser.parseOnly("15:00g")), Done("", AtUniversalTime(LocalTime.of(15, 0))))
+    assertEquals(atParser.parseOnly("15:00g"), Done("", AtUniversalTime(LocalTime.of(15, 0))))
   }
   test("parse explicit z time h:m 24h time") {
-    assertEquals((atParser.parseOnly("15:00z")), Done("", AtUniversalTime(LocalTime.of(15, 0))))
+    assertEquals(atParser.parseOnly("15:00z"), Done("", AtUniversalTime(LocalTime.of(15, 0))))
   }
   test("parse explicit universal time h:m:s time") {
-    assertEquals((atParser.parseOnly("1:28:14u")),
-                 Done("", AtUniversalTime(LocalTime.of(1, 28, 14)))
-    )
+    assertEquals(atParser.parseOnly("1:28:14u"), Done("", AtUniversalTime(LocalTime.of(1, 28, 14))))
   }
   test("calculate if at the end of day") {
     assertEquals(atParser.parseOnly("2:20").map(_.endOfDay), Done("", false))
@@ -306,7 +302,7 @@ class TZDBParserSuite extends munit.FunSuite {
           Letter("GMT")
         )
     )
-    rules.foreach(rule => assertEquals((ruleParser.parseOnly(rule._1)), Done("", rule._2)))
+    rules.foreach(rule => assertEquals(ruleParser.parseOnly(rule._1), Done("", rule._2)))
   }
   test("parse Link") {
     val links = List(
@@ -323,7 +319,7 @@ class TZDBParserSuite extends munit.FunSuite {
       "Link Africa/Abidjan Africa/Sao_Tome	# São Tomé and Príncipe"          ->
         Link("Africa/Abidjan", "Africa/Sao_Tome")
     )
-    links.foreach(link => assertEquals((linkParser.parseOnly(link._1)), Done("", link._2)))
+    links.foreach(link => assertEquals(linkParser.parseOnly(link._1), Done("", link._2)))
   }
   test("parse single-line Zone") {
     val zones = List(
@@ -401,7 +397,7 @@ class TZDBParserSuite extends munit.FunSuite {
           )
         )
     )
-    zones.foreach(zone => assertEquals((zoneParser.parseOnly(zone._1)), Done("", zone._2)))
+    zones.foreach(zone => assertEquals(zoneParser.parseOnly(zone._1), Done("", zone._2)))
   }
   test("parse a multi-line Zone") {
     val zones     = List(
@@ -792,7 +788,7 @@ class TZDBParserSuite extends munit.FunSuite {
           )
         )
     )
-    zones.foreach(zone => assertEquals((zoneParserNl.parseOnly(zone._1)), Done("", zone._2)))
+    zones.foreach(zone => assertEquals(zoneParserNl.parseOnly(zone._1), Done("", zone._2)))
     // Tests some special cases
     // The first zone has an unknown rule
     val firstRule = zones.headOption.flatMap(z => z._2.transitions.headOption.map(_.ruleId))
@@ -963,7 +959,7 @@ class TZDBParserSuite extends munit.FunSuite {
           )
         )
     )
-    zones.foreach(zone => assertEquals((many(zoneParserNl).parseOnly(zone._1)), Done("", zone._2)))
+    zones.foreach(zone => assertEquals(many(zoneParserNl).parseOnly(zone._1), Done("", zone._2)))
   }
   test("parse contiguous Zones with inconsistent left padding") {
     val zones = List(
@@ -1069,7 +1065,7 @@ class TZDBParserSuite extends munit.FunSuite {
           )
         )
     )
-    zones.foreach(zone => assertEquals((many(zoneParserNl).parseOnly(zone._1)), Done("", zone._2)))
+    zones.foreach(zone => assertEquals(many(zoneParserNl).parseOnly(zone._1), Done("", zone._2)))
   }
   test("parse Zones with comments") {
     val zones = List(
