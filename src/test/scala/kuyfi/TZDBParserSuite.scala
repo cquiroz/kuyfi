@@ -5,6 +5,7 @@ import java.time.{ DayOfWeek, LocalTime, Month }
 import atto._
 import Atto._
 import atto.ParseResult.{ Done, Fail }
+import cats.effect.unsafe.implicits._
 import java.io.File
 import TZDB._
 import TZDBParser._

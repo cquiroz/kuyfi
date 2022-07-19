@@ -3,6 +3,7 @@ package kuyfi
 import java.io.File
 import java.time.zone.{ ZoneRules, ZoneRulesProvider }
 import kuyfi.TZDB.Zone
+import cats.effect.unsafe.implicits._
 
 class ZoneRulesBuilderSuite extends munit.FunSuite {
 
