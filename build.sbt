@@ -39,7 +39,7 @@ lazy val kuyfi: Project = project
       "org.typelevel"          %% "cats-effect"             % "3.3.14",
       "com.chuusai"            %% "shapeless"               % "2.3.9",
       "com.eed3si9n"           %% "treehugger"              % "0.4.4",
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.0",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
       "org.scalameta"          %% "munit"                   % "0.7.29" % Test
     ),
     testFrameworks += new TestFramework("munit.Framework"),
