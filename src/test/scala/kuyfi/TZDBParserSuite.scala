@@ -11,6 +11,17 @@ import TZDB._
 import TZDBParser._
 
 class TZDBParserSuite extends munit.FunSuite {
+  test("parse comment") {
+    assertEquals(commentParser.parseOnly("# tzdb data for Africa and environs"),
+                 Done("", Comment(" tzdb data for Africa and environs"))
+    )
+  }
+  test("parse whitespace-prefixed comment") {
+    assertEquals(commentParser.parseOnly("		#STDOFF	2:05:08.9"),
+                 Done("", Comment("STDOFF	2:05:08.9"))
+    )
+  }
+
   test("parse from maximum") {
     assertEquals(fromParser.parseOnly("maximum"), Done("", Maximum))
   }
