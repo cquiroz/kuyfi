@@ -147,28 +147,28 @@ object TZDB {
       }
   }
   final case class DayOfTheMonth(i: Int)                 extends On                        {
-    override val dayOfMonthIndicator              = Some(i)
-    override def onDay(d: Int)                    = DayOfTheMonth(d)
+    override val dayOfMonthIndicator = Some(i)
+    override def onDay(d:     Int) = DayOfTheMonth(d)
     override def dayOnYear(y: Int, m: Month): Int = i
   }
   final case class LastWeekday(d: DayOfWeek)             extends On                        {
-    override def dayOfWeek: Option[DayOfWeek]     = Some(d)
-    override def onDay(d: Int): On                = this
+    override def dayOfWeek: Option[DayOfWeek] = Some(d)
+    override def onDay(d: Int): On = this
     override def dayOnYear(y: Int, m: Month): Int = {
       val lastDay = m.length(Year.isLeap(y.toLong))
       LocalDate.of(y, m, lastDay).`with`(TemporalAdjusters.previousOrSame(d)).getDayOfMonth
     }
   }
   final case class AfterWeekday(d: DayOfWeek, day: Int)  extends On                        {
-    override val dayOfMonthIndicator              = Some(day)
-    override def onDay(i: Int)                    = AfterWeekday(d.plus(1), i)
+    override val dayOfMonthIndicator = Some(day)
+    override def onDay(i: Int) = AfterWeekday(d.plus(1), i)
     override def dayOfWeek: Option[DayOfWeek]     = Some(d)
     override def dayOnYear(y: Int, m: Month): Int =
       LocalDate.of(y, m, day).`with`(TemporalAdjusters.nextOrSame(d)).getDayOfMonth
   }
   final case class BeforeWeekday(d: DayOfWeek, day: Int) extends On                        {
-    override val dayOfMonthIndicator              = Some(day)
-    override def onDay(i: Int)                    = BeforeWeekday(d.plus(1), i)
+    override val dayOfMonthIndicator = Some(day)
+    override def onDay(i: Int) = BeforeWeekday(d.plus(1), i)
     override def dayOfWeek: Option[DayOfWeek]     = Some(d)
     override def dayOnYear(y: Int, m: Month): Int =
       LocalDate.of(y, m, day).`with`(TemporalAdjusters.previousOrSame(d)).getDayOfMonth
