@@ -209,7 +209,7 @@ object TZDBParser {
     } yield Until(year, month, on, at)
 
   val commentParser: Parser[Comment] =
-    chr('#') ~> toEndLine.map(Comment.apply)
+    many(whitespace) ~> chr('#') ~> toEndLine.map(Comment.apply)
 
   val zoneRuleParser: Parser[ZoneRule] =
     gmtOffsetParser.map(d => FixedOffset(d): ZoneRule) | (chr('-') <~ opt(whitespace)).map(_ =>
