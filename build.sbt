@@ -23,7 +23,7 @@ inThisBuild(
 val commonSettings: Seq[Setting[_]] = Seq(
   organization       := "io.github.cquiroz",
   scalaVersion       := "2.13.3",
-  crossScalaVersions := Seq("2.12.19", "2.13.12"),
+  crossScalaVersions := Seq("2.12.19", "2.13.13"),
   description        := "TZDB parser"
 )
 
