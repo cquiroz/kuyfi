@@ -255,11 +255,11 @@ object TZDBCodeGenerator {
   }
 
   object OptimizedTreeGenerator {
-    def zoneOffsetSafeName(zo: Int): String = s"zo_${if (zo < 0) s"_${-zo}" else zo.toString}"
+    def zoneOffsetSafeName(zo: Int): String                      = s"zo_${if (zo < 0) s"_${-zo}" else zo.toString}"
     def zoneRuleSafeName(zo: ZoneOffsetTransitionParams): String =
       s"zot_${if (zo.hashCode < 0) s"_${-zo.hashCode}" else zo.hashCode}"
 
-    val JsListClass = definitions.getClass("scala.scalajs.js.Array")
+    val JsListClass                  = definitions.getClass("scala.scalajs.js.Array")
     def TYPE_JSLIST(typ: Type): Type = JsListClass.TYPE_OF(typ)
 
     def JSLIST(typ: Type, xs: Iterable[Tree]): Tree = TYPE_JSLIST(typ).APPLY(xs)
