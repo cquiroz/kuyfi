@@ -23,7 +23,7 @@ inThisBuild(
 val commonSettings: Seq[Setting[_]] = Seq(
   organization       := "io.github.cquiroz",
   scalaVersion       := "2.13.3",
-  crossScalaVersions := Seq("2.12.19", "2.13.14"),
+  crossScalaVersions := Seq("2.12.20", "2.13.14"),
   description        := "TZDB parser"
 )
 
@@ -35,7 +35,7 @@ lazy val kuyfi: Project = project
     Test / run / fork := true,
     libraryDependencies ++= Seq(
       "org.tpolecat"           %% "atto-core"               % "0.9.5",
-      "org.typelevel"          %% "cats-core"               % "2.10.0",
+      "org.typelevel"          %% "cats-core"               % "2.12.0",
       "org.typelevel"          %% "cats-effect"             % "3.5.4",
       "com.chuusai"            %% "shapeless"               % "2.3.12",
       "com.eed3si9n"           %% "treehugger"              % "0.4.4",
