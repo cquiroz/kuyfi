@@ -1245,16 +1245,17 @@ class TZDBParserSuite extends munit.FunSuite {
                              )
                            )
             ),
-            ZoneTransition(GmtOffset(2, 0, 0),
-                           FixedOffset(GmtOffset(1, 0, 0)),
-                           "SAST",
-                           Some(
-                             Until(1943,
-                                   Some(Month.MARCH),
-                                   Some(DayOfTheMonth(21)),
-                                   Some(AtWallTime(LocalTime.of(2, 0)))
-                             )
-                           )
+            ZoneTransition(
+              GmtOffset(2, 0, 0),
+              FixedOffset(GmtOffset(1, 0, 0)),
+              "SAST",
+              Some(
+                Until(1943,
+                      Some(Month.MARCH),
+                      Some(DayOfTheMonth(21)),
+                      Some(AtWallTime(LocalTime.of(2, 0)))
+                )
+              )
             ),
             ZoneTransition(GmtOffset(2, 0, 0),
                            NullRule,
