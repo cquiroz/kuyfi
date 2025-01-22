@@ -35,7 +35,7 @@ lazy val kuyfi: Project = project
     Test / run / fork := true,
     libraryDependencies ++= Seq(
       "org.tpolecat"           %% "atto-core"               % "0.9.5",
-      "org.typelevel"          %% "cats-core"               % "2.12.0",
+      "org.typelevel"          %% "cats-core"               % "2.13.0",
       "org.typelevel"          %% "cats-effect"             % "3.5.7",
       "com.chuusai"            %% "shapeless"               % "2.3.12",
       "com.eed3si9n"           %% "treehugger"              % "0.4.4",
