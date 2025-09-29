@@ -3,7 +3,6 @@ package kuyfi
 import atto._, Atto.{ char => chr, _ }
 import atto.ParseResult.{ Done, Fail }
 import cats._
-import cats.effect._
 import cats.syntax.all._
 import java.io.File
 import java.nio.charset.StandardCharsets
@@ -278,49 +277,45 @@ object TZDBParser {
 
   /** Parse the version
     */
-  def parseVersion(dir: File): IO[Option[TzdbVersion]] =
-    IO {
-      dir match {
-        case x if x.isDirectory =>
-          val files = x.list
+  def parseVersion(dir: File): Option[TzdbVersion] =
+    dir match {
+      case x if x.isDirectory =>
+        val files = x.list
+        files
+          .filter(_ === "version")
+          .map(f =>
+            Files
+              .readAllLines(new File(dir, f).toPath, StandardCharsets.UTF_8)
+              .asScala
+              .mkString("\n")
+          )
+          .map(TzdbVersion.apply)
+          .toList
+          .headOption
+      case _                  => None
+    }
+
+  /** Entry point. Takes a dir with the TZDB files and parses them into Rows
+    */
+  def parseAll(dir: File): List[Row] =
+    dir match {
+      case x if x.isDirectory =>
+        val files  = x.list
+        val parsed =
           files
-            .filter(_ === "version")
+            .filter(f => tzdbFiles.contains(f))
             .map(f =>
               Files
                 .readAllLines(new File(dir, f).toPath, StandardCharsets.UTF_8)
                 .asScala
                 .mkString("\n")
             )
-            .map(TzdbVersion.apply)
-            .toList
-            .headOption
-        case _                  => None
-      }
-    }
-
-  /** Entry point. Takes a dir with the TZDB files and parses them into Rows
-    */
-  def parseAll(dir: File): IO[List[Row]] =
-    IO {
-      dir match {
-        case x if x.isDirectory =>
-          val files  = x.list
-          val parsed =
-            files
-              .filter(f => tzdbFiles.contains(f))
-              .map(f =>
-                Files
-                  .readAllLines(new File(dir, f).toPath, StandardCharsets.UTF_8)
-                  .asScala
-                  .mkString("\n")
-              )
-              .map(parseFile)
-          val rows   = parsed.toList.combineAll match {
-            case Done(_, v) => v
-            case _          => Nil
-          }
-          rows
-        case _                  => Nil
-      }
+            .map(parseFile)
+        val rows   = parsed.toList.combineAll match {
+          case Done(_, v) => v
+          case _          => Nil
+        }
+        rows
+      case _                  => Nil
     }
 }

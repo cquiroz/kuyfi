@@ -12,7 +12,7 @@ jobs:
       - name: Set up JDK
         uses: olafurpg/setup-scala@v14
         with:
-          java-version: adopt@1.11.0-9
+          java-version: temurin@17
       - name: Checking your code format
         run: sbt scalafmtCheckAll
       - name: Run tests

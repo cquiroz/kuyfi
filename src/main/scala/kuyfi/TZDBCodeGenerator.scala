@@ -1,6 +1,4 @@
 package kuyfi
-
-import cats.effect._
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -478,19 +476,17 @@ object TZDBCodeGenerator {
     genStdList:     TreeGenerator[List[(Zone, StandardRulesParams)]],
     genLinks:       TreeGenerator[List[Link]],
     genImports:     ImportTreeGenerator[Imports]
-  ): IO[File] =
-    for {
-      ver  <- TZDBParser.parseVersion(dir)
-      rows <- TZDBParser.parseAll(dir)
-      tree <- IO(
-                exportTzdb(ver.getOrElse(DefaultTzdbVersion),
-                           zonePackage,
-                           importsPackage,
-                           rows,
-                           zoneFilter
-                )
-              )
-      _    <- IO(Files.write(to.toPath, treeToString(tree).getBytes(StandardCharsets.UTF_8)))
-    } yield to
+  ): File = {
+    val ver  = TZDBParser.parseVersion(dir)
+    val rows = TZDBParser.parseAll(dir)
+    val tree = exportTzdb(ver.getOrElse(DefaultTzdbVersion),
+                          zonePackage,
+                          importsPackage,
+                          rows,
+                          zoneFilter
+                 )
+    Files.write(to.toPath, treeToString(tree).getBytes(StandardCharsets.UTF_8))
+    to
+  }
 
 }
