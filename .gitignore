@@ -19,3 +19,6 @@ project/metals.sbt
 .idea
 .metals/
 .bloop/
+.bsp/
+.direnv/
+.project/project/

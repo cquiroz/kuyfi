@@ -5,7 +5,6 @@ import java.time.{ DayOfWeek, LocalTime, Month }
 import atto._
 import Atto._
 import atto.ParseResult.{ Done, Fail }
-import cats.effect.unsafe.implicits._
 import java.io.File
 import TZDB._
 import TZDBParser._
@@ -1298,9 +1297,9 @@ class TZDBParserSuite extends munit.FunSuite {
   test("parse a whole dir") {
 
     val r    = new File("src/test/resources/")
-    val rows = TZDBParser.parseAll(r).unsafeRunSync()
+    val rows = TZDBParser.parseAll(r)
     // Check a few well-known items
-    assert(rows.flatMap(_.select[Link]).contains(Link("America/Port_of_Spain", "America/Anguilla")))
+    assert(rows.flatMap(_.select[Link]).contains(Link("America/Puerto_Rico", "America/Anguilla")))
     assert(
       rows
         .flatMap(_.select[Rule])
