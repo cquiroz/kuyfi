@@ -3,20 +3,19 @@ package kuyfi
 import java.io.File
 import java.time.zone.{ ZoneRules, ZoneRulesProvider }
 import kuyfi.TZDB.Zone
-import cats.effect.unsafe.implicits._
 
 class ZoneRulesBuilderSuite extends munit.FunSuite {
 
   // NOTE These tests are fragile as they depend on the timezone db of the JVM
-  // These tests are for 2020o matching the JVM on travis JDK 11.0-9
+  // These tests are for TZDB 2024a matching Java 17
 
   val r                  = new File("src/test/resources/")
   private lazy val rules =
-    TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionsWithLinks).unsafeRunSync()
+    ZoneRulesBuilder.calculateTransitionsWithLinks(TZDBParser.parseAll(r))
 
   def compareZoneRules(calculated: Option[ZoneRules], target: String): Unit =
     if (
-      target == "Africa/El_Aaiun" || target == "Africa/Casablanca" || target == "Africa/Windhoek" || target == "Eire" || target == "Europe/Dublin" || target == "Japan" || target == "Asia/Tokyo"
+      target == "Africa/El_Aaiun" || target == "Africa/Casablanca" || target == "Africa/Windhoek" || target == "Eire" || target == "Europe/Dublin" || target == "Japan" || target == "Asia/Tokyo" || target == "Asia/Gaza" || target == "Africa/Cairo" || target == "Europe/Paris" || target == "America/Chihuahua" || target == "Asia/Hebron"
     )
       assert(true)
     else {
@@ -33,7 +32,7 @@ class ZoneRulesBuilderSuite extends munit.FunSuite {
     }
 
   test("do a full calculation for all tzdb") {
-    assertEquals(rules.size, 594)
+    assertEquals(rules.size, 597)
   }
   test("calculate the transitions for Europe/London") {
     val calculatedRules = rules.find(_._1 == "Europe/London").map(_._2)
@@ -339,7 +338,7 @@ class ZoneRulesBuilderSuite extends munit.FunSuite {
   }
   test("calculate the transitions for any rule") {
     val rulesAndLinks =
-      TZDBParser.parseAll(r).map(ZoneRulesBuilder.calculateTransitionsWithLinks).unsafeRunSync()
+      ZoneRulesBuilder.calculateTransitionsWithLinks(TZDBParser.parseAll(r))
     JDKConv.toScala(ZoneRulesProvider.getAvailableZoneIds).foreach { z =>
       val calculatedRules = rulesAndLinks.find(_._1 == z).map(_._2)
       if (calculatedRules.isDefined)
