@@ -2,14 +2,43 @@ package kuyfi
 
 import java.time.{ DayOfWeek, LocalTime, Month }
 
-import atto._
-import Atto._
-import atto.ParseResult.{ Done, Fail }
+import cats.parse.{ Parser, Parser0 }
 import java.io.File
 import TZDB._
 import TZDBParser._
 
 class TZDBParserSuite extends munit.FunSuite {
+  // Helper to convert cats-parse result to atto-style Done/Fail for test compatibility
+  sealed trait ParseResult[+A] {
+    def map[B](f: A => B): ParseResult[B] = this match {
+      case Done(r, v) => Done(r, f(v))
+      case f: Fail    => f
+    }
+    def isSuccess: Boolean                = this match {
+      case _: Done[_] => true
+      case _: Fail    => false
+    }
+    def isFailure: Boolean                = !isSuccess
+  }
+  case class Done[A](remaining: String, value: A) extends ParseResult[A]
+  case class Fail(input: String, stack: List[String], message: String) extends ParseResult[Nothing]
+
+  implicit class ParserTestOps[A](parser: Parser[A]) {
+    def parseOnly(input: String): ParseResult[A] =
+      parser.parseAll(input) match {
+        case Right(value) => Done("", value)
+        case Left(error)  => Fail(input, Nil, error.toString)
+      }
+  }
+
+  implicit class Parser0TestOps[A](parser: Parser0[A]) {
+    def parseOnly(input: String): ParseResult[A] =
+      parser.parseAll(input) match {
+        case Right(value) => Done("", value)
+        case Left(error)  => Fail(input, Nil, error.toString)
+      }
+  }
+
   test("parse comment") {
     assertEquals(commentParser.parseOnly("# tzdb data for Africa and environs"),
                  Done("", Comment(" tzdb data for Africa and environs"))
@@ -51,7 +80,7 @@ class TZDBParserSuite extends munit.FunSuite {
     assertEquals(monthParser.parseOnly("Dec"), Done("", Month.DECEMBER))
   }
   test("parse non valid") {
-    assertEquals(monthParser.parseOnly("abc"), Fail("abc", Nil, "unknown month"))
+    assert(monthParser.parseOnly("abc").isFailure)
   }
 
   test("parse Mon") {
@@ -61,7 +90,7 @@ class TZDBParserSuite extends munit.FunSuite {
     assertEquals(dayParser.parseOnly("Sun"), Done("", DayOfWeek.SUNDAY))
   }
   test("parse non valid") {
-    assertEquals(dayParser.parseOnly("abc"), Fail("abc", Nil, "unknown day"))
+    assert(dayParser.parseOnly("abc").isFailure)
   }
 
   test("sun after the eighth") {
@@ -970,7 +999,7 @@ class TZDBParserSuite extends munit.FunSuite {
           )
         )
     )
-    zones.foreach(zone => assertEquals(many(zoneParserNl).parseOnly(zone._1), Done("", zone._2)))
+    zones.foreach(zone => assertEquals(zoneParserNl.rep0.parseOnly(zone._1), Done("", zone._2)))
   }
   test("parse contiguous Zones with inconsistent left padding") {
     val zones = List(
@@ -1076,7 +1105,7 @@ class TZDBParserSuite extends munit.FunSuite {
           )
         )
     )
-    zones.foreach(zone => assertEquals(many(zoneParserNl).parseOnly(zone._1), Done("", zone._2)))
+    zones.foreach(zone => assertEquals(zoneParserNl.rep0.parseOnly(zone._1), Done("", zone._2)))
   }
   test("parse Zones with comments") {
     val zones = List(
@@ -1278,8 +1307,8 @@ class TZDBParserSuite extends munit.FunSuite {
       .mkString
     val r    = TZDBParser.parseFile(text)
     r match {
-      case Done("", _) => assert(true)
-      case _           => fail("parsing failure")
+      case Right(_) => assert(true)
+      case _        => fail("parsing failure")
     }
   }
   test("parse all relevant files") {
@@ -1289,8 +1318,8 @@ class TZDBParserSuite extends munit.FunSuite {
       val r    = TZDBParser.parseFile(text)
       // Checks that it ingests the whole file
       r match {
-        case Done("", _) => assert(true)
-        case _           => fail("parsing failed")
+        case Right(_) => assert(true)
+        case Left(e)  => fail(s"parsing failed for file $f: $e")
       }
     }
   }
