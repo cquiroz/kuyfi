@@ -240,7 +240,7 @@ class ZoneRulesBuilderSuite extends munit.FunSuite {
       .mkString
 
     val parsedZoneRules: Option[Map[Zone, ZoneRules]] =
-      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).toOption
     assertEquals(parsedZoneRules.map(_.size), Some(1))
 
     val calculatedLondonRules =
@@ -253,7 +253,7 @@ class ZoneRulesBuilderSuite extends munit.FunSuite {
       .mkString
 
     val parsedZoneRules: Option[Map[Zone, ZoneRules]] =
-      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).toOption
     assertEquals(parsedZoneRules.map(_.size), Some(1))
     val calculatedKathmanduRules                      =
       parsedZoneRules.flatMap(_.find(_._1.name == "Asia/Kathmandu")).map(_._2)
@@ -265,7 +265,7 @@ class ZoneRulesBuilderSuite extends munit.FunSuite {
       .mkString
 
     val parsedZoneRules: Option[Map[Zone, ZoneRules]] =
-      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).toOption
     assertEquals(parsedZoneRules.map(_.size), Some(1))
     val calculatedParisRules                          =
       parsedZoneRules.flatMap(_.find(_._1.name == "Europe/Paris")).map(_._2)
@@ -277,7 +277,7 @@ class ZoneRulesBuilderSuite extends munit.FunSuite {
       .mkString
 
     val parsedZoneRules: Option[Map[Zone, ZoneRules]] =
-      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).toOption
     assertEquals(parsedZoneRules.map(_.size), Some(1))
 
     val calculatedCasablancaRules =
@@ -290,7 +290,7 @@ class ZoneRulesBuilderSuite extends munit.FunSuite {
       .mkString
 
     val parsedZoneRules: Option[Map[Zone, ZoneRules]] =
-      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).toOption
     assertEquals(parsedZoneRules.map(_.size), Some(1))
 
     val calculatedWindhoekRules =
@@ -303,7 +303,7 @@ class ZoneRulesBuilderSuite extends munit.FunSuite {
       .mkString
 
     val parsedZoneRules: Option[Map[Zone, ZoneRules]] =
-      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).toOption
     assertEquals(parsedZoneRules.map(_.size), Some(1))
 
     val calculatedCairoRules =
@@ -316,7 +316,7 @@ class ZoneRulesBuilderSuite extends munit.FunSuite {
       .mkString
 
     val parsedZoneRules: Option[Map[Zone, ZoneRules]] =
-      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).toOption
     assertEquals(parsedZoneRules.map(_.size), Some(1))
 
     val calculatedLondonRules =
@@ -329,7 +329,7 @@ class ZoneRulesBuilderSuite extends munit.FunSuite {
       .mkString
 
     val parsedZoneRules: Option[Map[Zone, ZoneRules]] =
-      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).option
+      TZDBParser.parseFile(text).map(ZoneRulesBuilder.calculateTransitions).toOption
     assertEquals(parsedZoneRules.map(_.size), Some(1))
 
     val calculatedLondonRules =

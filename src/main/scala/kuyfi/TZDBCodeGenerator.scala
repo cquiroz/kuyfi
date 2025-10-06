@@ -479,12 +479,8 @@ object TZDBCodeGenerator {
   ): File = {
     val ver  = TZDBParser.parseVersion(dir)
     val rows = TZDBParser.parseAll(dir)
-    val tree = exportTzdb(ver.getOrElse(DefaultTzdbVersion),
-                          zonePackage,
-                          importsPackage,
-                          rows,
-                          zoneFilter
-                 )
+    val tree =
+      exportTzdb(ver.getOrElse(DefaultTzdbVersion), zonePackage, importsPackage, rows, zoneFilter)
     Files.write(to.toPath, treeToString(tree).getBytes(StandardCharsets.UTF_8))
     to
   }

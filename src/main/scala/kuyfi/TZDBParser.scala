@@ -1,7 +1,7 @@
 package kuyfi
 
-import atto._, Atto.{ char => chr, _ }
-import atto.ParseResult.{ Done, Fail }
+import cats.parse.{ Parser, Parser0 }
+import cats.parse.Rfc5234.{ digit => digitParser }
 import cats._
 import cats.syntax.all._
 import java.io.File
@@ -13,17 +13,20 @@ import java.util.Locale
 import scala.jdk.CollectionConverters._
 import TZDB._
 
-/** Defines atto parsers to read tzdb files
+/** Defines cats-parse parsers to read tzdb files
   */
 object TZDBParser {
+  type ParseResult[A] = Either[Parser.Error, A]
+
   // Useful Monoid
   implicit def parserListMonoid[A]: Monoid[ParseResult[List[A]]] =
     new Monoid[ParseResult[List[A]]] {
-      def empty                                                                           = Done("", List.empty[A])
+      def empty                                                                           = Right(List.empty[A])
       def combine(a: ParseResult[List[A]], b: ParseResult[List[A]]): ParseResult[List[A]] =
         (a, b) match {
-          case (Done(u, x), Done(v, y)) => Done(u + v, x ::: y)
-          case _                        => Fail("", Nil, "Can only handle full response ")
+          case (Right(x), Right(y)) => Right(x ::: y)
+          case (Left(e), _)         => Left(e)
+          case (_, Left(e))         => Left(e)
         }
     }
 
@@ -33,14 +36,16 @@ object TZDBParser {
     ): Parser[C] = a.map(_.liftC[C])
   }
 
-  private val space      = chr(' ')
-  private val semicolon  = chr(':')
-  private val tab        = chr('\t')
-  private val nl         = chr('\n')
-  private val identifier = stringOf1(noneOf(" \t\n"))
+  private val space      = Parser.char(' ')
+  private val semicolon  = Parser.char(':')
+  private val nl         = Parser.char('\n')
+  private val identifier = Parser.charWhere(c => c != ' ' && c != '\t' && c != '\n').rep.string
 
-  private val whitespace: Parser[Char]          = tab | space
-  private val linkSeparator: Parser[List[Char]] = many(whitespace)
+  private val whitespace: Parser[Char]     = Parser.charIn(" \t")
+  private val linkSeparator: Parser0[Unit] = whitespace.rep0.void
+
+  private val int: Parser[Int] =
+    digitParser.rep.string.map(_.toInt)
 
   private val months: List[(String, Month)]   =
     Month.values().map(m => (m.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), m)).toList
@@ -48,71 +53,64 @@ object TZDBParser {
     DayOfWeek.values().map(m => (m.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), m)).toList
 
   val from: Parser[String] =
-    stringOf1(digit) |
-      string("minimum") |
-      string("maximum")
+    digitParser.rep.string |
+      Parser.string("minimum").string |
+      Parser.string("maximum").string
 
   val fromParser: Parser[RuleYear] =
-    stringOf1(digit).map(y => GivenYear(y.toInt)) |
-      string("minimum").map(_ => Minimum: RuleYear) |
-      string("maximum").map(_ => Maximum: RuleYear) |
-      string("max").map(_ => Maximum: RuleYear) |
-      string("min").map(_ => Minimum: RuleYear)
+    digitParser.rep.string.map(y => GivenYear(y.toInt)) |
+      Parser.string("minimum").as(Minimum: RuleYear) |
+      Parser.string("maximum").as(Maximum: RuleYear) |
+      Parser.string("max").as(Maximum: RuleYear) |
+      Parser.string("min").as(Minimum: RuleYear)
 
   val toParser: Parser[RuleYear] =
-    stringOf1(digit).map(y => GivenYear(y.toInt)) |
-      string("minimum").map(_ => Minimum: RuleYear) |
-      string("maximum").map(_ => Maximum: RuleYear) |
-      string("max").map(_ => Maximum: RuleYear) |
-      string("min").map(_ => Minimum: RuleYear) |
-      string("only").map(_ => Only: RuleYear)
+    digitParser.rep.string.map(y => GivenYear(y.toInt)) |
+      Parser.string("minimum").as(Minimum: RuleYear) |
+      Parser.string("maximum").as(Maximum: RuleYear) |
+      Parser.string("max").as(Maximum: RuleYear) |
+      Parser.string("min").as(Minimum: RuleYear) |
+      Parser.string("only").as(Only: RuleYear)
 
-  def parseOneOf[A](items: List[(String, A)], msg: String): Parser[A] = {
+  def parseOneOf[A](items: List[(String, A)]): Parser[A] = {
     val p = items.map { case (i, v) =>
-      string(i).map(_ => v)
+      Parser.string(i).as(v)
     }
 
-    p.foldRight(err[A](msg))(_ | _)
+    p.reduceLeft(_ | _)
   }
 
-  val monthParser: Parser[Month] = parseOneOf(months, "unknown month")
+  val monthParser: Parser[Month] = parseOneOf(months)
 
-  val dayParser: Parser[DayOfWeek] = parseOneOf(days, "unknown day")
+  val dayParser: Parser[DayOfWeek] = parseOneOf(days)
 
   val afterWeekdayParser: Parser[On] =
-    for {
-      d <- opt(space) ~> dayParser <~ string(">=")
-      a <- int
-    } yield AfterWeekday(d, a)
+    ((space.?.with1 *> dayParser) ~ (space.? *> Parser.string(">=") *> int)).map { case (d, a) =>
+      AfterWeekday(d, a)
+    }
 
   val beforeWeekdayParser: Parser[On] =
-    for {
-      d <- opt(space) ~> dayParser <~ string("<=")
-      a <- int
-    } yield BeforeWeekday(d, a)
+    ((space.?.with1 *> dayParser) ~ (space.? *> Parser.string("<=") *> int)).map { case (d, a) =>
+      BeforeWeekday(d, a)
+    }
 
   val lastWeekdayParser: Parser[On] =
-    for {
-      _ <- string("last")
-      d <- dayParser
-    } yield LastWeekday(d)
+    (Parser.string("last") *> dayParser).map(d => LastWeekday(d))
 
   val onParser: Parser[On] =
-    opt(space) ~> int.map(DayOfTheMonth.apply) |
-      afterWeekdayParser |
-      beforeWeekdayParser |
-      lastWeekdayParser
-
-  val timePartParser: Parser[Char] =
-    digit | semicolon
+    afterWeekdayParser.backtrack |
+      beforeWeekdayParser.backtrack |
+      lastWeekdayParser.backtrack |
+      (space *> int).backtrack.map(DayOfTheMonth.apply) |
+      int.map(DayOfTheMonth.apply)
 
   val hourMinParser: Parser[(Boolean, Int, Int)] =
-    for {
-      _ <- opt(space)
-      n <- opt(chr('-'))
-      h <- int <~ semicolon
-      m <- int
-    } yield (n.isDefined, h, m)
+    (Parser.char('-') *> int ~ (semicolon *> int)).map { case (h, m) => (true, h, m) } |
+      (space *> Parser.char('-') *> int ~ (semicolon *> int)).map { case (h, m) => (true, h, m) } |
+      (space *> int ~ (semicolon *> int)).map { case (h, m) => (false, h, m) } |
+      (int ~ (semicolon *> int)).map { case (h, m) => (false, h, m) }
+
+  private val backtrackHourMinParser = hourMinParser.backtrack
 
   val hourMinParserLT: Parser[(Int, Boolean, LocalTime)] = hourMinParser.map { case (_, h, m) =>
     val (endOfDay, hours) = fixHourRange(h)
@@ -125,14 +123,24 @@ object TZDBParser {
   }
 
   val hourMinSecParser: Parser[(Boolean, Int, Int, Int)] =
-    for {
-      _ <- opt(space)
-      n <- opt(chr('-'))
-      _ <- opt(space)
-      h <- int <~ semicolon
-      m <- int <~ semicolon
-      s <- int
-    } yield (n.isDefined, h, m, s)
+    (Parser.char('-') *> int ~ (semicolon *> int) ~ (semicolon *> int)).map { case ((h, m), s) =>
+      (true, h, m, s)
+    } |
+      (Parser.char('-') *> space *> int ~ (semicolon *> int) ~ (semicolon *> int)).map {
+        case ((h, m), s) => (true, h, m, s)
+      } |
+      (space *> Parser.char('-') *> int ~ (semicolon *> int) ~ (semicolon *> int)).map {
+        case ((h, m), s) => (true, h, m, s)
+      } |
+      (space *> Parser.char('-') *> space *> int ~ (semicolon *> int) ~ (semicolon *> int)).map {
+        case ((h, m), s) => (true, h, m, s)
+      } |
+      (space *> int ~ (semicolon *> int) ~ (semicolon *> int)).map { case ((h, m), s) =>
+        (false, h, m, s)
+      } |
+      (int ~ (semicolon *> int) ~ (semicolon *> int)).map { case ((h, m), s) => (false, h, m, s) }
+
+  private val backtrackHourMinSecParser = hourMinSecParser.backtrack
 
   val hourMinSecParserLT: Parser[(Int, Boolean, LocalTime)] = hourMinSecParser.map {
     case (_, h, m, s) =>
@@ -145,121 +153,144 @@ object TZDBParser {
     case (_, h, m, s)          => GmtOffset(h, m, s)
   }
 
-  val timeParser: Parser[(Int, Boolean, LocalTime)] =
-    opt(many(whitespace)) ~>
-      hourMinSecParserLT |
-      hourMinParserLT |
-      int.map(fixHourRange).map(h => (0, h._1, LocalTime.of(h._2, 0)))
+  val timeParser: Parser[(Int, Boolean, LocalTime)] = {
+    val time: Parser[(Int, Boolean, LocalTime)] =
+      backtrackHourMinSecParser.map { case (_, h, m, s) =>
+        val (endOfDay, hours) = fixHourRange(h)
+        (if (h > 24) h % 24 else 0, endOfDay, LocalTime.of(hours, m, s))
+      } |
+        backtrackHourMinParser.map { case (_, h, m) =>
+          val (endOfDay, hours) = fixHourRange(h)
+          (if (h > 24) h % 24 else 0, endOfDay, LocalTime.of(hours, m))
+        } |
+        int.map(fixHourRange).map(h => (0, h._1, LocalTime.of(h._2, 0)))
+
+    (whitespace.rep.with1 *> time) | time
+  }
 
   private def fixHourRange(h: Int): (Boolean, Int) =
     (h >= 24, if (h >= 24) h - 24 else h)
 
   val gmtOffsetParser: Parser[GmtOffset] =
-    hourMinSecParserOf |
-      hourMinParserOf |
+    hourMinSecParserOf.backtrack |
+      hourMinParserOf.backtrack |
+      (Parser.char('-') *> int).backtrack.map(h => GmtOffset(-h, 0, 0)) |
       int.map(h => GmtOffset(h, 0, 0))
 
   val atParser: Parser[At] =
-    (timeParser ~ chr('w')).map { case ((r, e, t), _) => AtWallTime(t, e, r): At } |
-      (timeParser ~ chr('s')).map { case ((r, e, t), _) => AtStandardTime(t, e, r): At } |
-      (timeParser ~ oneOf("zgu")).map { case ((r, e, t), _) => AtUniversalTime(t, e, r): At } |
-      (opt(whitespace) ~> timeParser).map { case (r, e, t) => AtWallTime(t, e, r): At }
+    (timeParser <* Parser.char('w')).backtrack.map { case (r, e, t) => AtWallTime(t, e, r): At } |
+      (timeParser <* Parser.char('s')).backtrack.map { case (r, e, t) =>
+        AtStandardTime(t, e, r): At
+      } |
+      (timeParser <* Parser.charIn("zgu")).backtrack.map { case (r, e, t) =>
+        AtUniversalTime(t, e, r): At
+      } |
+      timeParser.map { case (r, e, t) => AtWallTime(t, e, r): At }
 
   val saveParser: Parser[Save] =
-    (opt(chr('-')) ~ timeParser).map { case (s, (_, _, l)) => Save(s.isEmpty, l) }
+    ((Parser.char('-') *> whitespace.?).backtrack *> timeParser).map { case (_, _, l) =>
+      Save(false, l)
+    } |
+      timeParser.map { case (_, _, l) => Save(true, l) }
 
-  val toEndLine: Parser[String] = takeWhile(_ =!= '\n') <~ opt(nl)
+  val toEndLine: Parser0[String] = Parser.charsWhile0(_ != '\n')
 
   val letterParser: Parser[Letter] =
     for {
-      l <- takeWhile(c => c.isUpper || c === '-')
+      l <- Parser.charsWhile(c => c != '\n' && c != '#').string
       _ <- toEndLine
-    } yield Letter(l)
+    } yield Letter(l.trim)
 
   val ruleParser: Parser[Rule] =
     for {
-      _      <- string("Rule") <~ whitespace
-      name   <- identifier <~ whitespace
-      from   <- fromParser <~ whitespace
-      to     <- toParser <~ whitespace
-      _      <- chr('-') <~ whitespace
-      month  <- monthParser <~ whitespace
-      on     <- onParser <~ whitespace
-      at     <- atParser <~ whitespace
-      save   <- saveParser <~ whitespace
-      letter <- letterParser
+      name   <- Parser.string("Rule") *> whitespace *> identifier <* whitespace
+      from   <- fromParser <* whitespace
+      to     <- toParser <* whitespace
+      month  <- Parser.char('-') *> whitespace *> monthParser <* whitespace
+      on     <- onParser <* whitespace
+      at     <- atParser <* whitespace
+      save   <- saveParser <* whitespace.rep0
+      letter <- letterParser <* nl.?
     } yield Rule(name, from, to, month, on, at, save, letter).adjustRoll
 
   val linkParser: Parser[Link] =
     for {
-      _    <- string("Link") <~ linkSeparator
-      from <- identifier <~ linkSeparator
-      to   <- identifier
-      _    <- toEndLine
+      from <- Parser.string("Link") *> linkSeparator *> identifier
+      to   <- linkSeparator *> identifier <* toEndLine <* nl.?
     } yield Link(from, to)
 
   val untilParser: Parser[Until] =
     for {
-      year  <- int <~ opt(whitespace)
-      month <- opt(monthParser) <~ many(whitespace)
-      on    <- opt(onParser) <~ many(whitespace)
-      at    <- opt(atParser)
-      _     <- toEndLine
+      year  <- int <* whitespace.?
+      month <- monthParser.? <* whitespace.rep0
+      on    <- onParser.? <* whitespace.rep0
+      at    <- atParser.? <* toEndLine
     } yield Until(year, month, on, at)
 
   val commentParser: Parser[Comment] =
-    many(whitespace) ~> chr('#') ~> toEndLine.map(Comment.apply)
+    (Parser.char('#') *> toEndLine).map(Comment.apply) |
+      (whitespace.rep *> Parser.char('#') *> toEndLine).map(Comment.apply)
 
   val zoneRuleParser: Parser[ZoneRule] =
-    gmtOffsetParser.map(d => FixedOffset(d): ZoneRule) | (chr('-') <~ opt(whitespace)).map(_ =>
-      NullRule: ZoneRule
-    ) | identifier.map(RuleId.apply)
+    gmtOffsetParser.map(d => FixedOffset(d): ZoneRule) |
+      (Parser.char('-') <* whitespace.?).as(NullRule: ZoneRule) |
+      identifier.map(RuleId.apply)
 
-  val zoneTransitionParser: Parser[ZoneTransition] =
-    for {
-      gmtOff   <- many(whitespace) ~> gmtOffsetParser <~ whitespace
-      zoneRule <- zoneRuleParser <~ many(whitespace)
-      format   <- identifier <~ many(whitespace)
-      until    <- opt(untilParser)
-      _        <- opt(many(commentParser))
-    } yield ZoneTransition(gmtOff, zoneRule, format, until)
+  val zoneTransitionParser: Parser[ZoneTransition] = {
+    val transition =
+      for {
+        gmtOff   <- gmtOffsetParser <* whitespace
+        zoneRule <- zoneRuleParser <* whitespace.rep0
+        format   <- identifier <* whitespace.rep0
+        until    <- untilParser.?
+      } yield ZoneTransition(gmtOff, zoneRule, format, until)
+
+    transition | (whitespace.rep *> transition)
+  }
 
   val continuationZoneTransitionParser: Parser[ZoneTransition] =
     for {
-      _        <- manyN(3, whitespace) <~ opt(whitespace)
-      gmtOff   <- gmtOffsetParser <~ whitespace
-      zoneRule <- opt(whitespace) ~> zoneRuleParser <~ many(whitespace)
-      format   <- identifier <~ many(whitespace)
-      until    <- opt(untilParser)
-      _        <- opt(many(many(whitespace) ~> commentParser))
+      gmtOff   <- nl *> whitespace.rep(1) *> gmtOffsetParser <* whitespace.rep(1)
+      zoneRule <- zoneRuleParser <* whitespace.rep0
+      format   <- identifier <* whitespace.rep0
+      until    <- untilParser.? <* toEndLine
     } yield ZoneTransition(gmtOff, zoneRule, format, until)
 
+  val zoneWithCommentParser: Parser[Option[ZoneTransition]] =
+    ((nl *> commentParser).backtrack.as(None: Option[ZoneTransition])) |
+      continuationZoneTransitionParser.map(Some(_))
+
   val zoneTransitionListParser: Parser[List[ZoneTransition]] =
-    (zoneTransitionParser ~ many(continuationZoneTransitionParser)).map { case (a, b) => a :: b }
+    (zoneTransitionParser ~ zoneWithCommentParser.backtrack.rep0).map { case (a, b) =>
+      a :: b.flatten
+    }
 
   val zoneParser: Parser[Zone] =
     for {
-      _     <- string("Zone") <~ whitespace
-      name  <- identifier <~ whitespace
+      name  <- Parser.string("Zone") *> whitespace *> identifier <* whitespace
       trans <- zoneTransitionListParser
     } yield Zone(name, trans)
 
   val zoneParserNl: Parser[Zone] =
-    zoneParser <~ opt(nl)
+    zoneParser <* nl.?
 
   val blankLine: Parser[BlankLine] =
-    nl.map(_ => BlankLine(""))
+    nl.as(BlankLine(""))
+
+  val commentParserNl: Parser[Comment] =
+    commentParser <* nl.?
 
   val fileParser: Parser[List[Row]] =
-    for {
-      c <- many(
-             commentParser.liftC[Row] | ruleParser.liftC[Row] | zoneParserNl.liftC[Row] | linkParser
-               .liftC[Row] | blankLine.liftC[Row]
-           )
-    } yield c
+    (
+      commentParserNl.backtrack.liftC[Row] |
+        ruleParser.backtrack.liftC[Row] |
+        zoneParserNl.backtrack.liftC[Row] |
+        linkParser.backtrack.liftC[Row] |
+        blankLine.liftC[Row]
+    ).rep.map(_.toList)
 
   def parseFile(text: String): ParseResult[List[Row]] =
-    fileParser.parseOnly(text)
+    fileParser.parseAll(text)
 
   val tzdbFiles: List[String] = List(
     "africa",
@@ -312,8 +343,8 @@ object TZDBParser {
             )
             .map(parseFile)
         val rows   = parsed.toList.combineAll match {
-          case Done(_, v) => v
-          case _          => Nil
+          case Right(v) => v
+          case Left(_)  => Nil
         }
         rows
       case _                  => Nil
