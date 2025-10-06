@@ -36,7 +36,7 @@ lazy val kuyfi: Project = project
     libraryDependencies ++= Seq(
       "org.typelevel"          %% "cats-parse"              % "1.0.0",
       "org.typelevel"          %% "cats-core"               % "2.12.0",
-      "com.chuusai"            %% "shapeless"               % "2.3.12",
+      "com.chuusai"            %% "shapeless"               % "2.3.13",
       "com.eed3si9n"           %% "treehugger"              % "0.4.4",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.12.0",
       "org.scalameta"          %% "munit"                   % "1.0.4" % Test
