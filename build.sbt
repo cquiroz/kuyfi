@@ -5,18 +5,19 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 // sbt-ci-release
 inThisBuild(
   List(
-    homepage   := Some(url("https://github.com/cquiroz/kuyfi")),
-    licenses   := Seq("BSD 3-Clause License" -> url("https://opensource.org/licenses/BSD-3-Clause")),
-    developers := List(
+    homepage      := Some(url("https://github.com/cquiroz/kuyfi")),
+    licenses      := Seq("BSD 3-Clause License" -> url("https://opensource.org/licenses/BSD-3-Clause")),
+    developers    := List(
       Developer("cquiroz",
                 "Carlos Quiroz",
                 "carlos.m.quiroz@gmail.com",
                 url("https://github.com/cquiroz")
       )
     ),
-    scmInfo    := Some(
+    scmInfo       := Some(
       ScmInfo(url("https://github.com/cquiroz/kuyfi"), "scm:git:git@github.com:cquiroz/kuyfi.git")
-    )
+    ),
+    versionScheme := Some("early-semver")
   )
 )
 
