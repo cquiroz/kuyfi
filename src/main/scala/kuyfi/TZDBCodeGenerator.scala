@@ -5,7 +5,6 @@ import java.nio.file.Files
 import java.time.zone.ZoneOffsetTransitionRule
 import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 import java.time.{ DayOfWeek, LocalDate, LocalDateTime, LocalTime, Month, ZoneOffset }
-import shapeless._
 import treehugger.forest._
 import treehugger.forest.definitions._
 import treehuggerDSL._
@@ -46,18 +45,6 @@ object TZDBCodeGenerator {
     // Globally visible type class instances
     implicit def intInstance: TreeGenerator[Int]       = instance(LIT.apply)
     implicit def stringInstance: TreeGenerator[String] = instance(LIT.apply)
-
-    // Encoders for products
-    implicit def cnilInstance: TreeGenerator[CNil] =
-      instance(_ => throw new Exception("Cannot happen"))
-    implicit def coproductInstance[H, T <: Coproduct](implicit
-      hInstance: Lazy[TreeGenerator[H]], // wrap in Lazy
-      tInstance: TreeGenerator[T]
-    ): TreeGenerator[H :+: T] =
-      instance {
-        case Inl(h) => hInstance.value.generateTree(h)
-        case Inr(t) => tInstance.generateTree(t)
-      }
   }
 
   // Typeclass of code generator

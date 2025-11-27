@@ -30,12 +30,6 @@ object TZDBParser {
         }
     }
 
-  implicit class Parser2Coproduct[A](val a: Parser[A]) extends AnyVal {
-    def liftC[C <: shapeless.Coproduct](implicit
-      inj: shapeless.ops.coproduct.Inject[C, A]
-    ): Parser[C] = a.map(_.liftC[C])
-  }
-
   private val space      = Parser.char(' ')
   private val semicolon  = Parser.char(':')
   private val nl         = Parser.char('\n')
@@ -282,11 +276,11 @@ object TZDBParser {
 
   val fileParser: Parser[List[Row]] =
     (
-      commentParserNl.backtrack.liftC[Row] |
-        ruleParser.backtrack.liftC[Row] |
-        zoneParserNl.backtrack.liftC[Row] |
-        linkParser.backtrack.liftC[Row] |
-        blankLine.liftC[Row]
+      commentParserNl.backtrack.widen[Row] |
+        ruleParser.backtrack.widen[Row] |
+        zoneParserNl.backtrack.widen[Row] |
+        linkParser.backtrack.widen[Row] |
+        blankLine.widen[Row]
     ).rep.map(_.toList)
 
   def parseFile(text: String): ParseResult[List[Row]] =
