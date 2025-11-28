@@ -146,10 +146,10 @@ class TZDBCodeGeneratorSpec extends munit.FunSuite {
     )
   }
   test("clean dangling links") {
-    val rows1 = link1.liftC[Row] :: link2.liftC[Row] :: Nil
+    val rows1 = link1 :: link2 :: Nil
     assert(cleanLinks(rows1).isEmpty)
 
-    val rows2 = link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil
+    val rows2 = link1 :: link2 :: zone1 :: Nil
 
     assertEquals(cleanLinks(rows2).length, 2)
   }
@@ -218,7 +218,7 @@ class TZDBCodeGeneratorSpec extends munit.FunSuite {
         exportTzdb(TzdbVersion("2018e"),
                    "org.threeten.bp",
                    "org.threeten.bp",
-                   link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
+                   link1 :: link2 :: zone1 :: Nil,
                    _ => true
         )
       ).contains("import org.threeten.bp.zone._")
@@ -271,7 +271,7 @@ class TZDBCodeGeneratorSpec extends munit.FunSuite {
       exportTzdb(TzdbVersion("2018e"),
                  "java.time",
                  "java.time",
-                 link1.liftC[Row] :: link2.liftC[Row] :: zone1.liftC[Row] :: Nil,
+                 link1 :: link2 :: zone1 :: Nil,
                  _ => true
       )
     )

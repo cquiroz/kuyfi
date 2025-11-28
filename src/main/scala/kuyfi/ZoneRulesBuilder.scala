@@ -6,7 +6,6 @@ import java.time.zone.{ ZoneOffsetTransitionRule, ZoneRules }
 import kuyfi.TimeZoneWindow._
 import kuyfi.TZDB._
 import scala.annotation.tailrec
-import shapeless.Poly1
 
 object ZoneRulesBuilder {
 
@@ -170,16 +169,10 @@ object ZoneRulesBuilder {
         }
   }
 
-  /** Creat timezone windows from the zone transitions
+  /** Create timezone windows from the zone transitions
     */
-  object toWindows extends Poly1 {
-    type U = WindowsCollector => WindowsCollector
-
-    implicit val caseItem1: Case.Aux[Comment, U]   = at[Comment](_ => identity)
-    implicit val caseItem2: Case.Aux[BlankLine, U] = at[BlankLine](_ => identity)
-    implicit val caseItem3: Case.Aux[Link, U]      = at[Link](_ => identity)
-    implicit val caseItem4: Case.Aux[Rule, U]      = at[Rule](_ => identity)
-    implicit val caseItem5: Case.Aux[Zone, U]      = at[Zone] { zone => (c: WindowsCollector) =>
+  def toWindows(row: Row)(c: WindowsCollector): WindowsCollector = row match {
+    case zone: Zone =>
       val newWindows = zone.transitions.foldLeft(List.empty[TimeZoneWindow]) {
         (windows, transition) =>
           def windowForever(offset: GmtOffset): TimeZoneWindow =
@@ -226,27 +219,22 @@ object ZoneRulesBuilder {
           windows :+ w
       }
       c.copy(zoneWindows = c.zoneWindows + (zone -> newWindows))
-    }
+    case _          => c
   }
 
   /** Collects all the rules
     */
-  object collectRules extends Poly1 {
-    type U = List[Rule] => List[Rule]
-
-    implicit val caseComment: Case.Aux[Comment, U] = at[Comment](_ => identity)
-    implicit val caseBlank: Case.Aux[BlankLine, U] = at[BlankLine](_ => identity)
-    implicit val caseLink: Case.Aux[Link, U]       = at[Link](_ => identity)
-    implicit val caseRule: Case.Aux[Rule, U]       = at[Rule](i => r => i :: r)
-    implicit val caseZone: Case.Aux[Zone, U]       = at[Zone](_ => identity)
+  def collectRules(row: Row): Option[Rule] = row match {
+    case rule: Rule => Some(rule)
+    case _          => None
   }
 
   /** Calculates all the zone rules for the rows
     */
   def calculateTransitionParams(rows: List[Row]): Map[Zone, ZoneRulesParams] = {
-    val rulesByName: RulesById                 = rows.flatMap(_.fold(collectRules).apply(Nil)).groupBy(_.name)
+    val rulesByName: RulesById                 = rows.flatMap(collectRules).groupBy(_.name)
     val collectedRules: List[WindowsCollector] =
-      rows.map(_.fold(toWindows).apply(WindowsCollector(rulesByName, Map.empty)))
+      rows.map(r => toWindows(r)(WindowsCollector(rulesByName, Map.empty)))
     collectedRules.filter(_.zoneWindows.nonEmpty).flatMap(_.toRules).toMap
   }
 

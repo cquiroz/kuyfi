@@ -5,18 +5,19 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 // sbt-ci-release
 inThisBuild(
   List(
-    homepage   := Some(url("https://github.com/cquiroz/kuyfi")),
-    licenses   := Seq("BSD 3-Clause License" -> url("https://opensource.org/licenses/BSD-3-Clause")),
-    developers := List(
+    homepage      := Some(url("https://github.com/cquiroz/kuyfi")),
+    licenses      := Seq("BSD 3-Clause License" -> url("https://opensource.org/licenses/BSD-3-Clause")),
+    developers    := List(
       Developer("cquiroz",
                 "Carlos Quiroz",
                 "carlos.m.quiroz@gmail.com",
                 url("https://github.com/cquiroz")
       )
     ),
-    scmInfo    := Some(
+    scmInfo       := Some(
       ScmInfo(url("https://github.com/cquiroz/kuyfi"), "scm:git:git@github.com:cquiroz/kuyfi.git")
-    )
+    ),
+    versionScheme := Some("early-semver")
   )
 )
 
@@ -36,7 +37,6 @@ lazy val kuyfi: Project = project
     libraryDependencies ++= Seq(
       "org.typelevel"          %% "cats-parse"              % "1.1.0",
       "org.typelevel"          %% "cats-core"               % "2.12.0",
-      "com.chuusai"            %% "shapeless"               % "2.3.13",
       "com.eed3si9n"           %% "treehugger"              % "0.4.4",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.12.0",
       "org.scalameta"          %% "munit"                   % "1.2.1" % Test

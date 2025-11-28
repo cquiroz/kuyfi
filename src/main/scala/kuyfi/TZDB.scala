@@ -6,8 +6,6 @@ import java.time.chrono.IsoChronology
 import java.time.temporal.TemporalAdjusters
 import java.time.zone.ZoneOffsetTransitionRule.TimeDefinition
 import java.time.zone.{ ZoneOffsetTransition, ZoneOffsetTransitionRule, ZoneRules }
-import shapeless._
-import shapeless.ops.coproduct.Inject
 
 /** Model of the TimeZone Database
   */
@@ -103,9 +101,7 @@ object TZDB {
     format: String,
     until:  Option[Until]
   )
-  final case class Zone(name: String, transitions: List[ZoneTransition])
-      extends Product
-      with Serializable {
+  final case class Zone(name: String, transitions: List[ZoneTransition]) extends Row {
     def scalaSafeName: String      =
       name.replace("-", "_minus_").replace("+", "_plus_").replaceAll("/|-|\\+", "_")
     def scalaGroup(z: Int): String =
@@ -217,8 +213,7 @@ object TZDB {
     at:     At,
     save:   Save,
     letter: Letter
-  ) extends Product
-      with Serializable {
+  ) extends Row {
     private def toInt(y: RuleYear, defaultY: Int): Int =
       y match {
         case GivenYear(x) => x
@@ -306,12 +301,12 @@ object TZDB {
 
   /** Model for Link entries
     */
-  final case class Link(from: String, to: String) extends Product with Serializable
+  final case class Link(from: String, to: String) extends Row
 
   /** Comments and blank lines
     */
-  final case class Comment(comment: String) extends Product with Serializable
-  final case class BlankLine(line: String)  extends Product with Serializable
+  final case class Comment(comment: String) extends Row
+  final case class BlankLine(line: String)  extends Row
 
   final case class ZoneOffsetTransitionParams(
     transition:   LocalDateTime,
@@ -364,12 +359,14 @@ object TZDB {
 
   final case class Imports(imports: String)
 
-  /** Coproduct for the content of lines on the parsed files
+  /** Model for the content of lines on the parsed files
     */
-  type Row = Comment :+: BlankLine :+: Link :+: Rule :+: Zone :+: CNil
+  sealed trait Row extends Product with Serializable {
+    def select[A <: Row](implicit ct: scala.reflect.ClassTag[A]): Option[A] =
+      if (ct.runtimeClass.isInstance(this)) Some(this.asInstanceOf[A])
+      else None
 
-  implicit class ToCoproduct[A](val a: A) extends AnyVal {
-    def liftC[C <: Coproduct](implicit inj: Inject[C, A]): C = Coproduct[C](a)
+    def fold[B](f: PartialFunction[Row, B]): B = f(this)
   }
 
 }
