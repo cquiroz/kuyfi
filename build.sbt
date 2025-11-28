@@ -36,10 +36,11 @@ lazy val kuyfi: Project = project
     name              := "kuyfi",
     Test / run / fork := true,
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-parse" % "1.1.0",
-      "org.typelevel" %% "cats-core"  % "2.12.0",
-      "com.eed3si9n"  %% "treehugger" % "0.4.4",
-      "org.scalameta" %% "munit"      % "1.2.1" % Test
+      "org.typelevel"          %% "cats-parse"              % "1.1.0",
+      "org.typelevel"          %% "cats-core"               % "2.12.0",
+      "com.eed3si9n"           %% "treehugger"              % "0.4.4",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.12.0",
+      "org.scalameta"          %% "munit"                   % "1.2.1" % Test
     ),
     testFrameworks += new TestFramework("munit.Framework"),
     scalacOptions ~= (_.filterNot(
