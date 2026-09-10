@@ -81,15 +81,19 @@ object TZDBCodeGenerator {
       )
 
     // (baseStandardOffset, baseWallOffset, standardTransitions, transitionList, lastRules)
-    val czrType: Type = TYPE_TUPLE(IntClass, IntClass, TYPE_ARRAY(IntClass), TYPE_ARRAY(IntClass), TYPE_ARRAY(IntClass))
+    val czrType: Type = TYPE_TUPLE(IntClass,
+                                   IntClass,
+                                   TYPE_ARRAY(IntClass),
+                                   TYPE_ARRAY(IntClass),
+                                   TYPE_ARRAY(IntClass)
+    )
 
     implicit val stdListInstance: TreeGenerator[List[(Zone, StandardRulesParams)]] =
       TreeGenerator.instance { l =>
-        LAZYVAL("stdZones", TYPE_MAP(StringClass, czrType)) := MAKE_MAP(l.map {
-          case (z, _) =>
-            TUPLE(
-              List(LIT(z.name), REF(z.scalaGroup(groupingSize) + "." + z.scalaSafeName)): _*
-            )
+        LAZYVAL("stdZones", TYPE_MAP(StringClass, czrType)) := MAKE_MAP(l.map { case (z, _) =>
+          TUPLE(
+            List(LIT(z.name), REF(z.scalaGroup(groupingSize) + "." + z.scalaSafeName)): _*
+          )
         })
       }
 
@@ -97,9 +101,8 @@ object TZDBCodeGenerator {
     // the runtime provider builds ZoneRules.of(ZoneOffset.ofTotalSeconds(offset)) on demand.
     implicit val fixedListInstance: TreeGenerator[List[(Zone, FixedZoneRulesParams)]] =
       TreeGenerator.instance(l =>
-        LAZYVAL("fixedZones", TYPE_MAP(StringClass, IntClass)) := MAKE_MAP(l.map {
-          case (z, f) =>
-            TUPLE(LIT(z.name), LIT(f.baseStandardOffset.getTotalSeconds))
+        LAZYVAL("fixedZones", TYPE_MAP(StringClass, IntClass)) := MAKE_MAP(l.map { case (z, f) =>
+          TUPLE(LIT(z.name), LIT(f.baseStandardOffset.getTotalSeconds))
         })
       )
 
@@ -203,7 +206,12 @@ object TZDBCodeGenerator {
     // combined with dayOfYear.
     private def encodeTransition(l: ZoneOffsetTransitionParams): List[Int] = {
       val ld = l.transition
-      List(ld.getYear, ld.getDayOfYear, ld.toLocalTime.toSecondOfDay, l.offsetBefore.getTotalSeconds, l.offsetAfter.getTotalSeconds)
+      List(ld.getYear,
+           ld.getDayOfYear,
+           ld.toLocalTime.toSecondOfDay,
+           l.offsetBefore.getTotalSeconds,
+           l.offsetAfter.getTotalSeconds
+      )
     }
 
     // Encodes a transition rule as (month, dayOfMonthIndicator, dayOfWeek (-1 if none),
@@ -227,7 +235,8 @@ object TZDBCodeGenerator {
     implicit val zoneOffsetTransitionListInstance: TreeGenerator[List[ZoneOffsetTransitionParams]] =
       TreeGenerator.instance(l => ARRAY(l.flatMap(encodeTransition).map(LIT(_))))
 
-    implicit val zoneOffsetTransitionRuleListInstance: TreeGenerator[List[ZoneOffsetTransitionRule]] =
+    implicit val zoneOffsetTransitionRuleListInstance
+      : TreeGenerator[List[ZoneOffsetTransitionRule]] =
       TreeGenerator.instance(l => ARRAY(l.flatMap(encodeRule).map(LIT(_))))
 
     // A zone's rules are a tuple of the two base offsets plus the three Int-encoded arrays -
