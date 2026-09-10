@@ -3,7 +3,7 @@ name: build
 on: [push, pull_request]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     strategy:
@@ -28,3 +28,14 @@ jobs:
         run: sbt scalafmtCheckAll
       - name: Test
         run: sbt ++${{ matrix.scala }} test
+
+  # Aggregate gate. Branch protection requires a check named "build", which a
+  # matrix job cannot provide (its checks are "test (2.12.21)" and so on), so
+  # the matrix can grow or shrink without touching the repo settings.
+  build:
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: always()
+    steps:
+      - name: Check matrix result
+        run: '[ "${{ needs.test.result }}" = "success" ]'
