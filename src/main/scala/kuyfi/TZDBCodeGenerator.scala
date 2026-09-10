@@ -80,9 +80,12 @@ object TZDBCodeGenerator {
         LAZYVAL("allZones", "Map[String, ZoneRules]") := MAKE_MAP(z.map(_.toTree))
       )
 
+    // (baseStandardOffset, baseWallOffset, standardTransitions, transitionList, lastRules)
+    val czrType: Type = TYPE_TUPLE(IntClass, IntClass, TYPE_ARRAY(IntClass), TYPE_ARRAY(IntClass), TYPE_ARRAY(IntClass))
+
     implicit val stdListInstance: TreeGenerator[List[(Zone, StandardRulesParams)]] =
       TreeGenerator.instance { l =>
-        LAZYVAL("stdZones", TYPE_MAP(StringClass, TYPE_REF("ZoneRules"))) := MAKE_MAP(l.map {
+        LAZYVAL("stdZones", TYPE_MAP(StringClass, czrType)) := MAKE_MAP(l.map {
           case (z, _) =>
             TUPLE(
               List(LIT(z.name), REF(z.scalaGroup(groupingSize) + "." + z.scalaSafeName)): _*
@@ -90,17 +93,13 @@ object TZDBCodeGenerator {
         })
       }
 
+    // Fixed-offset zones have no transitions, so the raw offset is all a ZoneRules needs -
+    // the runtime provider builds ZoneRules.of(ZoneOffset.ofTotalSeconds(offset)) on demand.
     implicit val fixedListInstance: TreeGenerator[List[(Zone, FixedZoneRulesParams)]] =
       TreeGenerator.instance(l =>
-        LAZYVAL("fixedZones", TYPE_MAP(StringClass, TYPE_REF("ZoneRules"))) := MAKE_MAP(l.map {
+        LAZYVAL("fixedZones", TYPE_MAP(StringClass, IntClass)) := MAKE_MAP(l.map {
           case (z, f) =>
-            TUPLE(
-              List(LIT(z.name),
-                   zoneRulesSym.DOT("of")(
-                     zoneOffsetSym.DOT("ofTotalSeconds")(LIT(f.baseStandardOffset.getTotalSeconds))
-                   )
-              )
-            )
+            TUPLE(LIT(z.name), LIT(f.baseStandardOffset.getTotalSeconds))
         })
       )
 
@@ -176,7 +175,7 @@ object TZDBCodeGenerator {
 
     implicit val zoneFixedTupleRules: TreeGenerator[(Zone, StandardRulesParams)] =
       TreeGenerator.instance { case (z, r) =>
-        LAZYVAL(z.scalaSafeName, TYPE_REF("ZoneRules")) :=
+        LAZYVAL(z.scalaSafeName, czrType) :=
           r.toTree
       }
 
@@ -199,40 +198,58 @@ object TZDBCodeGenerator {
         zoneRulesSym.DOT("of")(offset)
       }
 
-    implicit val standardZoneRules: TreeGenerator[StandardRulesParams] =
-      TreeGenerator.instance(l =>
-        BLOCK(
-          List(
-            VAL("bso", "ZoneOffset")                                 := l.baseStandardOffset.toTree,
-            VAL("bwo", "ZoneOffset")                                 := l.baseWallOffset.toTree,
-            VAL("standardTransitions", "List[ZoneOffsetTransition]") := LIST(
-              l.standardOffsetTransitionList.map(_.toTree)
-            ),
-            VAL("transitionList", "List[ZoneOffsetTransition]")      := LIST(
-              l.transitionList.map(_.toTree)
-            ),
-            VAL("lastRules", "List[ZoneOffsetTransitionRule]")       := LIST(l.lastRules.map(_.toTree)),
-            zoneRulesSym.DOT("of")(REF("bso"),
-                                   REF("bwo"),
-                                   REF("standardTransitions").POSTFIX("asJava"),
-                                   REF("transitionList").POSTFIX("asJava"),
-                                   REF("lastRules").POSTFIX("asJava")
-            )
-          )
-        )
+    // Encodes a transition as (year, dayOfYear, secondOfDay, offsetBefore, offsetAfter), kept as
+    // separate ints since LocalDate's year range far exceeds what a single Int could hold if
+    // combined with dayOfYear.
+    private def encodeTransition(l: ZoneOffsetTransitionParams): List[Int] = {
+      val ld = l.transition
+      List(ld.getYear, ld.getDayOfYear, ld.toLocalTime.toSecondOfDay, l.offsetBefore.getTotalSeconds, l.offsetAfter.getTotalSeconds)
+    }
+
+    // Encodes a transition rule as (month, dayOfMonthIndicator, dayOfWeek (-1 if none),
+    // secondOfDay, midnightEndOfDay (0/1), timeDefinition ordinal, standardOffset, offsetBefore,
+    // offsetAfter).
+    private def encodeRule(l: ZoneOffsetTransitionRule): List[Int] = {
+      val dayOfWeek = Option(l.getDayOfWeek).map(_.getValue).getOrElse(-1)
+      List(
+        l.getMonth.getValue,
+        l.getDayOfMonthIndicator,
+        dayOfWeek,
+        l.getLocalTime.toSecondOfDay,
+        if (l.isMidnightEndOfDay) 1 else 0,
+        l.getTimeDefinition.ordinal,
+        l.getStandardOffset.getTotalSeconds,
+        l.getOffsetBefore.getTotalSeconds,
+        l.getOffsetAfter.getTotalSeconds
       )
+    }
+
+    implicit val zoneOffsetTransitionListInstance: TreeGenerator[List[ZoneOffsetTransitionParams]] =
+      TreeGenerator.instance(l => ARRAY(l.flatMap(encodeTransition).map(LIT(_))))
+
+    implicit val zoneOffsetTransitionRuleListInstance: TreeGenerator[List[ZoneOffsetTransitionRule]] =
+      TreeGenerator.instance(l => ARRAY(l.flatMap(encodeRule).map(LIT(_))))
+
+    // A zone's rules are a tuple of the two base offsets plus the three Int-encoded arrays -
+    // the runtime provider decodes this into a real ZoneRules lazily, on first lookup.
+    implicit val standardZoneRules: TreeGenerator[StandardRulesParams] =
+      TreeGenerator.instance { l =>
+        TUPLE(
+          LIT(l.baseStandardOffset.getTotalSeconds),
+          LIT(l.baseWallOffset.getTotalSeconds),
+          l.standardOffsetTransitionList.toTree,
+          l.transitionList.toTree,
+          l.lastRules.toTree
+        )
+      }
 
     implicit val version: TreeGenerator[TzdbVersion] =
       TreeGenerator.instance(v => LAZYVAL("version", TYPE_REF("String")) := LIT(v.ver))
 
-    implicit var imports: ImportTreeGenerator[Imports] =
-      ImportTreeGenerator.instance(i =>
-        List(IMPORT(s"${i.imports}._"),
-             IMPORT(s"${i.imports}.zone._"),
-             IMPORT("scala.collection.JavaConverters._"),
-             IMPORT("scala.language.postfixOps")
-        )
-      )
+    // The generated code is plain Int/Array[Int]/String/Map/Tuple, so it needs no imports of
+    // its own - the runtime provider owns the java.time/threetenbp references.
+    implicit val imports: ImportTreeGenerator[Imports] =
+      ImportTreeGenerator.instance(_ => Nil)
   }
 
   object OptimizedTreeGenerator {

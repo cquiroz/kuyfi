@@ -212,16 +212,16 @@ class TZDBCodeGeneratorSpec extends munit.FunSuite {
                  s"ZoneOffset.ofTotalSeconds(${1 * 3600 + 2 * 60 + 3})"
     )
   }
-  test("import a top level package") {
+  test("no imports needed, generated code is plain data") {
     assert(
-      treeToString(
+      !treeToString(
         exportTzdb(TzdbVersion("2018e"),
                    "org.threeten.bp",
                    "org.threeten.bp",
                    link1 :: link2 :: zone1 :: Nil,
                    _ => true
         )
-      ).contains("import org.threeten.bp.zone._")
+      ).contains("import ")
     )
   }
   test("generate from zone rules param") {
@@ -257,14 +257,7 @@ class TZDBCodeGeneratorSpec extends munit.FunSuite {
     )
     assertEquals(
       treeToString(TreeGenerator[ZoneRulesParams].generateTree(params)).trim,
-      s"""{
-      |  val bso: ZoneOffset = ZoneOffset.ofTotalSeconds(3600)
-      |  val bwo: ZoneOffset = ZoneOffset.ofTotalSeconds(0)
-      |  val standardTransitions: List[ZoneOffsetTransition] = List(ZoneOffsetTransition.of(LocalDateTime.of(2017, 2, 1, 10, 15, 0, 0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200)))
-      |  val transitionList: List[ZoneOffsetTransition] = List(ZoneOffsetTransition.of(LocalDateTime.of(2005, 11, 3, 0, 0, 0, 0), ZoneOffset.ofTotalSeconds(0), ZoneOffset.ofTotalSeconds(7200)))
-      |  val lastRules: List[ZoneOffsetTransitionRule] = List(ZoneOffsetTransitionRule.of(Month.JANUARY, 3, DayOfWeek.MONDAY, LocalTime.of(12, 0, 0, 0), false, ZoneOffsetTransitionRule.TimeDefinition.UTC, ZoneOffset.ofTotalSeconds(0), ZoneOffset.ofTotalSeconds(3600), ZoneOffset.ofTotalSeconds(7200)))
-      |  ZoneRules.of(bso, bwo, standardTransitions asJava, transitionList asJava, lastRules asJava)
-      |}""".stripMargin
+      "(3600, 0, Array(2017, 32, 36900, 3600, 7200), Array(2005, 307, 0, 0, 7200), Array(1, 3, 1, 43200, 0, 0, 0, 3600, 7200))"
     )
 
     val r = treeToString(
@@ -275,6 +268,6 @@ class TZDBCodeGeneratorSpec extends munit.FunSuite {
                  _ => true
       )
     )
-    assert(r.contains("import java.time.zone._"))
+    assert(!r.contains("import "))
   }
 }
