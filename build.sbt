@@ -1,37 +1,27 @@
-import sbt.Keys._
-
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
 // sbt-ci-release
-inThisBuild(
-  List(
-    homepage                                             := Some(url("https://github.com/cquiroz/kuyfi")),
-    licenses                                             := Seq("BSD 3-Clause License" -> url("https://opensource.org/licenses/BSD-3-Clause")),
-    developers                                           := List(
-      Developer("cquiroz",
-                "Carlos Quiroz",
-                "carlos.m.quiroz@gmail.com",
-                url("https://github.com/cquiroz")
-      )
-    ),
-    scmInfo                                              := Some(
-      ScmInfo(url("https://github.com/cquiroz/kuyfi"), "scm:git:git@github.com:cquiroz/kuyfi.git")
-    ),
-    versionScheme                                        := Some("early-semver"),
-    libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % "always"
+homepage      := Some(uri("https://github.com/cquiroz/kuyfi"))
+licenses      := Seq("BSD 3-Clause License" -> uri("https://opensource.org/licenses/BSD-3-Clause"))
+developers    := List(
+  Developer("cquiroz",
+            "Carlos Quiroz",
+            "carlos.m.quiroz@gmail.com",
+            uri("https://github.com/cquiroz")
   )
 )
+scmInfo       := Some(
+  ScmInfo(uri("https://github.com/cquiroz/kuyfi"), "scm:git:git@github.com:cquiroz/kuyfi.git")
+)
+versionScheme := Some("early-semver")
 
-val commonSettings: Seq[Setting[_]] = Seq(
-  organization       := "io.github.cquiroz",
-  scalaVersion       := "2.13.18",
-  crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.6"),
-  description        := "TZDB parser"
+val commonSettings: Seq[Setting[?]] = Seq(
+  organization := "io.github.cquiroz",
+  description  := "TZDB parser"
 )
 
-lazy val kuyfi: Project = project
-  .in(file("."))
-  .settings(commonSettings: _*)
+lazy val kuyfi = (projectMatrix in file("."))
+  .settings(commonSettings*)
   .settings(
     name              := "kuyfi",
     Test / run / fork := true,
@@ -50,23 +40,17 @@ lazy val kuyfi: Project = project
       )
     ))
   )
+  .jvmPlatform(scalaVersions = Seq("3.3.6", "2.13.18", "2.12.21"))
 
-lazy val docs = project
-  .in(file("docs"))
-  .dependsOn(kuyfi)
-  .settings(commonSettings)
+// projectMatrix lives at file("."), so the aggregating root would otherwise pick up
+// src/ as its own sources and compile them without the library dependencies.
+lazy val root = (project in file("."))
+  .aggregate(kuyfi.componentProjects.map(p => p: ProjectReference)*)
   .settings(
-    name               := "docs",
-    crossScalaVersions := Nil,
-    publish / skip     := true
-  )
-  .enablePlugins(MicrositesPlugin)
-  .settings(
-    micrositeName           := "kuyfi",
-    micrositeAuthor         := "Carlos Quiroz",
-    micrositeGithubOwner    := "cquiroz",
-    micrositeGithubRepo     := "kuyfi",
-    micrositeBaseUrl        := "/kuyfi",
-    // micrositeDocumentationUrl := "/scala-java-time/docs/",
-    micrositeHighlightTheme := "color-brewer"
+    name                                   := "kuyfi-root",
+    publish / skip                         := true,
+    Compile / unmanagedSourceDirectories   := Nil,
+    Test / unmanagedSourceDirectories      := Nil,
+    Compile / unmanagedResourceDirectories := Nil,
+    Test / unmanagedResourceDirectories    := Nil
   )

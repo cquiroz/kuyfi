@@ -22,3 +22,4 @@ project/metals.sbt
 .bsp/
 .direnv/
 .project/project/
+.sbt/matrix/

@@ -9,7 +9,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scala: [2.12.21, 2.13.18, 3.3.6]
+        # projectMatrix subproject names, one per Scala version
+        project: [kuyfi, kuyfi2_13, kuyfi2_12]
 
     steps:
       - uses: actions/checkout@v6
@@ -24,13 +25,11 @@ jobs:
           distribution: temurin
           java-version: 17.0.12+7
           cache: sbt
-      - name: Check formatting
-        run: sbt scalafmtCheckAll
       - name: Test
-        run: sbt ++${{ matrix.scala }} test
+        run: sbt "scalafmtCheckAll ; scalafmtSbtCheck ; ${{ matrix.project }}/testFull"
 
   # Aggregate gate. Branch protection requires a check named "build", which a
-  # matrix job cannot provide (its checks are "test (2.12.21)" and so on), so
+  # matrix job cannot provide (its checks are "test (kuyfi2_13)" and so on), so
   # the matrix can grow or shrink without touching the repo settings.
   build:
     runs-on: ubuntu-latest
