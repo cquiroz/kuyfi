@@ -8,7 +8,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: olafurpg/setup-scala@v14
+        with:
+          fetch-depth: 0
+      - uses: sbt/setup-sbt@v1
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: sbt
       - name: Publish
         run: sbt ci-release
         env:
