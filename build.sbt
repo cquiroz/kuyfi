@@ -40,7 +40,7 @@ lazy val kuyfi = (projectMatrix in file("."))
       )
     ))
   )
-  .jvmPlatform(scalaVersions = Seq("3.3.6", "2.13.18", "2.12.21"))
+  .jvmPlatform(scalaVersions = Seq("3.3.8", "2.13.18", "2.12.21"))
 
 // projectMatrix lives at file("."), so the aggregating root would otherwise pick up
 // src/ as its own sources and compile them without the library dependencies.
