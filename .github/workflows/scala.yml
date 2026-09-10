@@ -15,11 +15,14 @@ jobs:
       - uses: actions/checkout@v6
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
-      - name: Setup Java (temurin@17)
+      # Pinned to an exact patch: ZoneRulesBuilderSuite compares kuyfi's output
+      # against the JVM's bundled tzdb, and the checked-in data is 2024a, which
+      # matches 17.0.12. A newer JDK patch ships newer tzdb and fails 4 zones.
+      - name: Setup Java (temurin@17.0.12)
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 17.0.12+7
           cache: sbt
       - name: Check formatting
         run: sbt scalafmtCheckAll
