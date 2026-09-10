@@ -6,6 +6,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        scala: [2.12.21, 2.13.18, 3.3.6]
+
     steps:
       - uses: actions/checkout@v5
       - name: Setup sbt
@@ -16,3 +21,7 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: sbt
+      - name: Check formatting
+        run: sbt scalafmtCheckAll
+      - name: Test
+        run: sbt ++${{ matrix.scala }} test

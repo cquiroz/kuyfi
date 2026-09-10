@@ -24,8 +24,8 @@ inThisBuild(
 
 val commonSettings: Seq[Setting[_]] = Seq(
   organization       := "io.github.cquiroz",
-  scalaVersion       := "2.13.14",
-  crossScalaVersions := Seq("2.12.21", "2.13.18"),
+  scalaVersion       := "2.13.18",
+  crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.6"),
   description        := "TZDB parser"
 )
 
@@ -38,7 +38,7 @@ lazy val kuyfi: Project = project
     libraryDependencies ++= Seq(
       "org.typelevel"          %% "cats-parse"              % "1.1.0",
       "org.typelevel"          %% "cats-core"               % "2.13.0",
-      "com.eed3si9n"           %% "treehugger"              % "0.4.4",
+      "com.eed3si9n"           %% "treehugger"              % "0.5.0",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.14.0",
       "org.scalameta"          %% "munit"                   % "1.2.4" % Test
     ),
@@ -55,7 +55,11 @@ lazy val docs = project
   .in(file("docs"))
   .dependsOn(kuyfi)
   .settings(commonSettings)
-  .settings(name := "docs")
+  .settings(
+    name               := "docs",
+    crossScalaVersions := Nil,
+    publish / skip     := true
+  )
   .enablePlugins(MicrositesPlugin)
   .settings(
     micrositeName           := "kuyfi",
