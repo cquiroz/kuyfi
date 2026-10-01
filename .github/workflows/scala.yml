@@ -13,7 +13,7 @@ jobs:
         project: [kuyfi, kuyfi2_13, kuyfi2_12]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
       # Pinned to an exact patch: ZoneRulesBuilderSuite compares kuyfi's output
