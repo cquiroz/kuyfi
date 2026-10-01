@@ -20,7 +20,7 @@ jobs:
       # against the JVM's bundled tzdb, and the checked-in data is 2024a, which
       # matches 17.0.12. A newer JDK patch ships newer tzdb and fails 4 zones.
       - name: Setup Java (temurin@17.0.12)
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 17.0.12+7
