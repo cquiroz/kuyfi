@@ -270,4 +270,36 @@ class TZDBCodeGeneratorSpec extends munit.FunSuite {
     )
     assert(!r.contains("import "))
   }
+
+  test("tables are sorted string literals, not a Map of tuples") {
+    val r = treeToString(
+      exportTzdb(TzdbVersion("2018e"),
+                 "java.time",
+                 "java.time",
+                 link1 :: link2 :: zone1 :: Nil,
+                 _ => true
+      )
+    )
+    // links are keyed by their target name, sorted so the runtime can binary search them
+    assert(r.contains("object zoneLinks"), r)
+    assert(r.contains("Array[String](\"America/Aruba;Europe/Ireland\")"), r)
+    assert(r.contains("Array[String](\"America/Curacao;Europe/Belfast\")"), r)
+    assert(r.contains("object stdZones"), r)
+    assert(r.contains("case 0 => "), r)
+    assert(!r.contains("= Map("), r)
+  }
+
+  test("empty tables are typed") {
+    val r = treeToString(
+      exportTzdb(TzdbVersion("2018e"), "java.time", "java.time", link1 :: zone1 :: Nil, _ => false)
+    )
+    assert(r.contains("Array[String]()"), r)
+  }
+
+  test("table keys can't contain the separator") {
+    val bad = Link("Europe/Belfast", "Europe;Ireland")
+    intercept[IllegalArgumentException](
+      treeToString(TreeGenerator[List[Link]].generateTree(bad :: Nil))
+    )
+  }
 }
