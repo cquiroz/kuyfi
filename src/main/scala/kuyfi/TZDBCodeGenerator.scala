@@ -88,28 +88,92 @@ object TZDBCodeGenerator {
                                    TYPE_ARRAY(IntClass)
     )
 
+    // Entries per string literal. Keeps every literal far below the 65535 byte class file limit.
+    private val tableChunkSize = 200
+
+    // Keys of a table, sorted so the runtime can binary search them. A few string literals split
+    // at runtime cost a few IR lines, where a Tuple2 per entry costs ~100.
+    private def keysDef(keys: List[String]): Tree =
+      LAZYVAL("keys", TYPE_ARRAY(StringClass)).withFlags(Flags.PRIVATE) :=
+        stringChunks(keys)
+
+    // Typed, so that an empty table still compiles
+    private def stringChunks(values: List[String]): Tree = {
+      values.foreach(v => require(!v.contains(";"), s"table entry $v contains a separator"))
+      REF("Array")
+        .APPLYTYPE(StringClass)
+        .APPLY(values.grouped(tableChunkSize).map(g => LIT(g.mkString(";"))).toList)
+        .DOT("flatMap")(LAMBDA(PARAM("s")) ==> REF("s").DOT("split")(LIT(";")))
+    }
+
+    private val findDef: Tree =
+      DEF("find", IntClass).withFlags(Flags.PRIVATE).withParams(PARAM("name", StringClass)) :=
+        REF("java.util.Arrays").DOT("binarySearch")(
+          REF("keys").DOT("asInstanceOf").APPLYTYPE(TYPE_ARRAY(AnyRefClass)),
+          REF("name")
+        )
+
+    private val keySetDef: Tree =
+      LAZYVAL("keySet", TYPE_SET(StringClass)) := REF("keys").DOT("toSet")
+
+    // The tables are objects exposing the keySet/get/getOrElse the providers use on a Map.
+    // Zones are only built when looked up: the match calls a single def.
     implicit val stdListInstance: TreeGenerator[List[(Zone, StandardRulesParams)]] =
       TreeGenerator.instance { l =>
-        LAZYVAL("stdZones", TYPE_MAP(StringClass, czrType)) := MAKE_MAP(l.map { case (z, _) =>
-          TUPLE(
-            List(LIT(z.name), REF(z.scalaGroup(groupingSize) + "." + z.scalaSafeName)): _*
-          )
-        })
+        val sorted = l.sortBy(_._1.name)
+        val cases  = sorted.zipWithIndex.map { case ((z, _), i) =>
+          CASE(LIT(i)) ==> REF(z.scalaGroup(groupingSize) + "." + z.scalaSafeName)
+        }
+        OBJECTDEF("stdZones") := BLOCK(
+          keysDef(sorted.map(_._1.name)),
+          findDef,
+          keySetDef,
+          DEF("rules", czrType).withFlags(Flags.PRIVATE).withParams(PARAM("i", IntClass)) :=
+            REF("i").MATCH(cases: _*),
+          DEF("get", TYPE_OPTION(czrType)).withParams(PARAM("name", StringClass))         :=
+            BLOCK(
+              VAL("i") := REF("find").APPLY(REF("name")),
+              IF(REF("i").INT_>=(LIT(0))).THEN(SOME(REF("rules").APPLY(REF("i")))).ELSE(NONE)
+            )
+        )
       }
 
     // Fixed-offset zones have no transitions, so the raw offset is all a ZoneRules needs -
     // the runtime provider builds ZoneRules.of(ZoneOffset.ofTotalSeconds(offset)) on demand.
     implicit val fixedListInstance: TreeGenerator[List[(Zone, FixedZoneRulesParams)]] =
-      TreeGenerator.instance(l =>
-        LAZYVAL("fixedZones", TYPE_MAP(StringClass, IntClass)) := MAKE_MAP(l.map { case (z, f) =>
-          TUPLE(LIT(z.name), LIT(f.baseStandardOffset.getTotalSeconds))
-        })
-      )
+      TreeGenerator.instance { l =>
+        val sorted = l.sortBy(_._1.name)
+        OBJECTDEF("fixedZones") := BLOCK(
+          keysDef(sorted.map(_._1.name)),
+          LAZYVAL("offsets", TYPE_ARRAY(IntClass)).withFlags(Flags.PRIVATE)        :=
+            ARRAY(sorted.map(_._2.baseStandardOffset.getTotalSeconds).map(LIT(_))),
+          findDef,
+          keySetDef,
+          DEF("get", TYPE_OPTION(IntClass)).withParams(PARAM("name", StringClass)) :=
+            BLOCK(
+              VAL("i") := REF("find").APPLY(REF("name")),
+              IF(REF("i").INT_>=(LIT(0))).THEN(SOME(REF("offsets").APPLY(REF("i")))).ELSE(NONE)
+            )
+        )
+      }
 
     implicit val linkInstances: TreeGenerator[List[Link]] =
-      TreeGenerator.instance(l =>
-        LAZYVAL("zoneLinks", "Map[String, String]") := MAKE_MAP(l.map(_.toTree): _*)
-      )
+      TreeGenerator.instance { l =>
+        val sorted = l.sortBy(_.to)
+        OBJECTDEF("zoneLinks") := BLOCK(
+          keysDef(sorted.map(_.to)),
+          LAZYVAL("targets", TYPE_ARRAY(StringClass)).withFlags(Flags.PRIVATE)     :=
+            stringChunks(sorted.map(_.from)),
+          findDef,
+          keySetDef,
+          DEF("getOrElse", StringClass)
+            .withParams(PARAM("name", StringClass), PARAM("default", StringClass)) :=
+            BLOCK(
+              VAL("i") := REF("find").APPLY(REF("name")),
+              IF(REF("i").INT_>=(LIT(0))).THEN(REF("targets").APPLY(REF("i"))).ELSE(REF("default"))
+            )
+        )
+      }
 
     implicit val zoneOffsetInstance: TreeGenerator[ZoneOffset] =
       TreeGenerator.instance(l => zoneOffsetSym.DOT("ofTotalSeconds")(LIT(l.getTotalSeconds)))
@@ -176,9 +240,11 @@ object TZDBCodeGenerator {
           r.toTree
       }
 
+    // A def, not a lazy val: the provider caches the built ZoneRules, and a lazy val adds an
+    // inlined init check at every use
     implicit val zoneFixedTupleRules: TreeGenerator[(Zone, StandardRulesParams)] =
       TreeGenerator.instance { case (z, r) =>
-        LAZYVAL(z.scalaSafeName, czrType) :=
+        DEF(z.scalaSafeName, czrType) :=
           r.toTree
       }
 
