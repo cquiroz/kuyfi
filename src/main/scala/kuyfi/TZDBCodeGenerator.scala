@@ -116,20 +116,28 @@ object TZDBCodeGenerator {
     private val keySetDef: Tree =
       LAZYVAL("keySet", TYPE_SET(StringClass)) := REF("keys").DOT("toSet")
 
+    private val switchAnnot: AnnotationInfo = ANNOT(definitions.getClass("scala.annotation.switch"))
+
     // The tables are objects exposing the keySet/get/getOrElse the providers use on a Map.
     // Zones are only built when looked up: the match calls a single def.
     implicit val stdListInstance: TreeGenerator[List[(Zone, StandardRulesParams)]] =
       TreeGenerator.instance { l =>
-        val sorted = l.sortBy(_._1.name)
-        val cases  = sorted.zipWithIndex.map { case ((z, _), i) =>
+        val sorted     = l.sortBy(_._1.name)
+        val cases      = sorted.zipWithIndex.map { case ((z, _), i) =>
           CASE(LIT(i)) ==> REF(z.scalaGroup(groupingSize) + "." + z.scalaSafeName)
         }
+        // Unreachable, since `i` only ever comes from a successful binary search, but without
+        // it the match on an Int is non-exhaustive, which Scala 3 warns about and so breaks
+        // builds with fatal warnings. It also gives an empty table a case to compile.
+        val outOfRange =
+          CASE(WILDCARD) ==> THROW(NEW(IndexOutOfBoundsExceptionClass, REF("i").TOSTRING))
         OBJECTDEF("stdZones") := BLOCK(
           keysDef(sorted.map(_._1.name)),
           findDef,
           keySetDef,
+          // @switch so the compiler reports it if the cases ever stop compiling to a jump table
           DEF("rules", czrType).withFlags(Flags.PRIVATE).withParams(PARAM("i", IntClass)) :=
-            REF("i").MATCH(cases: _*),
+            REF("i").withAnnots(switchAnnot).MATCH(cases :+ outOfRange: _*),
           DEF("get", TYPE_OPTION(czrType)).withParams(PARAM("name", StringClass))         :=
             BLOCK(
               VAL("i") := REF("find").APPLY(REF("name")),
