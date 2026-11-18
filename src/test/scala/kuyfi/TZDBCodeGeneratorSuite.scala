@@ -289,6 +289,19 @@ class TZDBCodeGeneratorSpec extends munit.FunSuite {
     assert(!r.contains("= Map("), r)
   }
 
+  test("the zone rules match is exhaustive and annotated @switch") {
+    val r = treeToString(
+      exportTzdb(TzdbVersion("2018e"),
+                 "java.time",
+                 "java.time",
+                 link1 :: link2 :: zone1 :: Nil,
+                 _ => true
+      )
+    )
+    assert(r.contains("(i: @scala.annotation.switch) match {"), r)
+    assert(r.contains("case _ => throw new java.lang.IndexOutOfBoundsException(i.toString)"), r)
+  }
+
   test("empty tables are typed") {
     val r = treeToString(
       exportTzdb(TzdbVersion("2018e"), "java.time", "java.time", link1 :: zone1 :: Nil, _ => false)
